@@ -1,4 +1,4 @@
-#mapsOrder.html
+# mapsOrder.html
 ### Reorder maps list outside of RPGMaker's UI
 
 * Drag and drop the file onto / or open it with a web browser (Chrome or Firefox)

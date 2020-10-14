@@ -1,4 +1,4 @@
-##Gimmer_FolderPictures
+## Gimmer_FolderPictures
 
 Allows you to save pictures into folders, and use them.
 
@@ -18,7 +18,7 @@ Required Arguments and their accepted inputs:
  * BlendOpacity = 0 to 255
  * BlendMode = 0,1,2,3 (Normal, Additive, Multiply, Screen). Tbh, not sure if these work because I don't know what they mean
  
- ####Or
+ #### Or
  Follow the following steps:
   * Make a picture in the root img/pictures directory with the following format (it can be 0 kb):
   folderpicture_path_to_the_image.png

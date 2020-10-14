@@ -1,4 +1,4 @@
-##Gimmer_Core
+## Gimmer_Core
 
 Core plugin required for all other plugins.
 
