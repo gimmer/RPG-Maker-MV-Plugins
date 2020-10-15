@@ -22,7 +22,7 @@ Gimmer_Core.GameTimer.currentTime = '';
 Gimmer_Core.GameTimer.timerMS = 0;
 Gimmer_Core.GameTimer.paused = true; //Start paused
 let GameTimerParameters = PluginManager.parameters('Gimmer_GameTimer');
-Gimmer_Core.GameTimer.snapshotVariableId = GameTimerParameters['Snapshot Variable'];
+Gimmer_Core.GameTimer.snapshotVariableId = Number(GameTimerParameters['Snapshot Variable']);
 
 //Upgrade main loop to record real time
 Gimmer_Core.GameTimer.Scene_Map_prototype_updateMain = Scene_Map.prototype.updateMain;

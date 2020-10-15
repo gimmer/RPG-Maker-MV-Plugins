@@ -66,7 +66,7 @@ Gimmer_Core.SpottingPlayers.startingY = SpottingPlayersParameters['Starting Y Va
 Gimmer_Core.SpottingPlayers.spotter = 0;
 Gimmer_Core.SpottingPlayers.isSpotted = false;
 Gimmer_Core.SpottingPlayers.watchedBoxes = {};
-Gimmer_Core.SpottingPlayers.stopViewAt = SpottingPlayersParameters['Solid Wall Region Id'];
+Gimmer_Core.SpottingPlayers.stopViewAt = Number(SpottingPlayersParameters['Solid Wall Region Id']);
 Gimmer_Core.SpottingPlayers.trackSpotter = (SpottingPlayersParameters['Track Spotter For Balloons'] === "true");
 Gimmer_Core.SpottingPlayers.trackMapPosition = (SpottingPlayersParameters['Track Map Position'] === "true");
 
