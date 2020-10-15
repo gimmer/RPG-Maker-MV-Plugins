@@ -6,7 +6,7 @@ Gimmer_Core['QuitToDesktop'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc A plugin to allow NPC events to "spot the player" and send execute a common event
+ * @plugindesc A plugin that adds quit to desktop to the Game_End window
  * @author Gimmer
  *
  * @param ---Parameters---
