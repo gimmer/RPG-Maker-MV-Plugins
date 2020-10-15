@@ -1,5 +1,5 @@
 if(!Galv || !Galv.AI){
-    throw "You must have Galv Action Icons running to use this extension.";
+    throw "You must have Galv_ActionIndicators running to use this extension.";
 }
 
 if(Gimmer_Core === undefined){
