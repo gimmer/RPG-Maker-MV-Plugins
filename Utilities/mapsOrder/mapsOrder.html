@@ -56,35 +56,21 @@
             background-color: #fafafa;
         }
 
-        .nested-sort {
-            padding: 0;
+        .new {
+            display:none;
         }
 
-        .nested-sort li {
-            list-style: none;
-            margin: 0 0 12px;
-            padding: 12px;
-            background-color: #eee;
-            border: 1px solid #131313;
-            border-radius: 5px;
+        .hand, .new{
+            cursor:pointer;
         }
 
-        .nested-sort li ul {
-            padding: 0;
-            margin-top: 10px;
-            margin-bottom: -5px;
+        .new:hover{
+            color: greenyellow;
         }
 
-        .nested-sort .ns-dragged {
-            border: 3px solid #d51f1f;
-            border-radius: 5px;
+        .no{
+            cursor: not-allowed;
         }
-
-        .nested-sort .ns-targeted {
-            border: 3px solid #26da4d;
-            border-radius: 5px;
-        }
-        .container { margin: 150px auto; max-width: 960px; }
     </style>
 </head>
 <body>
@@ -95,6 +81,8 @@
 
 <div id="draggable"></div>
 
+<ul id="list"></ul>
+
 <button class="save-btn" onclick="saveOrder()">SAVE</button>
 
 <script
@@ -102,12 +90,9 @@
         integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
         crossorigin="anonymous"></script>
 
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/nested-sort/dist/nested-sort.umd.min.js"></script>
-
 <script type="text/javascript">
     let mapInfos = [];
     let parsedMapInfos = [];
-    let newOrderValues = [];
     let table = $('#table');
 
     if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -147,9 +132,6 @@
         function parseMapInfos(){
             mapInfos.forEach(function(v){
                 if(v !== null){
-                    if(v.parentId === 0){
-                        v.parentId = undefined;
-                    }
                     parsedMapInfos.push(v);
                 }
             });
@@ -165,27 +147,161 @@
             evt.stopPropagation();
             evt.preventDefault();
             evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
-            console.log('dragover');
         }
 
+        let rootList = $('#list');
         function renderMapInfos(){
-            new NestedSort({
-                data: parsedMapInfos,
-                propertyMap: {
-                    id: 'id',
-                    parent: 'parentId',
-                    text: 'name',
-                },
-                el: '#draggable',
-                actions: {
-                    onDrop: function (data) {
-                        newOrderValues = data;
+            let parentNodes = [];
+            while(parsedMapInfos.length){
+                let defferedNodes = [];
+                parsedMapInfos.forEach(function(v){
+                    if(v.parentId === 0){
+                        renderNode(v, v.parentId);
+                        parentNodes.push(v.id);
                     }
-                },
-                droppingEdge: 5,
-                listClassNames: ['nested-sort']
-            });
+                    else if(parentNodes.indexOf(v.parentId) === -1){
+                        //Their parent doesn't exist yet
+                        defferedNodes.push(v);
+                    }
+                    else{
+                        renderNode(v,v.parentId);
+                        parentNodes.push(v.id);
+                    }
+                });
+                parsedMapInfos = defferedNodes;
+            }
         }
+
+        function renderNode(obj, parentId){
+            let elem = rootList;
+            if(parentId > 0) {
+                elem = $('#Parent'+parentId.toString());
+            }
+            //Make a li item automatically
+            elem.append('<li data-id="'+obj.id+'" class="new above" data-new-parent-id="'+parentId+'" data-new-order="'+obj.order+'">Above</li>');
+            elem.append('<li data-id="'+obj.id+'" data-parent-id="'+parentId+'" class="clickable hand" data-order="'+obj.order+'">'+obj.name+'</li>');
+            elem.append('<li data-id="'+obj.id+'" class="new inside" data-new-parent-id="'+obj.id.toString()+'">Inside</li>');
+            elem.append('<ul data-id="'+obj.id+'" id="Parent'+obj.id.toString()+'"></ul>');
+            elem.append('<li data-id="'+obj.id+'" data-new-parent-id="'+parentId+'" class="new below" data-new-order="'+(obj.order+1)+'">Below</li>');
+        }
+
+        choosing = false;
+        $(document).on('click','.clickable', function(e){
+            e.preventDefault();
+            if(!choosing){
+                choosing = $(this);
+                $('.clickable').removeClass('hand').addClass('no');
+                choosing.addClass("faded");
+                $('.new').show();
+            }
+        }).on('click','.new',function(e){
+            e.preventDefault();
+
+
+            let id = parseInt(choosing.data('id'));
+            let order = parseInt($(this).data('newOrder'));
+            let parentId = parseInt($(this).data('newParentId'));
+            let oldOrder = parseInt(choosing.data('order'));
+            let allElements = $('*[data-id="'+choosing.data('id')+'"]');
+
+            if(id === parseInt($(this).data('id'))){
+                return false;
+            }
+
+            let direction = 'above';
+            if($(this).hasClass('inside')){
+                direction = 'inside';
+                $('#Parent'+parentId).append(allElements);
+            }
+            else if($(this).hasClass('below')){
+                direction = 'below';
+            }
+
+            if(direction === 'inside'){
+                $.each(allElements, function(k,v){
+                    v = $(v);
+                    if(v.data('newParentId') && !v.hasClass('inside')){
+                        v.data('newParentId',parentId);
+                    }
+                    if(v.data('parentId') !== undefined){
+                        v.data('parentId',parentId);
+                    }
+                });
+
+                let childrenOfParent = $('#Parent'+id).children('.clickable');
+                let orders = [oldOrder];
+                $.each(childrenOfParent, function(k,v){
+                    v = $(v);
+                    orders.push(parseInt(v.data('order')));
+                });
+                orders.sort();
+                $.each(childrenOfParent, function(k,v){
+                    v = $(v);
+                    v.data('order',orders[k]);
+                });
+            }
+            else{
+                //Set order on all moving elements
+                $.each(allElements, function(k,v){
+                    v = $(v);
+                    if(v.data('new-order')){
+                        let thisOrder = parseInt(v.data('new-order'));
+                        if(thisOrder === oldOrder){
+                            v.data('newOrder',order);
+                        }
+                        else{
+                            v.data('newOrder', (order+1));
+                        }
+                    }
+                    if(v.data('newParentId') && !v.hasClass('inside')){
+                        v.data('newParentId',parentId);
+                    }
+                    if(v.data('order')){
+                        v.data('order',order);
+                    }
+                    if(v.data('parentId')){
+                        v.data('parentId',parentId);
+                    }
+                });
+            }
+
+            switch(direction){
+                case "above":
+                    allElements.insertBefore($(this));
+                    break;
+                case "below":
+                    allElements.insertAfter($(this));
+                    break;
+            }
+
+            let newOrderBoxes = $('.new');
+            let clickableBoxes = $('.clickable');
+            if(direction !== "inside"){
+                $.each(newOrderBoxes, function(k,v){
+                    v = $(v);
+                    if(v.data('id') != id){
+                        if(parseInt(v.data('order')) >= order){
+                            v.data('order',parseInt(v.data('order')) + 1);
+                        }
+                    }
+                });
+                $.each(clickableBoxes, function(k,v){
+                    v = $(v);
+                    if(v.data('id') != id) {
+                        if (parseInt(v.data('order')) >= order) {
+                            v.data('order', parseInt(v.data('order')) + 1);
+                        }
+                    }
+                });
+            }
+            //done
+            choosing = false;
+            clickableBoxes.removeClass('no').removeClass('faded').addClass('hand');
+            newOrderBoxes.hide();
+        });
+
+
+
 
         // Setup the dnd listeners.
         var dropZone = document.getElementById('dragSpot');
@@ -193,19 +309,14 @@
         dropZone.addEventListener('drop', handleJSONDrop, false);
 
         function saveOrder(){
-            if(newOrderValues.length){
+            if(mapInfos.length){
                 mapInfos.forEach(function(v,k){
                     if(v){
-                        newOrderValues.every(function(data,order){
-                            if(data.id == v.id){
-                                mapInfos[k].parentId = (data.parentId !== undefined ? parseInt(data.parentId) : 0);
-                                mapInfos[k].order = order;
-                                return false;
-                            }
-                            else{
-                                return true;
-                            }
-                        });
+                        let newValues = $('.clickable[data-id="'+v.id+'"]');
+                        //console.log(v);
+                        //console.log(newValues.data());
+                        v.parentId = parseInt(newValues.data('parentId'));
+                        v.order = parseInt(newValues.data('order'));
                     }
                 });
                 var a = document.createElement("a");
@@ -214,17 +325,14 @@
                 a.href = URL.createObjectURL(file);
                 a.download = 'MapInfos.json';
                 a.click();
-                newOrderValues = [];
                 parsedMapInfos = [];
                 parseMapInfos();
             }
             else{
-                alert('No Changes');
+                alert("You need to put in a MapInfos.json file!");
             }
 
         }
-
-
     } else {
         alert('The File APIs are not fully supported in this browser.');
     }
