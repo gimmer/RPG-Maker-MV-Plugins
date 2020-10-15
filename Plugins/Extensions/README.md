@@ -13,3 +13,28 @@ This can be used to only have icons set when the player is facing towards the ev
 * iconId: if you just have a number as one of the arguments, it'll use that iconId to allow backwards compatibility
 * x or y: This is the exact X or Y coordinates you want the icon to show up at. This can help custom positioning more finely than the default option
 
+In order to use this, you'll have to edit Galv_ActionIndicators at line 283:
+
+```javascript
+let tempOffsetX = this._offsetX;
+let tempOffsetY = this._offsetY;
+
+if('offsetX' in $gamePlayer.actionIconTarget){
+	tempOffsetX = $gamePlayer.actionIconTarget.offsetX;
+}
+
+if('offsetY' in $gamePlayer.actionIconTarget){
+	tempOffsetY = $gamePlayer.actionIconTarget.offsetY;
+}
+
+if('isPlayer' in $gamePlayer.actionIconTarget){
+	this.x = $gamePlayer.screenX() + tempOffsetX;
+	this.y = $gamePlayer.screenY() + tempOffsetY + this._float;
+}
+else{
+	this.x = $gameMap.event($gamePlayer.actionIconTarget.eventId).screenX() + tempOffsetX;
+	this.y = $gameMap.event($gamePlayer.actionIconTarget.eventId).screenY() + tempOffsetY + this._float;
+}
+```
+
+This edit has to happen because Galv declares some functions in a document on ready, and other plugins can't override them;
