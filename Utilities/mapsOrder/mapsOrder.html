@@ -11,6 +11,13 @@
             background-color: #fafafa;
         }
 
+        .title {
+            font-size: 28px;
+            text-align: center;
+            color: #b1b1b1;
+            padding: 10px;
+        }
+
         #dragSpot{
             display: block;
             margin: 25px auto 0 auto;
@@ -39,6 +46,10 @@
 
         #dragSpot span {
             color: #1677df;
+        }
+
+        #list {
+            margin-left: 50px;
         }
 
         .download-btn {
@@ -76,7 +87,9 @@
 
         /* Icons */
 
-        .arrow {
+        .arrow,
+        .download,
+        .cross {
             padding-left: 15px;
         }
         .map {
@@ -84,9 +97,8 @@
             margin-right: 15px;
             vertical-align: middle;
         }
-        .download {
-            padding-left: 5px;
-        }
+
+        /* End Icons */
 
         .hand,
         .new {
@@ -122,12 +134,28 @@
             text-decoration: none;
         }
 
+        .deselect {
+            background: #eaeaea;
+            border-radius: 3px;
+            border: 0;
+            border: 1px solid #b9b9b9;
+            display: none;
+            cursor: pointer;
+            padding: 10px;
+            position: fixed;
+            top: 50%;
+            left: 15px;
+            color: #757575;
+        }
+
         footer {
             margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
+
+<h1 class="title">Re-order your maps for RPG Maker MV</h1>
 
 <div id="dragSpot">
     <strong>Drag <span>MapInfos.json</span> Here</strong>
@@ -140,6 +168,8 @@
 <button class="download-btn" onclick="saveOrder()">DOWNLOAD
     <i class="fas fa-download download"></i>
 </button>
+
+<button class="deselect">Deselect<i class="fas fa-times cross"></i></button>
 
 <footer>
     <span class="author">made with <i class="fas fa-code"></i> by
@@ -253,12 +283,12 @@
             if(!choosing){
                 choosing = $(this);
                 $('.clickable').removeClass('hand').addClass('no');
+                $('.deselect').show();
                 choosing.addClass("faded");
                 $('.new').show();
             }
         }).on('click','.new',function(e){
             e.preventDefault();
-
 
             let id = parseInt(choosing.data('id'));
             let order = parseInt($(this).data('newOrder'));
@@ -361,9 +391,6 @@
             clickableBoxes.removeClass('no').removeClass('faded').addClass('hand');
             newOrderBoxes.hide();
         });
-
-
-
 
         // Setup the dnd listeners.
         var dropZone = document.getElementById('dragSpot');
