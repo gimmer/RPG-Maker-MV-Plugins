@@ -90,7 +90,7 @@
         .arrow,
         .download,
         .cross {
-            padding-left: 15px;
+            padding-left: 8px;
         }
         .map {
             color: #7ecd62;
@@ -134,18 +134,20 @@
             text-decoration: none;
         }
 
-        .deselect {
-            background: #eaeaea;
+        .cancel {
+            background: #f75c5c;
             border-radius: 3px;
             border: 0;
-            border: 1px solid #b9b9b9;
+            border: 1px solid #8f0000;
             display: none;
             cursor: pointer;
             padding: 10px;
             position: fixed;
             top: 50%;
             left: 15px;
-            color: #757575;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
         }
 
         footer {
@@ -169,7 +171,7 @@
     <i class="fas fa-download download"></i>
 </button>
 
-<button class="deselect">Deselect<i class="fas fa-times cross"></i></button>
+<button class="cancel">Cancel<i class="fas fa-times cross"></i></button>
 
 <footer>
     <span class="author">made with <i class="fas fa-code"></i> by
@@ -283,7 +285,7 @@
             if(!choosing){
                 choosing = $(this);
                 $('.clickable').removeClass('hand').addClass('no');
-                $('.deselect').show();
+                $('.cancel').show();
                 choosing.addClass("faded");
                 $('.new').show();
             }
