@@ -280,6 +280,7 @@
         }
 
         choosing = false;
+
         $(document).on('click','.clickable', function(e){
             e.preventDefault();
             if(!choosing){
@@ -392,6 +393,14 @@
             choosing = false;
             clickableBoxes.removeClass('no').removeClass('faded').addClass('hand');
             newOrderBoxes.hide();
+        }).on('click', '.cancel', function(e){
+            e.preventDefault();
+            if(choosing){
+                choosing = false;
+                $('.clickable').removeClass('no').removeClass('faded').addClass('hand');
+                $('.new').hide();
+                $('.cancel').hide();
+            }
         });
 
         // Setup the dnd listeners.
