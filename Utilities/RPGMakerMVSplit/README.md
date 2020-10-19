@@ -1,4 +1,6 @@
-Script to seperate out RPG Maker MV Source files.
+### RPGMakerMVSplit
+
+Script to separate out RPG Maker MV Source files.
 
 Instructions:
 
