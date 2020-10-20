@@ -80,8 +80,8 @@
             font-size: 20px;
             font-variant-caps: all-petite-caps;
             list-style-type: none;
-            margin: 25px;
-            padding: 15px;
+            margin: 8px;
+            padding: 10px;
             letter-spacing: 0.05em;
         }
 
@@ -97,8 +97,14 @@
             margin-right: 15px;
             vertical-align: middle;
         }
+        .expand, .contract{
+            padding-right: 15px;
+            vertical-align: middle;
+            display: none;
+            cursor: pointer !important;
+        }
 
-        /* End Icons */
+            /* End Icons */
 
         .hand,
         .new {
@@ -148,6 +154,10 @@
             color: #fff;
             font-weight: bold;
             font-size: 16px;
+        }
+
+        .selecting{
+            opacity: 50%;
         }
 
         footer {
@@ -272,23 +282,26 @@
                 elem = $('#Parent'+parentId.toString());
             }
             //Make a li item automatically
-            elem.append('<li data-id="'+obj.id+'" class="new above" data-new-parent-id="'+parentId+'" data-new-order="'+obj.order+'">Above<i class="fas fa-chevron-up arrow"></i></li>');
-            elem.append('<li data-id="'+obj.id+'" data-parent-id="'+parentId+'" class="clickable hand" data-order="'+obj.order+'"><i class="far fa-map map"></i>'+obj.name+'</li>');
-            elem.append('<li data-id="'+obj.id+'" class="new inside" data-new-parent-id="'+obj.id.toString()+'">Inside<i class="fas fa-chevron-right arrow"></i></li>');
-            elem.append('<ul data-id="'+obj.id+'" id="Parent'+obj.id.toString()+'"></ul>');
-            elem.append('<li data-id="'+obj.id+'" data-new-parent-id="'+parentId+'" class="new below" data-new-order="'+(obj.order+1)+'">Below<i class="fas fa-chevron-down arrow"></i></li>');
+            elem.append('<li data-id="'+obj.id+'" class="new above" data-new-parent-id="'+parentId+'" data-new-order="'+obj.order+'">Above '+obj.name+'<i class="fas fa-chevron-up arrow"></i></li>');
+            elem.append('<li data-id="'+obj.id+'" data-parent-id="'+parentId+'" class="clickable hand" data-order="'+obj.order+'"><i data-toggle-id="'+obj.id+'" class="far fa-plus expand"></i><i class="far fa-map map"></i>'+obj.name+'</li>');
+            elem.append('<li data-id="'+obj.id+'" class="new inside" data-new-parent-id="'+obj.id.toString()+'">Inside '+obj.name+'<i class="fas fa-chevron-right arrow"></i></li>');
+            elem.append('<ul data-id="'+obj.id+'" class="parentList" id="Parent'+obj.id.toString()+'"></ul>');
+            elem.append('<li data-id="'+obj.id+'" data-new-parent-id="'+parentId+'" class="new below" data-new-order="'+(obj.order+1)+'">Below '+obj.name+'<i class="fas fa-chevron-down arrow"></i></li>');
         }
 
         choosing = false;
+        pathtree = [];
 
         $(document).on('click','.clickable', function(e){
             e.preventDefault();
             if(!choosing){
                 choosing = $(this);
-                $('.clickable').removeClass('hand').addClass('no');
+                $('.expand').show();
+                $('.contract').show();
+                $('.clickable').removeClass('hand').addClass('no').removeClass('selecting');
+                $(this).addClass('selecting');
                 $('.cancel').show();
                 choosing.addClass("faded");
-                $('.new').show();
             }
         }).on('click','.new',function(e){
             e.preventDefault();
@@ -392,7 +405,10 @@
             //done
             choosing = false;
             clickableBoxes.removeClass('no').removeClass('faded').addClass('hand');
+            $('.expand').hide();
+            $('.contract').hide();
             newOrderBoxes.hide();
+            $('.cancel').hide();
         }).on('click', '.cancel', function(e){
             e.preventDefault();
             if(choosing){
@@ -400,7 +416,23 @@
                 $('.clickable').removeClass('no').removeClass('faded').addClass('hand');
                 $('.new').hide();
                 $('.cancel').hide();
+                $('.expand').hide();
+                $('.contract').hide();
             }
+        }).on('click','.expand', function(e){
+            e.stopPropagation();
+            e.preventDefault();
+            if(choosing){
+                let id = $(this).data('toggleId');
+                if(choosing.data('id') != id){
+                    $(this).removeClass('fa-plus').removeClass('expand').addClass('fa-minus').addClass('contract');
+                    $('.new[data-id="'+id+'"]').show();
+                }
+            }
+        }).on('click','.contract', function(){
+            let id = $(this).data('toggleId');
+            $(this).removeClass('fa-minus').removeClass('contract').addClass('fa-plus').addClass('expand');
+            $('.new[data-id="'+id+'"]').hide();
         });
 
         // Setup the dnd listeners.
