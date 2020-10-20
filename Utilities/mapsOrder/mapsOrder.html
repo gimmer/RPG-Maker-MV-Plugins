@@ -301,7 +301,6 @@
                 $('.clickable').removeClass('hand').addClass('no').removeClass('selecting');
                 $(this).addClass('selecting');
                 $('.cancel').show();
-                choosing.addClass("faded");
             }
         }).on('click','.new',function(e){
             e.preventDefault();
@@ -404,7 +403,7 @@
             }
             //done
             choosing = false;
-            clickableBoxes.removeClass('no').removeClass('faded').addClass('hand');
+            clickableBoxes.removeClass('no').removeClass('selecting').addClass('hand');
             $('.expand').hide();
             $('.contract').hide();
             newOrderBoxes.hide();
@@ -413,7 +412,7 @@
             e.preventDefault();
             if(choosing){
                 choosing = false;
-                $('.clickable').removeClass('no').removeClass('faded').addClass('hand');
+                $('.clickable').removeClass('no').removeClass('selecting').addClass('hand');
                 $('.new').hide();
                 $('.cancel').hide();
                 $('.expand').hide();
