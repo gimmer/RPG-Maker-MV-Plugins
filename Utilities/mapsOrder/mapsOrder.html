@@ -145,19 +145,29 @@
             border-radius: 3px;
             border: 0;
             border: 1px solid #8f0000;
-            display: none;
+            color: #fff;
             cursor: pointer;
+            display: none;
+            font-size: 16px;
+            font-weight: bold;
+            left: 15px;
             padding: 10px;
             position: fixed;
             top: 50%;
-            left: 15px;
-            color: #fff;
-            font-weight: bold;
-            font-size: 16px;
         }
 
         .selecting{
-            opacity: 50%;
+            background: #f6f6f6;
+            border: 1px dashed #616161;
+            box-shadow: 5px 5px 10px 2px #a0a0a0;
+        }
+        .selecting::after {
+            color: #0d881c;
+            content: '[selected]';
+            font-size: 16px;
+            font-variant-caps: unicase;
+            letter-spacing: normal;
+            padding-left: 8px;
         }
 
         footer {
