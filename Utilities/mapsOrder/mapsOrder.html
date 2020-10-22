@@ -210,7 +210,6 @@
 <script type="text/javascript">
     let mapInfos = [];
     let parsedMapInfos = [];
-    let table = $('#table');
 
     if (window.File && window.FileReader && window.FileList && window.Blob) {
         // Great success!
@@ -258,6 +257,7 @@
 
                 return 0;
             });
+            console.log(parsedMapInfos);
         }
 
         function handleDragOver(evt) {
@@ -286,10 +286,17 @@
                     }
                 });
                 parsedMapInfos = defferedNodes;
+                parsedMapInfos.sort(function(a,b){
+                    if (a.order > b.order) return 1;
+                    if (b.order > a.order) return -1;
+
+                    return 0;
+                });
             }
         }
 
         function renderNode(obj, parentId){
+            console.log(obj);
             let elem = rootList;
             if(parentId > 0) {
                 elem = $('#Parent'+parentId.toString());
@@ -320,70 +327,49 @@
 
             let id = parseInt(choosing.data('id'));
             let order = parseInt($(this).data('newOrder'));
-            let parentId = parseInt($(this).data('newParentId'));
+            let oldParentId = parseInt($(this).data('parentId'));
+            let newParentId = parseInt($(this).data('newParentId'));
             let oldOrder = parseInt(choosing.data('order'));
             let allElements = $('*[data-id="'+choosing.data('id')+'"]');
+            let parentChain = [];
+            let choosingParentId = newParentId;
+            while(true){
+                if(choosingParentId === 0){
+                    break;
+                }
+                parentChain.push(choosingParentId);
+                choosingParentId = parseInt($('.clickable[data-id="'+choosingParentId+'"]').data('parentId'));
+                if(isNaN(choosingParentId)){
+                    break;
+                }
 
-            if(id === parseInt($(this).data('id'))){
+            }
+
+            if(id === parseInt($(this).data('id')) || id === newParentId || parentChain.indexOf(id) >= 0){
+                alert('You cannot move inside yourself!');
                 return false;
             }
 
             let direction = 'above';
             if($(this).hasClass('inside')){
                 direction = 'inside';
-                $('#Parent'+parentId).append(allElements);
+                $('#Parent'+newParentId).append(allElements);
             }
             else if($(this).hasClass('below')){
                 direction = 'below';
             }
 
-            if(direction === 'inside'){
-                $.each(allElements, function(k,v){
-                    v = $(v);
-                    if(v.data('newParentId') && !v.hasClass('inside')){
-                        v.data('newParentId',parentId);
-                    }
-                    if(v.data('parentId') !== undefined){
-                        v.data('parentId',parentId);
-                    }
-                });
+            //Set any parent changes
+            $.each(allElements, function(k,v){
+                v = $(v);
+                if(v.data('newParentId') && !v.hasClass('inside')){
+                    v.data('newParentId',newParentId);
+                }
 
-                let childrenOfParent = $('#Parent'+id).children('.clickable');
-                let orders = [oldOrder];
-                $.each(childrenOfParent, function(k,v){
-                    v = $(v);
-                    orders.push(parseInt(v.data('order')));
-                });
-                orders.sort();
-                $.each(childrenOfParent, function(k,v){
-                    v = $(v);
-                    v.data('order',orders[k]);
-                });
-            }
-            else{
-                //Set order on all moving elements
-                $.each(allElements, function(k,v){
-                    v = $(v);
-                    if(v.data('newOrder')){
-                        let thisOrder = parseInt(v.data('newOrder'));
-                        if(thisOrder === oldOrder){
-                            v.data('newOrder',order);
-                        }
-                        else{
-                            v.data('newOrder', (order+1));
-                        }
-                    }
-                    if(v.data('newParentId') && !v.hasClass('inside')){
-                        v.data('newParentId',parentId);
-                    }
-                    if(v.data('order')){
-                        v.data('order',order);
-                    }
-                    if(v.data('parentId')){
-                        v.data('parentId',parentId);
-                    }
-                });
-            }
+                if(v.data('parentId') !== undefined){
+                    v.data('parentId',newParentId);
+                }
+            });
 
             switch(direction){
                 case "above":
@@ -396,28 +382,11 @@
 
             let newOrderBoxes = $('.new');
             let clickableBoxes = $('.clickable');
-            if(direction !== "inside"){
-                $.each(newOrderBoxes, function(k,v){
-                    v = $(v);
-                    if(v.data('id') != id){
-                        if(parseInt(v.data('order')) >= order){
-                            v.data('order',parseInt(v.data('order')) + 1);
-                        }
-                    }
-                });
-                $.each(clickableBoxes, function(k,v){
-                    v = $(v);
-                    if(v.data('id') != id) {
-                        if (parseInt(v.data('order')) >= order) {
-                            v.data('order', parseInt(v.data('order')) + 1);
-                        }
-                    }
-                });
-            }
+
             //done
             choosing = false;
             clickableBoxes.removeClass('no').removeClass('selecting').addClass('hand');
-            $('.contract').removeClass('fa-minus').removeClass('contract').addClass('fa-plus').addClass('expand');
+            $('.contract').addClass('fa-plus').addClass('expand').removeClass('fa-minus').removeClass('contract');
             $('.expand').hide();
             newOrderBoxes.hide();
             $('.cancel').hide();
@@ -453,16 +422,24 @@
         dropZone.addEventListener('drop', handleJSONDrop, false);
 
         function saveOrder(){
+            let orderOfElements = $('.clickable');
+            console.log(mapInfos);
             if(mapInfos.length){
                 mapInfos.forEach(function(v,k){
                     if(v){
-                        let newValues = $('.clickable[data-id="'+v.id+'"]');
-                        //console.log(v);
-                        //console.log(newValues.data());
-                        v.parentId = parseInt(newValues.data('parentId'));
-                        v.order = parseInt(newValues.data('order'));
+                        $.each(orderOfElements, function(key, el){
+                            el = $(el);
+                           if(parseInt(el.data('id')) === v.id){
+                               //console.log("Changing "+v.id+" to parentId "+el.data(+", order "+key+1);
+                               v.parentId = parseInt(el.data('parentId'));
+                               v.order = parseInt(key) + 1;
+                           }
+                        });
                     }
                 });
+
+                console.log(mapInfos);
+                return;
                 var a = document.createElement("a");
 
                 var file = new Blob([JSON.stringify(mapInfos)], {type: 'text/json'});
