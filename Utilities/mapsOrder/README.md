@@ -3,5 +3,8 @@
 
 * Drag and drop the file onto / or open it with a web browser (Chrome or Firefox)
 * Drag and drop the mapInfos.json file from your project's data folder
-* Drag and drop the different maps into whatever order you want
+* Click on a map you want to move
+* Click the + next to the map you want to move above, below, or inside
+* Click above, below, or inside on the various buttons.
+* Watch it move!
 * Click the save button, and replace mapInfo.json with the file it makes
