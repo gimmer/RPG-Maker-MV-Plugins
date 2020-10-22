@@ -351,8 +351,8 @@
                 //Set order on all moving elements
                 $.each(allElements, function(k,v){
                     v = $(v);
-                    if(v.data('new-order')){
-                        let thisOrder = parseInt(v.data('new-order'));
+                    if(v.data('newOrder')){
+                        let thisOrder = parseInt(v.data('newOrder'));
                         if(thisOrder === oldOrder){
                             v.data('newOrder',order);
                         }
@@ -404,8 +404,8 @@
             //done
             choosing = false;
             clickableBoxes.removeClass('no').removeClass('selecting').addClass('hand');
+            $('.contract').removeClass('fa-minus').removeClass('contract').addClass('fa-plus').addClass('expand');
             $('.expand').hide();
-            $('.contract').hide();
             newOrderBoxes.hide();
             $('.cancel').hide();
         }).on('click', '.cancel', function(e){
