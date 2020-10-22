@@ -423,7 +423,6 @@
 
         function saveOrder(){
             let orderOfElements = $('.clickable');
-            console.log(mapInfos);
             if(mapInfos.length){
                 mapInfos.forEach(function(v,k){
                     if(v){
@@ -438,10 +437,8 @@
                     }
                 });
 
-                console.log(mapInfos);
-                return;
-                var a = document.createElement("a");
 
+                var a = document.createElement("a");
                 var file = new Blob([JSON.stringify(mapInfos)], {type: 'text/json'});
                 a.href = URL.createObjectURL(file);
                 a.download = 'MapInfos.json';
