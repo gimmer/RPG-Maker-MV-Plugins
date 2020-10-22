@@ -114,11 +114,13 @@
         .new {
             background: #ffefd9;
             border: 1px dashed #aaa;
+            color: #3e3e3e;
             font-size: 14px;
             margin: 12px 25px;
             position: relative;
             text-align: center;
-            width: 10%;
+            width: fit-content;
+            padding: 12px 18px;
         }
 
         .new:hover {
@@ -156,15 +158,15 @@
             top: 50%;
         }
 
-        .selecting{
-            background: #f6f6f6;
-            border: 1px dashed #616161;
+        .selecting {
+            background: #cfffd5;
             box-shadow: 5px 5px 10px 2px #a0a0a0;
+            transition: 0.25s cubic-bezier(0, 0.01, 0.66, 0.34);
         }
         .selecting::after {
-            color: #0d881c;
-            content: '[selected]';
-            font-size: 16px;
+            color: #095f14;
+            content: '[selected, move to...]';
+            font-size: 14px;
             font-variant-caps: unicase;
             letter-spacing: normal;
             padding-left: 8px;
@@ -195,7 +197,7 @@
 
 <footer>
     <span class="author">made with <i class="fas fa-code"></i> by
-        <a href="https://github.com/gimmer/" target="_blank">gimmer</a>
+        <a href="https://github.com/gimmer/" target="_blank">Gimmer_</a>
     </span>
 </footer>
 
