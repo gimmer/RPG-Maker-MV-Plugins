@@ -17,7 +17,7 @@ var Gimmer_Core = Gimmer_Core || {'debug':false, 'pluginCommands':{}};
 var parameters = PluginManager.parameters('Gimmer_Core');
 Gimmer_Core.debug = (parameters['debug'] === "true");
 
-//Function for debuging. Uses the DD name because my muscle memory types that when I want to figure out what's broken
+//Function for debugging. Uses the DD name because my muscle memory types that when I want to figure out what's broken
 function dd(something){
     if(Gimmer_Core.debug){
         console.log(something);
