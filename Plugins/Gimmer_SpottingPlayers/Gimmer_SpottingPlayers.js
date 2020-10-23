@@ -279,6 +279,6 @@ Gimmer_Core.pluginCommands['STOPSPOTTING'] = function(){
     Gimmer_Core.SpottingPlayers.isSpotted = true;
 }
 
-Gimmer_Core.pluginCommands['STARTSPOTTing'] = function(){
+Gimmer_Core.pluginCommands['STARTSPOTTING'] = function(){
     Gimmer_Core.SpottingPlayers.isSpotted = false;
 }
