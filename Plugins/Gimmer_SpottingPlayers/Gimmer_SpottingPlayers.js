@@ -243,7 +243,7 @@ Game_CharacterBase.prototype.setDirection = function(d) {
             Gimmer_Core.SpottingPlayers.setViewedArea(this, distances);
             Gimmer_Core.SpottingPlayers.checkIfSpotted();
         }
-        else if(this instanceof Game_Player){
+        else if(this instanceof Game_Player && !Gimmer_Core.SpottingPlayers.isSpotted){
             Gimmer_Core.SpottingPlayers.checkIfSpotted();
         }
     }
