@@ -122,7 +122,6 @@ Gimmer_Core.SpottingPlayers.checkIfSpotted = function(){
         $gameTemp.reserveCommonEvent(Gimmer_Core.SpottingPlayers.commonEvent);
         $gameMap._interpreter.pluginCommand("AllowEventMovement");
         $gameMap._interpreter.pluginCommand("AllowPlayerMovement");
-        Gimmer_Core.SpottingPlayers.isSpotted = false;
     }
 }
 
@@ -274,4 +273,12 @@ Game_CharacterBase.prototype.moveStraight = function(d){
 
 Gimmer_Core.pluginCommands['RESETLEVEL'] = function(args){
     Gimmer_Core.SpottingPlayers.resetLevel();
+}
+
+Gimmer_Core.pluginCommands['STOPSPOTTING'] = function(){
+    Gimmer_Core.SpottingPlayers.isSpotted = true;
+}
+
+Gimmer_Core.pluginCommands['STARTSPOTTing'] = function(){
+    Gimmer_Core.SpottingPlayers.isSpotted = false;
 }
