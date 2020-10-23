@@ -2,6 +2,10 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
+if(!Imported || !Imported.YEP_StopMapMovement){
+    throw "YEP_StopMapMovement is required for this plugin. Please load it before you load this plugin.";
+}
+
 Gimmer_Core['SpottingPlayers'] = {'loaded':true};
 
 //=============================================================================

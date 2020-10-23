@@ -2,6 +2,9 @@
 
 A plugin that allows events to be given cones of vision, and to run a common event when the player enters their line of sight
 
+### Requirements
+YEP_StopPlayerMovement is required currently. Later version will use my own method for this
+
 ### How to Use
 Include the following entry in the event's note field:
 * canSpotPlayer:up-right-down-left (replacing each word with a number)
