@@ -119,7 +119,6 @@ Gimmer_Core.SpottingPlayers.checkIfSpotted = function(){
         $gameMap._interpreter.pluginCommand("AllowEventMovement");
         $gameMap._interpreter.pluginCommand("AllowPlayerMovement");
         Gimmer_Core.SpottingPlayers.isSpotted = false;
-        Gimmer_Core.SpottingPlayers.spotter = 0;
     }
 }
 
