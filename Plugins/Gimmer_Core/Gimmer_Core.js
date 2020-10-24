@@ -1,6 +1,8 @@
 var Gimmer_Core = Gimmer_Core || {'debug':false, 'pluginCommands':{}};
 
 Gimmer_Core.pendingCallbacks = {};
+Gimmer_Core.areEventsStopped = false;
+Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
  * @plugindesc General plugin framework for my other plugins
@@ -25,6 +27,7 @@ function dd(something){
     }
 }
 
+//Support for common events to have callbacks
 var Gimmer_Core_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 Game_Interpreter.prototype.pluginCommand = function(command, args) {
     Gimmer_Core_Interpreter_pluginCommand.call(this, command, args)
@@ -35,15 +38,12 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
 };
 
 Gimmer_Core.reserveCommonEventWithCallback = function(commentEventId, callback){
-    dd('callabck added for commoneventId '+ commentEventId);
     Gimmer_Core.pendingCallbacks[commentEventId.toString()] = callback;
     $gameTemp.reserveCommonEvent(commentEventId);
 }
 
 Game_Interpreter.prototype.setupReservedCommonEvent = function() {
     if ($gameTemp.isCommonEventReserved()) {
-        dd($gameTemp.reservedCommonEvent());
-        dd('pending comment event: '+$gameTemp.reservedCommonEvent().id);
         this.setup($gameTemp.reservedCommonEvent().list, 0, $gameTemp.reservedCommonEvent().id);
         $gameTemp.clearCommonEvent();
         return true;
@@ -61,9 +61,39 @@ Game_Interpreter.prototype.setup = function(list, eventId, commonEventId) {
 Gimmer_Core.Game_Interpreter_prototype_terminate = Game_Interpreter.prototype.terminate;
 Game_Interpreter.prototype.terminate = function() {
     if(this._commonEventId.toString() in Gimmer_Core.pendingCallbacks && typeof Gimmer_Core.pendingCallbacks[this._commonEventId.toString()] === 'function'){
-        dd('calling callback');
         Gimmer_Core.pendingCallbacks[this._commonEventId.toString()]();
         delete Gimmer_Core.pendingCallbacks[this._commonEventId];
     }
     Gimmer_Core.Game_Interpreter_prototype_terminate.call(this);
+};
+
+//Quick functionality to stop players and events from moving. Similar to functionality from a no longer available YEP Plugin, but watered down for my needs only
+Gimmer_Core.stopEventMovement = function(){
+    this.areEventsStopped = true;
+}
+
+Gimmer_Core.startEventMovement = function(){
+    this.areEventsStopped = false;
+}
+
+Gimmer_Core.stopPlayerMovement = function(){
+    this.isPlayerStopped = true;
+}
+
+Gimmer_Core.startPlayerMovement = function(){
+    this.isPlayerStopped = false;
+}
+
+//Stop players
+Gimmer_Core.Game_Player_prototype_canMove = Game_Player.prototype.canMove;
+Game_Player.prototype.canMove = function() {
+    if (Gimmer_Core.isPlayerStopped) return false;
+    return Gimmer_Core.Game_Player_prototype_canMove.call(this);
+};
+
+//Stop Events
+Gimmer_Core.Game_Event_prototype_updateSelfMovement = Game_Event.prototype.updateSelfMovement;
+Game_Event.prototype.updateSelfMovement = function() {
+    if (Gimmer_Core.areEventsStopped || this._moveType === 0) return;
+    Gimmer_Core.Game_Event_prototype_updateSelfMovement.call(this);
 };

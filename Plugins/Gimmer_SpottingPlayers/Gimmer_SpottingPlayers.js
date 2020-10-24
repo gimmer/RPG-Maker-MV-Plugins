@@ -2,10 +2,6 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-if(!Imported || !Imported.YEP_StopMapMovement){
-    throw "YEP_StopMapMovement is required for this plugin. Please load it before you load this plugin.";
-}
-
 Gimmer_Core['SpottingPlayers'] = {'loaded':true};
 
 //=============================================================================
@@ -114,14 +110,14 @@ Gimmer_Core.SpottingPlayers.checkIfSpotted = function(){
 
     if(spotter){
         Gimmer_Core.SpottingPlayers.isSpotted = true;
-        $gameMap._interpreter.pluginCommand("StopPlayerMovement");
-        $gameMap._interpreter.pluginCommand("StopEventMovement");
+        Gimmer_Core.stopEventMovement();
+        Gimmer_Core.stopPlayerMovement();
         if(Gimmer_Core.SpottingPlayers.trackSpotter){
             Gimmer_Core.SpottingPlayers.spotter = spotter;
         }
         Gimmer_Core.reserveCommonEventWithCallback(Gimmer_Core.SpottingPlayers.commonEvent, function(){
-            $gameMap._interpreter.pluginCommand("AllowEventMovement");
-            $gameMap._interpreter.pluginCommand("AllowPlayerMovement");
+            Gimmer_Core.startEventMovement();
+            Gimmer_Core.startPlayerMovement();
             Gimmer_Core.SpottingPlayers.isSpotted = false;
         });
     }
@@ -139,7 +135,6 @@ Gimmer_Core.SpottingPlayers.resetLevel = function (){
                     })
                 })
             }
-
         }
     });
 }
