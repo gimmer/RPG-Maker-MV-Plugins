@@ -119,9 +119,11 @@ Gimmer_Core.SpottingPlayers.checkIfSpotted = function(){
         if(Gimmer_Core.SpottingPlayers.trackSpotter){
             Gimmer_Core.SpottingPlayers.spotter = spotter;
         }
-        $gameTemp.reserveCommonEvent(Gimmer_Core.SpottingPlayers.commonEvent);
-        $gameMap._interpreter.pluginCommand("AllowEventMovement");
-        $gameMap._interpreter.pluginCommand("AllowPlayerMovement");
+        Gimmer_Core.reserveCommonEventWithCallback(Gimmer_Core.SpottingPlayers.commonEvent, function(){
+            $gameMap._interpreter.pluginCommand("AllowEventMovement");
+            $gameMap._interpreter.pluginCommand("AllowPlayerMovement");
+            Gimmer_Core.SpottingPlayers.isSpotted = false;
+        });
     }
 }
 

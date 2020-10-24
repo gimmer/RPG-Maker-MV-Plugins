@@ -20,5 +20,8 @@ You'll have to set the following parameters:
 * Track Spotter for Balloon: If true, when a player is spotted, the event that spotted the player will automatically be the target of the next "Show Balloon" command the game runs, in spite of whatever target you choose for Show Balloon. Don't want this? Change it to no
 * Track Map Position: If true, the three variables above will be filled with the new MapId, X an Y position any time "Transfer Player" is done. Don't want to use them? Set this to false
 
-#### Note: 
-You must put in the plugin command StartSpotting in any common event if you want to reset the watchers to look for you again
+### Plugin Commands
+* ResetLevel: this will look for any common events on page that have "change switch to on" commands, and toggle them back off.
+Call this if you want the players progress to be reset through a level.
+* StopSpotting: call to prevent the player from being spotted anymore.
+* StartSpotting: call to all the player to be spotted again.
