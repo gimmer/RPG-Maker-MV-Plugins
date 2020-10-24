@@ -37,6 +37,9 @@ Gimmer_Core['SpottingPlayers'] = {'loaded':true};
  * @type Number
  * @desc RegionId that represents a solid wall
  *
+ * Default: 1
+ * @default 1
+ *
  * @param Track Spotter For Balloons
  * @parent ---Parameters---
  * @type Boolean
