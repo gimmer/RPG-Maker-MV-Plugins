@@ -3,9 +3,16 @@
 A plugin that allows events to be given cones of vision, and to run a common event when the player enters their line of sight
 
 ### Requirements
-YEP_StopPlayerMovement is required currently. Later version will use my own method for this
+Gimmer_Core is required for this plugin to function.
 
 ### How to Use
+
+#### Video Tutorial
+
+View here: https://youtu.be/sW1RJ_Xm7h0
+
+#### Text Tutorial
+
 Include the following entry in the event's note field:
 * canSpotPlayer:up-right-down-left (replacing each word with a number)
 
@@ -21,6 +28,7 @@ You'll have to set the following parameters:
 * Track Map Position: If true, the three variables above will be filled with the new MapId, X an Y position any time "Transfer Player" is done. Don't want to use them? Set this to false
 
 ### Plugin Commands
+
 * ResetLevel: this will look for any common events on page that have "change switch to on" commands, and toggle them back off.
 Call this if you want the players progress to be reset through a level.
 * StopSpotting: call to prevent the player from being spotted anymore.
