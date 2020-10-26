@@ -89,7 +89,7 @@ ImageManager.loadBitmap = function(folder, filename, hue, smooth) {
     if (filename) {
         if(filename.includes("folderpicture_")){
             filename = filename.replace("folderpicture_","");
-            filename = filename.replace("_","/");
+            filename = filename.replace(/_/g,"/");
         }
 
         let split = filename.split("/");
