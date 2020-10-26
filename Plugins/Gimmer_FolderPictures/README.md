@@ -4,6 +4,12 @@ Allows you to save pictures into folders, and use them.
 
 There are two ways to use them.
 
+#### Video Tutorial:
+
+View Here: https://youtu.be/07WOFNOOx9I
+
+#### Text Tutorial:
+
 The plugin command:
 
 ShowPicture ID Filename X Y Scale-W Scale-H BlendOpacity BlendMode
@@ -17,7 +23,7 @@ Required Arguments and their accepted inputs:
  * Scale-H = Number
  * BlendOpacity = 0 to 255
  * BlendMode = 0,1,2,3 (Normal, Additive, Multiply, Screen). Tbh, not sure if these work because I don't know what they mean
- 
+
  #### Or
  Follow the following steps:
   * Make a picture in the root img/pictures directory with the following format (it can be 0 kb):
