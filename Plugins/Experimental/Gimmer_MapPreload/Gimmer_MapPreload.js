@@ -79,6 +79,9 @@ if(Gimmer_Core.MapPreload.enabled){
     Gimmer_Core.MapPreload.queuePreloads = function(events, newMapId){
         dd('queue maps adjacent to '+newMapId);
         events.forEach(function(event){
+            if(event._trigger === 3){
+                return
+            }
             event.list().forEach(function(command){
                 if(command.code === 201){
                     //Transfer player
