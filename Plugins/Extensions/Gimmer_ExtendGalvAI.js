@@ -35,6 +35,10 @@ Gimmer_Core['ExtendGalvAI'] = {'loaded':true};
  * @default 0
  *
  * @help
+ * ===================
+ * Gimmer_ExtendGalvAI
+ * ===================
+ *
  * An extension to Galv_ActionIndicators to support dynamic positioning and icons.
  *
  * ActionIndicators has you put <actionIcon: iconId> into the comment of an event to have it show up over the event when you approach it
@@ -48,6 +52,12 @@ Gimmer_Core['ExtendGalvAI'] = {'loaded':true};
  * iconId: if you just have a number as one of the arguments, it'll use that iconId to allow backwards compatibility
  *
  * x or y: This is the exact X or Y coordinates you want the icon to show up at. This can help custom positioning more finely than the default options
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  */
 //=============================================================================
 

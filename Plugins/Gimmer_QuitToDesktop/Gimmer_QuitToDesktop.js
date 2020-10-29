@@ -8,6 +8,16 @@ Gimmer_Core['QuitToDesktop'] = {'loaded':true};
 /*:
  * @plugindesc A plugin that adds quit to desktop to the Game_End window
  * @author Gimmer
+ * @help
+ * ====================
+ * Gimmer_QuitToDesktop
+ * ====================
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Parameters---
  * @default

@@ -33,3 +33,9 @@ You'll have to set the following parameters:
 Call this if you want the players progress to be reset through a level.
 * StopSpotting: call to prevent the player from being spotted anymore.
 * StartSpotting: call to all the player to be spotted again.
+
+Terms of Use:
+=======================================================================
+Free for both commercial and non-commercial use, with credit.
+More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+=======================================================================

@@ -57,7 +57,23 @@ Gimmer_Core['SpottingPlayers'] = {'loaded':true};
  * @default true
  *
  * @help
- * A plugin to allow NPC events to "spot the player" and send execute a common event
+ * ======================
+ * Gimmer_SpottingPlayers
+ * ======================
+ *
+ * A plugin to allow NPC events to "spot the player" and send & execute
+ * a Common Event.
+ *
+ * VIDEO TUTORIAL:
+ * ============================
+ * https://youtu.be/sW1RJ_Xm7h0
+ * ============================
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  */
 //=============================================================================
 

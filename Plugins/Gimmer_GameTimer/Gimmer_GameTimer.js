@@ -8,8 +8,19 @@ Gimmer_Core['GameTimer'] = {'loaded':true};
 /*:
  * @plugindesc Support for a real time game timer
  * @author Gimmer
- * @help Use the system clock to keep time of how long a player takes to do something. Pauses when the menu is called and starts again when closed
+ * @help
+ * ================
+ * Gimmer_GameTimer
+ * ================
+ *
+ * Use the system clock to keep time of how long a player takes to do something. Pauses when the menu is called and starts again when closed
  * Includes a plugin command to snapshot the length of time at any point into a variable to be used in other places
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
 
  * @param Snapshot Variable
  * @parent ---Parameters---

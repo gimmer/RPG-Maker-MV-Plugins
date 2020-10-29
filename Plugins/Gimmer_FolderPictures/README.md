@@ -30,3 +30,9 @@ Required Arguments and their accepted inputs:
   folderpicture_path_to_the_image.png
   * Put Show Picture into your code, and select that picture. The interface will let you choose it. What will really load is the real picture that you put in img/pictures/path/to/the/image.png
   * Be done
+
+Terms of Use:
+=======================================================================
+Free for both commercial and non-commercial use, with credit.
+More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+=======================================================================

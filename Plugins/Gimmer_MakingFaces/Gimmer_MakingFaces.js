@@ -9,8 +9,18 @@ Gimmer_Core.MakingFaces.faceOverrides = {};
 /*:
  * @plugindesc Change faces during chat messages
  * @author Gimmer
- * @help Use the command \TF[faceIndex] to change the face index of an actor during chat messages.
+ * @help
+ * ==================
+ * Gimmer_MakingFaces
+ * ==================
  *
+ * Use the command \TF[faceIndex] to change the face index of an actor during chat messages.
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  */
 
 //Add the command as an escape character
