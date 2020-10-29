@@ -11,8 +11,8 @@ Has the following plugin commands:
 * GameTimerSnapshot: Saves the current time in a nice hh:mm:ss format to the provided variable in the configuration
 * GameTimerReset: Resets the timer back to 0
 
-Terms of Use:
-=======================================================================
+## Terms of Use:
+
 Free for both commercial and non-commercial use, with credit.
+
 More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
-=======================================================================

@@ -39,8 +39,8 @@ else{
 
 This edit has to happen because Galv declares some functions in a document on ready, and other plugins can't override them;
 
-Terms of Use:
-=======================================================================
+## Terms of Use:
+
 Free for both commercial and non-commercial use, with credit.
+
 More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
-=======================================================================
