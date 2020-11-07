@@ -50,6 +50,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc How fast should Anger hop up and down?
  * @min 0
  * @max 1
+ * @decimals 2
  * Default: 0.5
  * @default 0.5
  *
@@ -62,6 +63,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc What speed should fear shake at?
  * @min 0
  * @max 1
+ * @decimals 2
  * Default: 0.5
  * @default 0.5
  *
@@ -71,6 +73,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc How much should we shrink letters when we are scared? (0.5 is half)
  * @min 0
  * @max 1
+ * @decimals 2
  * Default: 0.5
  * @default 0.5
  *
@@ -100,6 +103,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @parent ---Pensive---
  * @type Number
  * @desc How fast should Pensive hop up and down?
+ * @decimals 2
  * @min 0
  * @max 1
  * Default: 0.1
@@ -132,6 +136,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc What percent should confused letters tilt before turning around (25% default)?
  * @min 0.1
  * @max 0.9
+ * @decimals 2
  * Default: 0.25
  * @default 0.25
  *
@@ -162,6 +167,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc What percent should custom 1 letters tilt before turning around (25% default)?
  * @min 0.1
  * @max 0.9
+ * @decimals 2
  * Default: 0.25
  * @default 0.25
  *
@@ -169,6 +175,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @parent ---Custom 1---
  * @type Number
  * @desc What percentage should custom 1 letters tilt each frame (1% default)?
+ * @decimals 2
  * Default: 0.01
  * @default 0.01
  *
@@ -178,6 +185,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc What speed should custom 1 shake on the x axis?
  * @min 0
  * @max 1
+ * @decimals 2
  * Default: 0.5
  * @default 0.5
  *
@@ -187,6 +195,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc What speed should custom 1 shake on the y axis?
  * @min 0
  * @max 1
+ * @decimals 2
  * Default: 0.5
  * @default 0.5
  *
@@ -196,6 +205,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
  * @desc How much should we scale custom 1's font?
  * @min 0
  * @max 2
+ * @decimals 2
  * Default: 1
  * @default 1
  *
@@ -432,7 +442,7 @@ Sprite_Emotional.prototype.setEmotionalParameters = function(contents){
             this._yMax = 1;
             this.bitmap.textColor = Gimmer_Core.ExpressingEmotions.AngerHexCode;
             this._animationType = 'shake';
-        break;
+            break;
         case 'FEAR':
             this.bitmap.fontSize *= Gimmer_Core.ExpressingEmotions.FearShrink;
             this._xSpd = Gimmer_Core.ExpressingEmotions.FearSpeed;
@@ -440,12 +450,12 @@ Sprite_Emotional.prototype.setEmotionalParameters = function(contents){
             this._xMax = 1;
             this._yMax = 1;
             this._animationType = 'shake'
-        break;
+            break;
         case 'JOYFUL':
             this.bitmap.textColor = Gimmer_Core.ExpressingEmotions.JoyfulHexCode;
             this._animationType = 'curve';
             this._animationSubType = Gimmer_Core.ExpressingEmotions.JoyfulDirection;
-        break;
+            break;
         case 'PENSIVE':
             this._animationType = 'shake';
             this._xSpd = 0;
@@ -453,13 +463,13 @@ Sprite_Emotional.prototype.setEmotionalParameters = function(contents){
             this._xMax = 1;
             this._yMax = 1;
             this._shakeDelay = contents._shakeDelay;
-        break;
+            break;
         case 'CONFUSION':
             this._animationType = 'tilt';
             this._tiltMax = Gimmer_Core.ExpressingEmotions.ConfusionMaxTilt;
             this._tiltSpeed = Gimmer_Core.ExpressingEmotions.ConfusionTiltSpeed;
             this._changeDirection = Gimmer_Core.ExpressingEmotions.ConfusionStartingDirection;
-        break;
+            break;
         case 'CUSTOM1':
             dd('making a custom');
             this._animationType = Gimmer_Core.ExpressingEmotions.Custom1AnimationType;
@@ -526,10 +536,10 @@ Sprite_Emotional.prototype.update = function() {
             switch(this._changeDirection){
                 case "add":
                     this._aniCouter += this._tiltSpeed;
-                break;
+                    break;
                 case "subtract":
                     this._aniCouter -= this._tiltSpeed;
-                break;
+                    break;
             }
 
             this.setTransform(this.x, this.y, 1,1,this._aniCouter);
