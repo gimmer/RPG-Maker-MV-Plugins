@@ -40,7 +40,7 @@ Scene_Title.prototype.createBackground = function(){
         Gimmer_Core.AnimatedTitle.videoObject.style.zIndex = 0;
         Gimmer_Core.AnimatedTitle.videoObject.autoplay = true;
         Gimmer_Core.AnimatedTitle.videoObject.loop = true;
-        Gimmer_Core.AnimatedTitle.videoObject.src = Gimmer_Core.AnimatedTitle.titleVideoPath + "." +$gameMap._interpreter.videoFileExt();
+        Gimmer_Core.AnimatedTitle.videoObject.src = Gimmer_Core.AnimatedTitle.titleVideoPath + $gameMap._interpreter.videoFileExt();
         Gimmer_Core.AnimatedTitle.playingTitle = true;
     }
 }
