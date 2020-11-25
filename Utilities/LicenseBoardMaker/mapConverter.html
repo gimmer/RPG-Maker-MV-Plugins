@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map Converter</title>
+    <!-- link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+          integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" / -->
+    <style type="text/css">
+        .dragzone{
+            width: 100px;
+            height: 100px;
+            background-color: orange
+        }
+    </style>
+
+
+</head>
+<body>
+
+<div class="dragzone">Drag Here</div>
+
+<script
+        src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+        crossorigin="anonymous"></script>
+<script type="text/javascript">
+    let dragZone = $('.dragzone');
+    let mapData = {};
+    dragZone.on('dragover', handleDragOver);
+    dragZone.on('drop', handleJSONDrop);
+    function handleDragOver(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.originalEvent.dataTransfer.dropEffect= 'copy'; // Explicitly show this is a copy.
+    }
+    function handleJSONDrop(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        let dragSpot = $(evt.target);
+        var files = evt.originalEvent.dataTransfer.files;
+        // Loop through the FileList and read
+        for (var i = 0, f; f = files[i]; i++) {
+
+            // Only process json files.
+            if (!f.type.match('application/json')) {
+                continue;
+            }
+
+            var reader = new FileReader();
+
+            // Closure to capture the file information.
+            reader.onload = (function(theFile) {
+                return function(e) {
+                    translateMapDataToLicenses(JSON.parse(e.target.result));
+                };
+            })(f);
+
+            reader.readAsText(f);
+        }
+    }
+
+    licenses = [];
+    licenseMap = {
+        '0,0': {cost: 0, description: "HP", type:"attribute", target: 0, value: "", iconIndex:32, iconIndexInactive: 16, x: -1, y: -1, iconIndexBackground: -1},
+        '1,0': {cost: 0, description: "MP", type:"attribute", target: 1, value: "", iconIndex:33, iconIndexInactive: 17, x: -1, y: -1, iconIndexBackground: -1},
+        '2,0': {cost: 0, description: "ATK", type:"attribute", target: 2, value: "", iconIndex:34, iconIndexInactive: 18, x: -1, y: -1, iconIndexBackground: -1},
+        '3,0': {cost: 0, description: "DEF", type:"attribute", target: 3, value: "", iconIndex:35, iconIndexInactive: 19, x: -1, y: -1, iconIndexBackground: -1},
+        '4,0': {cost: 0, description: "MAT", type:"attribute", target: 4, value: "", iconIndex:36, iconIndexInactive: 20, x: -1, y: -1, iconIndexBackground: -1},
+        '5,0': {cost: 0, description: "MDF", type:"attribute", target: 5, value: "", iconIndex:37, iconIndexInactive: 21, x: -1, y: -1, iconIndexBackground: -1},
+        '6,0': {cost: 0, description: "AGI", type:"attribute", target: 6, value: "", iconIndex:38, iconIndexInactive: 22, x: -1, y: -1, iconIndexBackground: -1},
+        '7,0': {cost: 0, description: "LUK", type:"attribute", target: 7, value: "", iconIndex:38, iconIndexInactive: 22, x: -1, y: -1, iconIndexBackground: -1},
+        '0,1': {cost: 0, description: "", type:"equip", target: "weapon", value: "", iconIndex:40, iconIndexInactive: 24, x: -1, y: -1, iconIndexBackground: -1},
+        '1,1': {cost: 0, description: "", type:"equip", target: "armor", value: "", iconIndex:41, iconIndexInactive: 25, x: -1, y: -1, iconIndexBackground: -1},
+        '2,1': {cost: 0, description: "", type:"skill", target: "magic", value: "", iconIndex:43, iconIndexInactive: 27, x: -1, y: -1, iconIndexBackground: -1},
+        '3,1': {cost: 0, description: "", type:"skill", target: "special", value: "", iconIndex:42, iconIndexInactive: 26, x: -1, y: -1, iconIndexBackground: -1},
+        '4,1': {cost: 0, description: "", type:"nope", target: "", value: "", iconIndex:2, iconIndexInactive: 2, x: -1, y: -1, iconIndexBackground: -1}
+    }
+
+    function translateMapDataToLicenses(mapData){
+        let width = mapData.width;
+        let height = mapData.height;
+        let costEquations = getMetaData(mapData.note);
+        let z = 0;
+        let regionZ = 5;
+        let mod = 0;
+        for(var y = 0; y < width; y++){
+            for(var x = 0; x < height; x++){
+                let tileId = mapData.data[(z * height + y) * width + x];
+                let regionId = mapData.data[(regionZ * height + y) * width + x] || 0;
+                let tileX = (Math.floor(tileId / 128) % 2 * 8 + tileId % 8);
+                let tileY = (Math.floor(tileId % 256 / 8) % 16);
+                let license = makeLicenseFromData(tileX,tileY, regionId, x, y, mapData.events, costEquations);
+                if((x+mod) % 2 ){
+                    license.iconIndexBackground = 0
+                }
+                else{
+                    license.iconIndexBackground = 1;
+                }
+                licenses.push(license);
+            }
+            mod = (mod > 0 ? 0 : 1);
+        }
+
+        var a = document.createElement("a");
+        var file = new Blob([JSON.stringify(licenses)], {type: 'text/json'});
+        a.href = URL.createObjectURL(file);
+        a.download = 'Licenses.json';
+        a.click();
+        licenses = [];
+    }
+
+    function makeLicenseFromData(tileX, tileY, regionId, x, y, events, costEquations){
+        let baseLicense = JSON.parse(JSON.stringify(licenseMap[tileX+","+tileY]));
+        baseLicense.x = x;
+        baseLicense.y = y;
+        let metadata = getMetaDataFromEvents(events, baseLicense.x, baseLicense.y);
+        switch(baseLicense.type){
+            case 'attribute':
+                baseLicense.value = parseInt(regionId);
+                let oldDescription = baseLicense.description
+                baseLicense.description = "Gain +"+baseLicense.value+" "+oldDescription;
+                if(oldDescription.toLowerCase() in costEquations){
+                    let v = baseLicense.value;
+                    baseLicense.cost = Math.floor(eval(costEquations[oldDescription.toLowerCase()]));
+                }
+                break;
+            case 'equip':
+                baseLicense.value = regionId.toString();
+                baseLicense.description = "Equip new "+baseLicense.target;
+                if(baseLicense.target in costEquations){
+                    let v = baseLicense.value;
+                    baseLicense.cost = Math.floor(eval(costEquations[baseLicense.target]));
+                }
+                break;
+        }
+
+        //override with event data
+        if('cost' in metadata){
+            baseLicense.cost = parseInt(metadata.cost);
+        }
+        if('description' in metadata && metadata.description.length > 0){
+            baseLicense.description = metadata.description;
+        }
+        if('value' in metadata){
+            baseLicense.value = metadata.value;
+        }
+
+        if(baseLicense.type === 'skill'){
+            baseLicense.value = baseLicense.value.toString();
+        }
+        else{
+            baseLicense.value = parseInt(baseLicense.value);
+        }
+
+        baseLicense.cost = parseInt(baseLicense.cost);
+
+        return baseLicense;
+    }
+
+    function getMetaDataFromEvents(events, x, y){
+        let eventWeNeed = false;
+        events.every(function(event){
+            if(event && event.x == x && event.y == y){
+                eventWeNeed = event;
+                return false;
+            }
+           return true;
+        });
+
+        let returnData = {};
+        if(eventWeNeed){
+            let note = eventWeNeed.note;
+            returnData = getMetaData(note);
+        }
+
+        return returnData;
+    }
+
+    function getMetaData(note){
+        var re = /<([^<>:]+)(:?)([^>]*)>/g;
+        let returnData = {};
+        for (;;) {
+            var match = re.exec(note);
+            if (match) {
+                if (match[2] === ':') {
+                    returnData[match[1].toLowerCase()] = match[3];
+                } else {
+                    returnData[match[1].toLowerCase()] = true;
+                }
+            } else {
+                break;
+            }
+        }
+        return returnData;
+    }
+
+</script>
+</body>
+</html>
