@@ -34,4 +34,7 @@
 10. Save the map
 11. Double click on "mapConverter.html" and open it in your web browser.
 12. Drag the Map000x.json file from the project's data folder onto the "Drag Here" square.
-13. Save the Licenses.json file it creates in the data folder of your project  
+13. Save the Licenses.json file it creates in the data folder of your project
+
+##Credits:
+[Codapill](codapill.com) for all graphical assets provided!  

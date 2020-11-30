@@ -76,3 +76,6 @@ A license object has the following parameters:
 Free for both commercial and non-commercial use, with credit.
 
 More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+
+##Credits:
+[Codapill](codapill.com) for all graphical assets provided!

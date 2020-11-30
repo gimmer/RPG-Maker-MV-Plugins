@@ -8,3 +8,6 @@
 * Click above, below, or inside on the various buttons.
 * Watch it move!
 * Click the save button, and replace mapInfo.json with the file it makes
+
+##Credits:
+[Codapill](codapill.com) for making the css nice!
