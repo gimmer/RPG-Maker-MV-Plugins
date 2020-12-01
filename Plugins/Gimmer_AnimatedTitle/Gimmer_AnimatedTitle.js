@@ -17,6 +17,9 @@ Gimmer_Core['AnimatedTitle'] = {'loaded':true};
  *
  * To be able to see the video, your title screen sprite must be transparent
  *
+ * If you want to have the title screen video plays as the game progress, toggle that parameter on, choose an in game variable to track which one to show, and create a list of movie files
+ * The title screen will show the video associated with that variable value (1 for first, 2 for second, etc) of the most recently saved file
+ *
  * @param Movie Path
  * @parent ---Parameters---
  * @type string
@@ -40,7 +43,7 @@ Gimmer_Core['AnimatedTitle'] = {'loaded':true};
  * @param List Of Video Files
  * @parent ---Changing Titles---
  * @type text[]
- * @desc A list of video files that you want, in the format of "movies/NameOfFile". Whatever the value of the variable chosen above is the position in this list (starting at 1) that will be played.
+ * @desc A list of video files that you want, in the format of "movies/NameOfFile" (no quotes). Whatever the value of the variable chosen above is the position in this list (starting at 1) that will be played.
  *
  */
 
