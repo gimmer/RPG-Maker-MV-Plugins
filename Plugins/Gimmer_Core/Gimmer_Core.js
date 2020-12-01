@@ -12,7 +12,7 @@ Gimmer_Core.isPlayerStopped = false;
  * Gimmer_Core
  * ===========
  *
- * Currently this plugin doesn't do very much beyond letting you toggle on some debug console output, and some frameworking for plugin commands and other plugin stuff.
+ * Currently this plugin doesn't do very much beyond letting you toggle on some debug console output, and some frameworking for plugin commands.
 
  * @param debug
  * @parent ---Parameters---
@@ -249,3 +249,11 @@ Window_Popup.prototype._createAllParts = function() {
     this.addChild(this._upArrowSprite);
     this.addChild(this._windowPauseSignSprite);
 };
+
+Gimmer_Core.reverseObject = function(object){
+        var ret = {};
+        for(let key in object){
+            ret[object[key]] = key;
+        }
+        return ret;
+}
