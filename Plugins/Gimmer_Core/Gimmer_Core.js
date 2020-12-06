@@ -21,6 +21,13 @@ Gimmer_Core.isPlayerStopped = false;
  * Default: False
  * @default false
  *
+ * @param Advanced Debug
+ * @parent debug
+ * @type Boolean
+ * @desc Debug messages in console will have more information.
+ * Default: False
+ * @default false
+ *
  * Terms of Use:
  * =======================================================================
  * Free for both commercial and non-commercial use, with credit.
@@ -28,13 +35,21 @@ Gimmer_Core.isPlayerStopped = false;
  * =======================================================================
  */
 
-var parameters = PluginManager.parameters('Gimmer_Core');
-Gimmer_Core.debug = (parameters['debug'] === "true");
+var gParameters = PluginManager.parameters('Gimmer_Core');
+Gimmer_Core.debug = (gParameters['debug'] === "true");
+Gimmer_Core.advancedDebug = (Gimmer_Core.debug && gParameters['Advanced Debug'] === "true");
 
 //Function for debugging. Uses the DD name because my muscle memory types that when I want to figure out what's broken
 function dd(something){
     if(Gimmer_Core.debug){
         console.log(something);
+        if(Gimmer_Core.advancedDebug) {
+            try {
+                throw Error('Debug Info');
+            } catch (e) {
+                console.log(e.stack);
+            }
+        }
     }
 }
 
@@ -251,9 +266,9 @@ Window_Popup.prototype._createAllParts = function() {
 };
 
 Gimmer_Core.reverseObject = function(object){
-        var ret = {};
-        for(let key in object){
-            ret[object[key]] = key;
-        }
-        return ret;
+    var ret = {};
+    for(let key in object){
+        ret[object[key]] = key;
+    }
+    return ret;
 }
