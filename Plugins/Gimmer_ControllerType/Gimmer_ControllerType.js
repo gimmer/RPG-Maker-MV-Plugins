@@ -34,6 +34,17 @@ Gimmer_Core['ControllerType'] = {'loaded':true};
  * Default: x
  * @default x
  *
+ * @param Keyboard System Menu
+ * @parent ---Parameters---
+ * @type select
+ * @option x
+ * @option escape
+ * @option insert
+ * @option numpad0
+ * @desc What button do you want to display as the primary system menu button for Keyboard? (Only used with the Gimmer_SystemMenu plugin)
+ * Default: escape
+ * @default escape
+ *
  * @param Keyboard Cancel
  * @parent ---Parameters---
  * @type select
@@ -180,6 +191,7 @@ var ctParameters = PluginManager.parameters('Gimmer_ControllerType');
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap = {}
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['ok'] = ctParameters['Keyboard Ok'];
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['menu'] = ctParameters['Keyboard Menu'];
+Gimmer_Core.ControllerType.ProvidedKeyBoardMap['system'] = ctParameters['Keyboard System Menu'];
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['cancel'] = ctParameters['Keyboard Cancel'];
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['shift'] = 'shift';
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['pageup'] = ctParameters['Keyboard Page Up'];
@@ -257,6 +269,8 @@ Gimmer_Core.ControllerType.setDefaultGamepadIndexMap = function(){
         '3': {iconIndex: 0, iconUnitWidth: 1, iconYMod: 0}, //shift
         '4': {iconIndex: 7, iconUnitWidth: 2, iconYMod: 0}, //LB
         '5': {iconIndex: 5, iconUnitWidth: 2, iconYMod: 0}, //RB
+        '8': {iconIndex: -1, iconUnitWidth: 1, iconYMod: 0}, //Select or "middle button on left"
+        '9': {iconIndex: -1, iconUnitWidth: 1, iconYMod: 0}, //start or "middle button on right"
         'directions': {iconIndex: 4, iconUnitWidth: 1, iconYmod: 0} // directionPad
     }
 }
@@ -417,6 +431,10 @@ Window_Base.prototype.obtainEscapeCode = function(textState) {
         textState.index += 4;
         return (send) ? "gimmer_menu" : "";
     }
+    else if(textState.text.slice(textState.index, textState.index+6).match(/system/)) {
+        textState.index += 6;
+        return (send) ? "gimmer_system" : "";
+    }
     else if(textState.text.slice(textState.index, textState.index+6).match(/cancel/)) {
         textState.index += 6;
         return (send) ? "gimmer_cancel" : "";
@@ -450,6 +468,7 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState) {
         case 'gimmer_pageup':
         case 'gimmer_pagedown':
         case 'gimmer_directions':
+        case 'gimmer_system':
             this.processDrawButtonIcon(this.determineIconForButton(code), textState);
             break;
         default:
@@ -467,10 +486,14 @@ Window_Base.prototype.determineIconForButton = function(code){
     let type = Gimmer_Core.ControllerType.getControllerTypeIfPresent();
     if(type === Gimmer_Core.ControllerType.TYPE_NONE){
         let keyChoice = Gimmer_Core.ControllerType.ProvidedKeyBoardMap[code]
-        let keyData = Gimmer_Core.ControllerType.KeyboardIndexMap[keyChoice];
-        iconIndex = keyData.iconIndex;
-        iconUnitWidth = keyData.iconUnitWidth;
-        iconYMod = keyData.iconYMod;
+        if(keyChoice){
+            let keyData = Gimmer_Core.ControllerType.KeyboardIndexMap[keyChoice];
+            if(keyData){
+                iconIndex = keyData.iconIndex;
+                iconUnitWidth = keyData.iconUnitWidth;
+                iconYMod = keyData.iconYMod;
+            }
+        }
     }
     else{
         //Figure out what button they pressed by reversing gamepadMapper into
@@ -478,14 +501,18 @@ Window_Base.prototype.determineIconForButton = function(code){
             let buttonObj = JSON.parse(JSON.stringify(Input.gamepadMapper));
             let reverseMap = Gimmer_Core.reverseObject(buttonObj);
             let buttonId = reverseMap[code];
-            let keyData = Gimmer_Core.ControllerType.GamePadIndexMap[buttonId.toString()];
-            iconIndex = keyData.iconIndex;
-            iconUnitWidth = keyData.iconUnitWidth;
+            if(buttonId) {
+                let keyData = Gimmer_Core.ControllerType.GamePadIndexMap[buttonId.toString()];
+                iconIndex = keyData.iconIndex;
+                iconUnitWidth = keyData.iconUnitWidth;
+            }
         }
         else{
             let keyData = Gimmer_Core.ControllerType.GamePadIndexMap[code];
-            iconIndex = keyData.iconIndex;
-            iconUnitWidth = keyData.iconUnitWidth;
+            if(keyData){
+                iconIndex = keyData.iconIndex;
+                iconUnitWidth = keyData.iconUnitWidth;
+            }
         }
 
         switch (type){

@@ -52,6 +52,8 @@ Gimmer_Core['SystemMenu'] = {'loaded':true};
  * @value 8
  * @option Start
  * @value 9
+ * @option Menu (Y on Xbox, Triangle on PS)
+ * @value 3
  *
  */
 
