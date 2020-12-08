@@ -99,6 +99,10 @@ Gimmer_Core['ControllerType'] = {'loaded':true};
  * @desc icon info for button 5
  * @type struct<IconData>
  *
+ * @param directions
+ * @desc icon info for direction pad
+ * @type struct<IconData>
+ *
  */
 
 /*~struct~KeyboardIndexMap:
@@ -149,6 +153,11 @@ Gimmer_Core['ControllerType'] = {'loaded':true};
  * @param w
  * @desc icon info for w key
  * @type struct<IconData>
+ *
+ * @param directions
+ * @desc icon info for direction pad
+ * @type struct<IconData>
+ *
  */
 
 /*~struct~IconData:
@@ -175,6 +184,7 @@ Gimmer_Core.ControllerType.ProvidedKeyBoardMap['cancel'] = ctParameters['Keyboar
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['shift'] = 'shift';
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['pageup'] = ctParameters['Keyboard Page Up'];
 Gimmer_Core.ControllerType.ProvidedKeyBoardMap['pagedown'] = ctParameters['Keyboard Page Down'];
+Gimmer_Core.ControllerType.ProvidedKeyBoardMap['directions'] = 'directions';
 Gimmer_Core.ControllerType.CustomGamePadIndexMap = (ctParameters['Game Pad Index'].length > 0 ? JSON.parse(ctParameters['Game Pad Index']) : "");
 Gimmer_Core.ControllerType.CustomKeyboardIndexMap = (ctParameters['Keyboard Index'].length > 0 ? JSON.parse(ctParameters['Keyboard Index']) : "");
 
@@ -245,8 +255,9 @@ Gimmer_Core.ControllerType.setDefaultGamepadIndexMap = function(){
         '1': {iconIndex: 2, iconUnitWidth: 1, iconYMod: 0}, //Cancel
         '2': {iconIndex: 1, iconUnitWidth: 1, iconYMod: 0}, //menu
         '3': {iconIndex: 0, iconUnitWidth: 1, iconYMod: 0}, //shift
-        '4': {iconIndex: 6, iconUnitWidth: 2, iconYMod: 0}, //LB
-        '5': {iconIndex: 4, iconUnitWidth: 2, iconYMod: 0}, //RB
+        '4': {iconIndex: 7, iconUnitWidth: 2, iconYMod: 0}, //LB
+        '5': {iconIndex: 5, iconUnitWidth: 2, iconYMod: 0}, //RB
+        'directions': {iconIndex: 4, iconUnitWidth: 1, iconYmod: 0} // directionPad
     }
 }
 
@@ -266,7 +277,9 @@ Gimmer_Core.ControllerType.setDefaultKeyboardIndexMap = function(){
         'pageup': {iconIndex: 4, iconUnitWidth: 1, iconYMod: 48},
         'pagedown': {iconIndex: 5, iconUnitWidth: 1, iconYMod: 48},
         'q': {iconIndex: 13, iconUnitWidth: 1, iconYMod: 48},
-        'w': {iconIndex: 0, iconUnitWidth: 1, iconYMod: 32}
+        'w': {iconIndex: 0, iconUnitWidth: 1, iconYMod: 32},
+        //directions
+        'directions': {iconIndex: 1, iconUnitWidth: 2, iconYMod: 64}
     }
 }
 
@@ -416,6 +429,10 @@ Window_Base.prototype.obtainEscapeCode = function(textState) {
         textState.index += 6;
         return (send) ? "gimmer_pageup" : "";
     }
+    else if(textState.text.slice(textState.index, textState.index+10).match(/directions/)) {
+        textState.index += 10;
+        return (send) ? "gimmer_directions" : "";
+    }
     else {
         textState.index--;
         return Gimmer_Core.ControllerType._Window_Base_obtainEscapeCode.call(this, textState);
@@ -432,6 +449,7 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState) {
         case 'gimmer_menu':
         case 'gimmer_pageup':
         case 'gimmer_pagedown':
+        case 'gimmer_directions':
             this.processDrawButtonIcon(this.determineIconForButton(code), textState);
             break;
         default:
@@ -456,12 +474,20 @@ Window_Base.prototype.determineIconForButton = function(code){
     }
     else{
         //Figure out what button they pressed by reversing gamepadMapper into
-        let buttonObj = JSON.parse(JSON.stringify(Input.gamepadMapper));
-        let reverseMap = Gimmer_Core.reverseObject(buttonObj);
-        let buttonId = reverseMap[code];
-        let keyData = Gimmer_Core.ControllerType.GamePadIndexMap[buttonId.toString()];
-        iconIndex = keyData.iconIndex;
-        iconUnitWidth = keyData.iconUnitWidth;
+        if(code !== 'directions'){
+            let buttonObj = JSON.parse(JSON.stringify(Input.gamepadMapper));
+            let reverseMap = Gimmer_Core.reverseObject(buttonObj);
+            let buttonId = reverseMap[code];
+            let keyData = Gimmer_Core.ControllerType.GamePadIndexMap[buttonId.toString()];
+            iconIndex = keyData.iconIndex;
+            iconUnitWidth = keyData.iconUnitWidth;
+        }
+        else{
+            let keyData = Gimmer_Core.ControllerType.GamePadIndexMap[code];
+            iconIndex = keyData.iconIndex;
+            iconUnitWidth = keyData.iconUnitWidth;
+        }
+
         switch (type){
             case Gimmer_Core.ControllerType.TYPE_SONY:
                 iconYMod = 16;
