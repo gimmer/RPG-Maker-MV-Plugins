@@ -1,6 +1,6 @@
 ## Gimmer_GameTimer
 
-Plugin to use the system clock to time out long a player takes to do something
+Plugin to use the system clock to time how long a player takes to do something
 
 Starts paused by default.
 Pauses when the menu opens and unpauses when it closes.
