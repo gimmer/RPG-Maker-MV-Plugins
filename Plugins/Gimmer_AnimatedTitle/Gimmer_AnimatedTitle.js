@@ -104,12 +104,9 @@ Gimmer_Core.AnimatedTitle._Scene_Title_prototype_terminate = Scene_Title.prototy
 Scene_Title.prototype.terminate = function(){
     Gimmer_Core.AnimatedTitle._Scene_Title_prototype_terminate.call(this);
     if(Gimmer_Core.AnimatedTitle.playingTitle){
-        Gimmer_Core.AnimatedTitle.videoObject.style.zIndex = 2;
-        Gimmer_Core.AnimatedTitle.videoObject.style.opacity = 0;
-        Gimmer_Core.AnimatedTitle.videoObject.autoplay = false;
-        Gimmer_Core.AnimatedTitle.videoObject.loop = false;
-        Gimmer_Core.AnimatedTitle.videoObject.pause();
-        Gimmer_Core.AnimatedTitle.playingTitle = false;
+        Gimmer_Core.AnimatedTitle.videoObject.remove();
+        Graphics._createVideo();
+        Gimmer_Core.AnimatedTitle.playingTitle = false
     }
 }
 
