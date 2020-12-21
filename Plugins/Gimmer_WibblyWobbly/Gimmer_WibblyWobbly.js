@@ -157,7 +157,8 @@ Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot = {
     playbackPerFrame: 0,
     soberWait: -1,
     initialSoberWait: -1,
-    targetDrunkCount: 0
+    targetDrunkCount: 0,
+    stillMuffling: false
 };
 //Make a snapshot of current drunk variables
 Gimmer_Core.WibblyWobbly.snapShot = function (spriteset){
@@ -174,6 +175,7 @@ Gimmer_Core.WibblyWobbly.snapShot = function (spriteset){
     this.DrunkLevelSnapShot.targetDrunkCount = spriteset._targetDrunkCount;
     this.DrunkLevelSnapShot.soberWait = spriteset._soberWait;
     this.DrunkLevelSnapShot.initialSoberWait = spriteset._initialSoberWait;
+    this.DrunkLevelSnapShot.stillMuffling = spriteset._stillMuffling;
 }
 
 //Helper function to see if you are still drunk. Is the screen currently blurry, or going to be blurry again soon?
@@ -208,6 +210,7 @@ Spriteset_Map.prototype.createDrunkFilters = function(){
     this._initialSoberWait = -1;
     this._filter = new PIXI.filters.BlurFilter();
     this._muffleMusic = Gimmer_Core.WibblyWobbly.MuffleMusic;
+    this._stillMuffling = false;
     //use the snapshot of status
     if(Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.snapShot){
         this._drunkAmount = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.drunkAmount;
@@ -220,8 +223,9 @@ Spriteset_Map.prototype.createDrunkFilters = function(){
         this._targetVol = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.targetVol;
         this._stayDrunk = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.stayDrunk;
         this._soberWait = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.soberWait;
-        this._initialSoberWait = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.initalSoberWait;
+        this._initialSoberWait = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.initialSoberWait;
         this._targetDrunkCount = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.targetDrunkCount;
+        this._stillMuffling = Gimmer_Core.WibblyWobbly.DrunkWalkSpeed.stillMuffling;
         Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.snapShot = false;
     }
     this._filter.blur = this._drunkAmount;
@@ -238,12 +242,14 @@ Spriteset_Map.prototype.update = function (){
 }
 
 Spriteset_Map.prototype.updateDrunk = function(){
-    if(this._gettingDrunk){
-        this._drunkAmount += this._drunkPerFrame;
-        if(this._drunkAmount >= this._drunkMax){
-            this._drunkAmount = this._drunkMax;
-            this._drunkCount = this._targetDrunkCount;
-            this._gettingDrunk = false;
+    if(this._gettingDrunk || this._stillMuffling){
+        if(this._gettingDrunk){
+            this._drunkAmount += this._drunkPerFrame;
+            if(this._drunkAmount >= this._drunkMax){
+                this._drunkAmount = this._drunkMax;
+                this._drunkCount = this._targetDrunkCount;
+                this._gettingDrunk = false;
+            }
         }
         if(this._muffleMusic){
             if(AudioManager.bgmVolume > this._targetVol) {
@@ -254,10 +260,16 @@ Spriteset_Map.prototype.updateDrunk = function(){
                 }
             }
 
-            let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
-            if(playbackRate > Gimmer_Core.WibblyWobbly.MuffleSlowDown){
-                playbackRate -= this._playbackPerFrame;
-                AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
+            if(AudioManager._bgmBuffer && AudioManager._bgmBuffer.isReady()){
+                let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
+                if(playbackRate > Gimmer_Core.WibblyWobbly.MuffleSlowDown){
+                    playbackRate -= this._playbackPerFrame;
+                    AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
+                    this._stillMuffling = true;
+                }
+                else{
+                    this._stillMuffling = false;
+                }
             }
         }
     }
@@ -278,13 +290,14 @@ Spriteset_Map.prototype.updateDrunk = function(){
                 }
             }
 
-            let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
-            if(playbackRate < 1){
-                playbackRate += this._playbackPerFrame;
-                AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
+            if(AudioManager._bgmBuffer && AudioManager._bgmBuffer.isReady()){
+                let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
+                if(playbackRate < 1){
+                    playbackRate += this._playbackPerFrame;
+                    AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
+                }
             }
         }
-
 
         if(this._drunkAmount <= 0){
             this._drunkAmount = 0;
