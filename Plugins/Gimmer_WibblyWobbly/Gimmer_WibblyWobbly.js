@@ -482,6 +482,9 @@ Gimmer_Core.pluginCommands['SOBERUP'] = function(args){
             SpriteSet._soberingUp = true;
             SpriteSet._gettingDrunk = false;
             SpriteSet._stayDrunk = false;
+            if(Gimmer_Core.WibblyWobbly.DrunkWalkSpeed){
+                $gamePlayer.setMoveSpeed($gamePlayer._soberWalkingSpeed);
+            }
         }
     }
 }
