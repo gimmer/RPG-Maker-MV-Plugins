@@ -403,7 +403,7 @@ Game_Player.prototype.moveStraight = function(d) {
                 break;
         }
     }
-    if(Gimmer_Core.WibblyWobbly.DrunkWalkSpeed){
+    if(Gimmer_Core.WibblyWobbly.DrunkWalkSpeed && Gimmer_Core.WibblyWobbly.isDrunk()){
         if(this._soberWalkingSpeed === -1){
             this._soberWalkingSpeed = this._moveSpeed;
         }
@@ -447,16 +447,16 @@ Gimmer_Core.pluginCommands['GETDRUNK'] = function(args){
     //Arg 1: how long (number of frames or "forever")
     //Arg 2: redrunk pulse time (if you are sober, how long in frame before you become drunk again. Leave blank for never)
     let SpriteSet = SceneManager._scene._spriteset
-    if(args && args.length > 1 && args[1] === "forever"){
+    if(args && args.length > 0 && args[1] === "forever"){
         SpriteSet._stayDrunk = true;
     }
-    else if(args && args.length > 1 && Number(args[1]) > 0){
-        SpriteSet._targetDrunkCount = Number(args[1]);
+    else if(args && args.length > 0 && Number(args[0]) > 0){
+        SpriteSet._targetDrunkCount = Number(args[0]);
     }
 
-    if(Number(args && args.length > 2 && args[2]) > 0){
-        SpriteSet._initialSoberWait = Number(args[2]);
-        SpriteSet._soberWait = Number(args[2]);
+    if(args && args.length > 1 && Number(args[1]) > 0){
+        SpriteSet._initialSoberWait = Number(args[1]);
+        SpriteSet._soberWait = Number(args[1]);
     }
 
     if(!SpriteSet._gettingDrunk){
