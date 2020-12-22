@@ -332,7 +332,7 @@ Spriteset_Map.prototype.calculateBGMVolumes = function(){
     let numFrames = Math.ceil(this._drunkMax / this._drunkPerFrame);
     this._targetVol = Math.floor(this._initialVol * Gimmer_Core.WibblyWobbly.MufflePercent);
     this._volPerFrame = Math.ceil((this._initialVol - this._targetVol) / numFrames);
-    this._playbackPerFrame = Math.ceil(Gimmer_Core.WibblyWobbly.MuffleSlowDown / numFrames);
+    this._playbackPerFrame = Gimmer_Core.WibblyWobbly.MuffleSlowDown / numFrames;
 }
 
 
