@@ -299,6 +299,9 @@ Spriteset_Map.prototype.updateDrunk = function(){
                 let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
                 if(playbackRate < 1){
                     playbackRate += this._playbackPerFrame;
+                    if(playbackRate > 1 ){
+                        playbackRate = 1;
+                    }
                     AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
                 }
             }
@@ -329,7 +332,7 @@ Spriteset_Map.prototype.calculateBGMVolumes = function(){
     let numFrames = Math.ceil(this._drunkMax / this._drunkPerFrame);
     this._targetVol = Math.floor(this._initialVol * Gimmer_Core.WibblyWobbly.MufflePercent);
     this._volPerFrame = Math.ceil((this._initialVol - this._targetVol) / numFrames);
-    this._playbackPerFrame = Gimmer_Core.WibblyWobbly.MuffleSlowDown / numFrames;
+    this._playbackPerFrame = Math.ceil(Gimmer_Core.WibblyWobbly.MuffleSlowDown / numFrames);
 }
 
 
