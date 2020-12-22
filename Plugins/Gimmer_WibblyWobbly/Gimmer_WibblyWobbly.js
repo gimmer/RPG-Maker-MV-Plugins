@@ -233,7 +233,6 @@ Spriteset_Map.prototype.createDrunkFilters = function(){
         this._baseSprite.filters = [this._toneFilter, this._filter];
     }
     else{
-        dd('new ww');
         this._baseSprite.filters = [this._filter];
     }
 }
@@ -286,11 +285,25 @@ Spriteset_Map.prototype.updateDrunk = function(){
     }
     else if(this._soberingUp){
         this._drunkAmount -= this._drunkPerFrame;
+        if(this._drunkAmount <= 0){
+            this._drunkAmount = 0;
+            this._soberingUp = false;
+            if(this._soberWait === -1 && Gimmer_Core.WibblyWobbly.DrunkWalkSpeed){
+                $gamePlayer.setMoveSpeed($gamePlayer._soberWalkingSpeed);
+            }
+        }
+
         if(this._muffleMusic){
             if(AudioManager.bgmVolume < this._initialVol) {
                 let tempVol = AudioManager.bgmVolume;
                 if (tempVol < this._initialVol) {
                     tempVol += this._volPerFrame;
+                    if(tempVol > this._initialVol){
+                        tempVol = this._initialVol;
+                    }
+                    if(!this._soberingUp){
+                        tempVol = this._initialVol;
+                    }
                     AudioManager.bgmVolume = tempVol;
                 }
             }
@@ -302,16 +315,11 @@ Spriteset_Map.prototype.updateDrunk = function(){
                     if(playbackRate > 1 ){
                         playbackRate = 1;
                     }
+                    if(!this._soberingUp){
+                        playbackRate = 1;
+                    }
                     AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
                 }
-            }
-        }
-
-        if(this._drunkAmount <= 0){
-            this._drunkAmount = 0;
-            this._soberingUp = false;
-            if(this._soberWait === -1 && Gimmer_Core.WibblyWobbly.DrunkWalkSpeed){
-                $gamePlayer.setMoveSpeed($gamePlayer._soberWalkingSpeed);
             }
         }
     }
