@@ -229,8 +229,13 @@ Spriteset_Map.prototype.createDrunkFilters = function(){
         Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.snapShot = false;
     }
     this._filter.blur = this._drunkAmount;
-
-    this._baseSprite.filters = [this._filter];
+    if(this._baseSprite.filters.length){
+        this._baseSprite.filters = [this._toneFilter, this._filter];
+    }
+    else{
+        dd('new ww');
+        this._baseSprite.filters = [this._filter];
+    }
 }
 
 Gimmer_Core.WibblyWobbly._Spriteset_Map_prototype_update = Spriteset_Map.prototype.update;
