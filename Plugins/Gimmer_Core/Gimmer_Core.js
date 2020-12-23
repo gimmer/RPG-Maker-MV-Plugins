@@ -265,6 +265,116 @@ Window_Popup.prototype._createAllParts = function() {
     this.addChild(this._windowPauseSignSprite);
 };
 
+//Fading window
+function Window_Fade() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_Fade.prototype = Object.create(Window_Base.prototype);
+Window_Fade.prototype.constructor = Window_Fade;
+
+Window_Fade.prototype.initialize = function(x, y, width, height){
+    Window_Base.prototype.initialize.call(this, x, y, width, height);
+    this._fadeForPlayer = true;
+    this.setOriginalAlpha();
+    this._desinationAlpha = 0;
+    this._isFading = false;
+    this._fadeLevel = 1;
+}
+
+Window_Fade.prototype.setOriginalAlpha = function(){
+    this._originalAlpha = [];
+    for(var i = 0; i < this.children.length; i++){
+        this._originalAlpha.push(this.children[i].alpha);
+    }
+}
+
+Window_Fade.prototype.reserveFade = function(){
+    this._fadeLevel = -1;
+    this._isFading = true;
+}
+
+Window_Fade.prototype.reserveUnFade = function(){
+    this._isFading = true;
+    this._fadeLevel = 1;
+}
+
+Window_Fade.prototype.fade = function(){
+    let numChanged = 0;
+    for(var i = 0; i < this.children.length; i++){
+        if(this.children[i].alpha > this._desinationAlpha){
+            this.children[i].alpha -= 0.1;
+            if(this.children[i].alpha < this._desinationAlpha){
+                this.children[i].alpha = this._desinationAlpha;
+            }
+            numChanged++;
+        }
+    }
+    if(numChanged === 0){ //finished fading
+        this._isFading = false;
+    }
+}
+Window_Fade.prototype.fadeIn = function(){
+    let numChanged = 0;
+    for(var i = 0; i < this.children.length; i++){
+        if(this.children[i].alpha < this._originalAlpha[i]){
+            this.children[i].alpha += 0.1;
+            if(this.children[i].alpha > this._originalAlpha[i]){
+                this.children[i].alpha = this._originalAlpha[i];
+            }
+            numChanged++;
+        }
+    }
+    if(numChanged === 0){ //finished fading
+        this._isFading = false;
+    }
+}
+
+Window_Fade.prototype.update = function(){
+    Window_Base.prototype.update.call(this);
+    this.updateFade();
+}
+
+Window_Fade.prototype.updateFade = function(){
+    if(this._fadeForPlayer){
+        //Check X
+        let minX = this.x;
+        let maxX = this.x + this.width;
+        let minY = this.y;
+        let maxY = this.y + this.height;
+        let playerX = $gamePlayer.screenX();
+        let playerXmin = playerX - ($gameMap.tileWidth() / 2);
+        let playerXmax = playerX + ($gameMap.tileWidth() / 2);
+        let playerY = $gamePlayer.screenY();
+        let playerYmin = playerY - $gameMap.tileHeight()
+        let playerYmax = playerY;
+        if( ((playerXmin > minX && playerXmin <= maxX) || (playerXmax > minX && playerXmax <= maxX))
+            && ((playerYmin > minY && playerYmin <= maxY) || (playerYmax > minY && playerYmax <= maxY))){
+            if(this._fadeLevel === 1){
+                this.reserveFade();
+            }
+        }
+        else {
+            if(this._fadeLevel === -1 && !$gamePlayer.isMoving()){
+                this.reserveUnFade();
+            }
+        }
+
+    }
+    if(this._isFading){
+        if(this._fadeLevel > 0){
+            this.fadeIn();
+        }
+        else{
+            this.fade();
+        }
+    }
+}
+
+
+//Helper Functions
+
+//Reverse an object
 Gimmer_Core.reverseObject = function(object){
     var ret = {};
     for(let key in object){
