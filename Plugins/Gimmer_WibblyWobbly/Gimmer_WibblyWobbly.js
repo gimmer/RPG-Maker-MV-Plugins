@@ -158,7 +158,8 @@ Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot = {
     soberWait: -1,
     initialSoberWait: -1,
     targetDrunkCount: 0,
-    stillMuffling: false
+    stillMuffling: false,
+    initialPlaybackRate: -1
 };
 //Make a snapshot of current drunk variables
 Gimmer_Core.WibblyWobbly.snapShot = function (spriteset){
@@ -176,6 +177,7 @@ Gimmer_Core.WibblyWobbly.snapShot = function (spriteset){
     this.DrunkLevelSnapShot.soberWait = spriteset._soberWait;
     this.DrunkLevelSnapShot.initialSoberWait = spriteset._initialSoberWait;
     this.DrunkLevelSnapShot.stillMuffling = spriteset._stillMuffling;
+    this.DrunkLevelSnapShot.initalPlaybackRate = spriteset._initialPlaybackRate;
 }
 
 //Helper function to see if you are still drunk. Is the screen currently blurry, or going to be blurry again soon?
@@ -211,6 +213,7 @@ Spriteset_Map.prototype.createDrunkFilters = function(){
     this._filter = new PIXI.filters.BlurFilter();
     this._muffleMusic = Gimmer_Core.WibblyWobbly.MuffleMusic;
     this._stillMuffling = false;
+    this._initialPlaybackRate = -1;
     //use the snapshot of status
     if(Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.snapShot){
         this._drunkAmount = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.drunkAmount;
@@ -225,7 +228,8 @@ Spriteset_Map.prototype.createDrunkFilters = function(){
         this._soberWait = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.soberWait;
         this._initialSoberWait = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.initialSoberWait;
         this._targetDrunkCount = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.targetDrunkCount;
-        this._stillMuffling = Gimmer_Core.WibblyWobbly.DrunkWalkSpeed.stillMuffling;
+        this._stillMuffling = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.stillMuffling
+        this._initialPlaybackRate = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.initalPlaybackRate;
         Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.snapShot = false;
     }
     this._filter.blur = this._drunkAmount;
@@ -266,6 +270,9 @@ Spriteset_Map.prototype.updateDrunk = function(){
 
             if(AudioManager._bgmBuffer && AudioManager._bgmBuffer.isReady()){
                 let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
+                if(this._initialPlaybackRate === -1){
+                    this._initialPlaybackRate = playbackRate;
+                }
                 if(playbackRate > Gimmer_Core.WibblyWobbly.MuffleSlowDown){
                     playbackRate -= this._playbackPerFrame;
                     AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
@@ -310,13 +317,13 @@ Spriteset_Map.prototype.updateDrunk = function(){
 
             if(AudioManager._bgmBuffer && AudioManager._bgmBuffer.isReady()){
                 let playbackRate = AudioManager._bgmBuffer._sourceNode.playbackRate.value;
-                if(playbackRate < 1){
+                if(playbackRate < this._initialPlaybackRate){
                     playbackRate += this._playbackPerFrame;
-                    if(playbackRate > 1 ){
-                        playbackRate = 1;
+                    if(playbackRate > this._initialPlaybackRate ){
+                        playbackRate = this._initialPlaybackRate;
                     }
                     if(!this._soberingUp){
-                        playbackRate = 1;
+                        playbackRate = this._initialPlaybackRate;
                     }
                     AudioManager._bgmBuffer._sourceNode.playbackRate.value = playbackRate;
                 }

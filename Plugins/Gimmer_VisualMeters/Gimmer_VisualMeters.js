@@ -447,6 +447,29 @@ Window_VisualMeter.prototype._createAllParts = function() {
     this.addChild(this._windowPauseSignSprite);
 };
 
+//Fix so Fadeout command in Game Interpreter fades out the meters too
+Game_Screen.prototype.updateFadeIn = function() {
+    if (this._fadeInDuration > 0) {
+        var d = this._fadeInDuration;
+        this._brightness = (this._brightness * (d - 1) + 255) / d;
+        if('_windowUILayer' in SceneManager._scene){
+            SceneManager._scene._windowUILayer.alpha = this._brightness / 255;
+        }
+        this._fadeInDuration--;
+    }
+};
+
+Game_Screen.prototype.updateFadeOut = function() {
+    if (this._fadeOutDuration > 0) {
+        var d = this._fadeOutDuration;
+        this._brightness = (this._brightness * (d - 1)) / d;
+        if('_windowUILayer' in SceneManager._scene){
+            SceneManager._scene._windowUILayer.alpha = this._brightness / 255;
+        }
+        this._fadeOutDuration--;
+    }
+};
+
 //Helper to draw a rectangle border without a fill.
 Bitmap.prototype.drawRectBorder = function(x, y, width, height, borderColor, thickness = 1){
     var context = this._context;
