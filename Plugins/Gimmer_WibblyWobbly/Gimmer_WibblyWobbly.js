@@ -182,11 +182,23 @@ Gimmer_Core.WibblyWobbly.snapShot = function (spriteset){
 
 //Helper function to see if you are still drunk. Is the screen currently blurry, or going to be blurry again soon?
 Gimmer_Core.WibblyWobbly.isDrunk = function(){
-    if(!('_spriteset' in SceneManager._scene)){
+    let Scene = SceneManager._scene;
+    if(!Scene || !('_spriteset' in Scene)){
         return false;
     }
-    let SpriteSet = SceneManager._scene._spriteset;
+    let SpriteSet = Scene._spriteset;
     return (SpriteSet._drunkAmount > 0 || SpriteSet._soberWait > -1);
+}
+
+Gimmer_Core.WibblyWobbly.ForceSobriety = function(){
+    if(Gimmer_Core.WibblyWobbly.DrunkWalkSpeed){
+        $gamePlayer.setMoveSpeed($gamePlayer._soberWalkingSpeed);
+    }
+    if(this.DrunkLevelSnapShot.snapShot && Gimmer_Core.WibblyWobbly.MuffleMusic){
+        AudioManager.bgmVolume = this.DrunkLevelSnapShot.initialVol
+        AudioManager._bgmBuffer._sourceNode.playbackRate.value = this.DrunkLevelSnapShot.initalPlaybackRate;
+    }
+    this.DrunkLevelSnapShot.snapShot = false;
 }
 
 /*
@@ -350,14 +362,6 @@ Spriteset_Map.prototype.calculateBGMVolumes = function(){
     this._playbackPerFrame = Gimmer_Core.WibblyWobbly.MuffleSlowDown / numFrames;
 }
 
-
-//Make Scene_Map remember if you are drunk when you leave it.
-Gimmer_Core.WibblyWobbly._Scene_Map_prototype_terminate = Scene_Map.prototype.terminate;
-Scene_Map.prototype.terminate = function(){
-    Gimmer_Core.WibblyWobbly.snapShot(this._spriteset);
-    Gimmer_Core.WibblyWobbly._Scene_Map_prototype_terminate.call(this);
-}
-
 Gimmer_Core.WibblyWobbly._Game_Player_prototype_initialize = Game_Player.prototype.initialize;
 Game_Player.prototype.initialize = function(){
     Gimmer_Core.WibblyWobbly._Game_Player_prototype_initialize.call(this);
@@ -453,19 +457,30 @@ Sprite_Character.prototype.updatePosition = function() {
     }
 };
 
+Gimmer_Core.WibblyWobbly._SceneManager_goto = SceneManager.goto;
+SceneManager.goto = function(sceneClass){
+    if(this._scene && this._scene.constructor === Scene_Map){
+        Gimmer_Core.WibblyWobbly.snapShot(this._scene._spriteset);
+    }
+    Gimmer_Core.WibblyWobbly._SceneManager_goto.call(this, sceneClass);
+    if(SceneManager.isNextScene(Scene_Title)){
+        Gimmer_Core.WibblyWobbly.ForceSobriety();
+    }
+}
 
 /*
 * Plugin commands!
 */
 
 Gimmer_Core.pluginCommands['GETDRUNK'] = function(args){
-    if(!('_spriteset' in SceneManager._scene)){
+    let Scene = SceneManager._scene;
+    if(!Scene || !("_spriteset" in Scene)){
         return false;
     }
     //Arg 1: how long (number of frames or "forever")
     //Arg 2: redrunk pulse time (if you are sober, how long in frame before you become drunk again. Leave blank for never)
-    let SpriteSet = SceneManager._scene._spriteset
-    if(args && args.length > 0 && args[1] === "forever"){
+    let SpriteSet = Scene._spriteset
+    if(args && args.length > 0 && args[0] === "forever"){
         SpriteSet._stayDrunk = true;
     }
     else if(args && args.length > 0 && Number(args[0]) > 0){
@@ -488,13 +503,14 @@ Gimmer_Core.pluginCommands['GETDRUNK'] = function(args){
 }
 
 Gimmer_Core.pluginCommands['SOBERUP'] = function(args){
-    if(!('_spriteset' in SceneManager._scene)){
+    let Scene = SceneManager._scene
+    if(!Scene || !('_spriteset' in Scene)){
         return false;
     }
     //Args[1] = how long to wait to sober up, otherwise instant
-    let SpriteSet = SceneManager._scene._spriteset
+    let SpriteSet = Scene._spriteset;
     if(!SpriteSet._soberingUp){
-        if(args && args.length > 1 && Number(args[1]) > 0){
+        if(args && args.length > 0 && Number(args[0]) > 0){
             SpriteSet._drunkCount = Number(args[1]);
             SpriteSet._stayDrunk = false;
             SpriteSet._soberWait = -1;
@@ -505,8 +521,14 @@ Gimmer_Core.pluginCommands['SOBERUP'] = function(args){
             SpriteSet._soberingUp = true;
             SpriteSet._gettingDrunk = false;
             SpriteSet._stayDrunk = false;
+            SpriteSet._filter.blur = 0;
+            Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot.snapShot = false;
             if(Gimmer_Core.WibblyWobbly.DrunkWalkSpeed){
                 $gamePlayer.setMoveSpeed($gamePlayer._soberWalkingSpeed);
+            }
+            if(Gimmer_Core.WibblyWobbly.MuffleMusic){
+                AudioManager.bgmVolume = SpriteSet._initialVol;
+                AudioManager._bgmBuffer._sourceNode.playbackRate.value = SpriteSet._initialPlaybackRate;
             }
         }
     }
