@@ -459,7 +459,7 @@ Sprite_Character.prototype.updatePosition = function() {
 
 Gimmer_Core.WibblyWobbly._SceneManager_goto = SceneManager.goto;
 SceneManager.goto = function(sceneClass){
-    if(this._scene && this._scene.constructor === Scene_Map){
+    if(this._scene && this._scene.constructor === Scene_Map && Gimmer_Core.WibblyWobbly.isDrunk()){
         Gimmer_Core.WibblyWobbly.snapShot(this._scene._spriteset);
     }
     Gimmer_Core.WibblyWobbly._SceneManager_goto.call(this, sceneClass);
