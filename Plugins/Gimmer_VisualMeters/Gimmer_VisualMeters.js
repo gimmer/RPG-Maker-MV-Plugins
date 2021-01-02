@@ -8,6 +8,7 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
 /*:
  * @plugindesc Display a visual meter of a given numeric measure
  * @author Gimmer
+ * @help Don't want meters to show on a specific map? Put in <blockmeters:1> in the maps note
  *
  * @param ---Parameters---
  * @default
@@ -300,13 +301,18 @@ Window_VisualMeter.prototype.refresh = function(){
 }
 
 Window_VisualMeter.prototype.isTriggered = function(){
-    let triggered = false;
+    let triggered;
     if(this._triggerSwitchId > 0){
         triggered = $gameSwitches.value(this._triggerSwitchId)
     }
     else{
         triggered = true;
     }
+
+    if(triggered && 'blockmeters' in $dataMap.meta && $dataMap.meta.blockmeters){
+        triggered = false;
+    }
+
     return triggered;
 }
 
