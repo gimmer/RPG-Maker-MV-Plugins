@@ -63,6 +63,19 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
     }
 };
 
+Gimmer_Core.pluginCommands['FADEINBGM'] = function(args){
+    let bgm = {
+        name: args[1],
+        volume: parseInt(args[2]),
+        pitch: parseInt(args[3]),
+        pan: parseInt(args[4]),
+        pos: parseInt(args[5]) || 0
+    }
+
+    AudioManager.playBgm(bgm, bgm.pos);
+    AudioManager.fadeInBgm(parseInt(args[0]));
+}
+
 Gimmer_Core.reserveCommonEventWithCallback = function(commentEventId, callback){
     Gimmer_Core.pendingCallbacks[commentEventId.toString()] = callback;
     $gameTemp.reserveCommonEvent(commentEventId);
