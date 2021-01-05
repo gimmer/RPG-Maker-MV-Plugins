@@ -196,7 +196,10 @@ Gimmer_Core.WibblyWobbly.ForceSobriety = function(){
     }
     if(this.DrunkLevelSnapShot.snapShot && Gimmer_Core.WibblyWobbly.MuffleMusic){
         AudioManager.bgmVolume = this.DrunkLevelSnapShot.initialVol
-        AudioManager._bgmBuffer._sourceNode.playbackRate.value = this.DrunkLevelSnapShot.initalPlaybackRate;
+        if(AudioManager._bgmBuffer){
+            AudioManager._bgmBuffer._sourceNode.playbackRate.value = this.DrunkLevelSnapShot.initalPlaybackRate;
+        }
+
     }
     this.DrunkLevelSnapShot.snapShot = false;
 }
@@ -426,9 +429,6 @@ Game_Player.prototype.moveStraight = function(d) {
         }
     }
     if(Gimmer_Core.WibblyWobbly.DrunkWalkSpeed && Gimmer_Core.WibblyWobbly.isDrunk()){
-        if(this._soberWalkingSpeed === -1){
-            this._soberWalkingSpeed = this._moveSpeed;
-        }
         let speed = Math.random() * (Gimmer_Core.WibblyWobbly.DrunkWalkingSpeedMax - Gimmer_Core.WibblyWobbly.DrunkWalkingSpeedMin + 1) + Gimmer_Core.WibblyWobbly.DrunkWalkingSpeedMin;
         this.setMoveSpeed(speed);
     }
@@ -473,6 +473,9 @@ SceneManager.goto = function(sceneClass){
 */
 
 Gimmer_Core.pluginCommands['GETDRUNK'] = function(args){
+    if($gamePlayer._soberWalkingSpeed === -1){
+        $gamePlayer._soberWalkingSpeed = $gamePlayer._moveSpeed;
+    }
     let Scene = SceneManager._scene;
     if(!Scene || !("_spriteset" in Scene)){
         return false;
@@ -528,8 +531,27 @@ Gimmer_Core.pluginCommands['SOBERUP'] = function(args){
             }
             if(Gimmer_Core.WibblyWobbly.MuffleMusic){
                 AudioManager.bgmVolume = SpriteSet._initialVol;
-                AudioManager._bgmBuffer._sourceNode.playbackRate.value = SpriteSet._initialPlaybackRate;
+                if(AudioManager._bgmBuffer){
+                    AudioManager._bgmBuffer._sourceNode.playbackRate.value = SpriteSet._initialPlaybackRate;
+                }
             }
         }
     }
 }
+
+
+//Extend saving
+Gimmer_Core.WibblyWobbly.DataManager_makeSaveContents = DataManager.makeSaveContents;
+DataManager.makeSaveContents = function() {
+    var contents = Gimmer_Core.WibblyWobbly.DataManager_makeSaveContents.call(this);
+    contents.drunk = Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot;
+    return contents;
+};
+
+Gimmer_Core.WibblyWobbly.DataManager_extractSaveContents = DataManager.extractSaveContents;
+DataManager.extractSaveContents = function(contents) {
+    Gimmer_Core.WibblyWobbly.DataManager_extractSaveContents.call(this, contents);
+    if('drunk' in contents){
+        Gimmer_Core.WibblyWobbly.DrunkLevelSnapShot = contents.drunk;
+    }
+};
