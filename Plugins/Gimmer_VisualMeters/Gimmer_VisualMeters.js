@@ -318,13 +318,18 @@ Window_VisualMeter.prototype.refresh = function(){
 }
 
 Window_VisualMeter.prototype.isTriggered = function(){
-    let triggered = false;
+    let triggered;
     if(this._triggerSwitchId > 0){
         triggered = $gameSwitches.value(this._triggerSwitchId)
     }
     else{
         triggered = true;
     }
+
+    if(triggered && 'blockmeters' in $dataMap.meta && $dataMap.meta.blockmeters){
+        triggered = false;
+    }
+
     return triggered;
 }
 
