@@ -8,7 +8,12 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
 /*:
  * @plugindesc Display a visual meter of a given numeric measure
  * @author Gimmer
- * @help Don't want meters to show on a specific map? Put in <blockmeters:1> in the maps note
+ * @help You can use this plugin to make visual meters of various UI elements. The plugin supports as many meters are you like, following a particular structure.
+ *
+ * Plugin Commands:
+ *
+ * HideUILayer: Hides the layer all the meters are on
+ * ShowUILayer: Shows the layer all the meters are on
  *
  * @param ---Parameters---
  * @default
@@ -217,6 +222,18 @@ Scene_Map.prototype.createDisplayObjects = function() {
     this.addVisualMeters();
 };
 
+Gimmer_Core.pluginCommands['HIDEUILAYER'] = function(){
+    if('_windowUILayer' in SceneManager._scene){
+        SceneManager._scene._windowUILayer.visible = false;
+    }
+}
+
+Gimmer_Core.pluginCommands['SHOWUILAYER'] = function(){
+    if('_windowUILayer' in SceneManager._scene){
+        SceneManager._scene._windowUILayer.visible = true;
+    }
+}
+
 Scene_Base.prototype.addVisualMeters = function(){
     this._meterWindows = {};
     Gimmer_Core.VisualMeters.meters.forEach(function(meter, key){
@@ -301,18 +318,13 @@ Window_VisualMeter.prototype.refresh = function(){
 }
 
 Window_VisualMeter.prototype.isTriggered = function(){
-    let triggered;
+    let triggered = false;
     if(this._triggerSwitchId > 0){
         triggered = $gameSwitches.value(this._triggerSwitchId)
     }
     else{
         triggered = true;
     }
-
-    if(triggered && 'blockmeters' in $dataMap.meta && $dataMap.meta.blockmeters){
-        triggered = false;
-    }
-
     return triggered;
 }
 
