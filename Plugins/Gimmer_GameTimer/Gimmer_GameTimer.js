@@ -61,18 +61,10 @@ Scene_Map.prototype.callMenu = function() {
 };
 
 //Extend Menu so cancelling it unpauses the timer
+Gimmer_Core.GameTimer._Scene_Menu_prototype_createCommandWindow = Scene_Menu.prototype.createCommandWindow;
 Scene_Menu.prototype.createCommandWindow = function() {
-    this._commandWindow = new Window_MenuCommand(0, 0);
-    this._commandWindow.setHandler('item',      this.commandItem.bind(this));
-    this._commandWindow.setHandler('skill',     this.commandPersonal.bind(this));
-    this._commandWindow.setHandler('equip',     this.commandPersonal.bind(this));
-    this._commandWindow.setHandler('status',    this.commandPersonal.bind(this));
-    this._commandWindow.setHandler('formation', this.commandFormation.bind(this));
-    this._commandWindow.setHandler('options',   this.commandOptions.bind(this));
-    this._commandWindow.setHandler('save',      this.commandSave.bind(this));
-    this._commandWindow.setHandler('gameEnd',   this.commandGameEnd.bind(this));
+    Gimmer_Core.GameTimer._Scene_Menu_prototype_createCommandWindow.call(this);
     this._commandWindow.setHandler('cancel',    this.commandCancelMenu.bind(this));
-    this.addWindow(this._commandWindow);
 };
 
 //Cancelling menu will unpause the timer
