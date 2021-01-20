@@ -138,12 +138,53 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
  * @type common_event
  * @desc Optional if you reach the max of a meter, what common event should be run?
  *
+ * @param Sound When Value Goes Up
+ * @type struct<se>
+ * @desc What sound to play when a value goes up?
+ *
+ * @param Sound When Value Goes Down
+ * @type struct<se>
+ * @desc What sound to play a value goes down?
+ *
  * @param Repeat Common Events
  * @type Boolean
  * @desc Should Max and Min Common events repeat? Only set to true if you are fixing the current or max values in your common event, otherwise you'll create an infinite loop
  * Default false
  * @default false
  */
+
+/*~struct~se:
+* @param name
+* @type file
+* @dir audio/se/
+* @require 1
+* @desc What filename?
+*
+* @param volume
+* @type Number
+* @min 1
+* @max 100
+* Default 90
+* @default 90
+* @desc What volume to play at?
+*
+* @param pitch
+* @type Number
+* @min 50
+* @max 150
+* @default 100
+* Default 100
+* @desc What pitch to play at?
+*
+* @param pan
+* @type Text
+* @min -100
+* @max 100
+* @default 0
+* Default 0
+* @desc Where to pan left or right?
+*
+*/
 
 //TODO Later:
 //Show values on the meters?
@@ -290,6 +331,8 @@ Window_VisualMeter.prototype.initialize = function(meter){
     this._eventsRepeat = meter['Repeat Common Events'];
     this._maxCommonEventId = meter['Common Event To Run at Max'];
     this._eventActive = false;
+    this._upSound = (meter['Sound When Value Goes Up'].length ? JSON.parse(meter['Sound When Value Goes Up']) : false );
+    this._downSound = (meter['Sound When Value Goes Down'].length ? JSON.parse(meter['Sound When Value Goes Down']) : false);
     Window_Fade.prototype.initialize.call(this, meter['Meter X'], meter['Meter Y'], meter['Meter Width'], meter['Meter Height']);
     this._fadeForPlayer = Gimmer_Core.VisualMeters.FadeUnderPlayer;
     this._desinationAlpha = Gimmer_Core.VisualMeters.FadePercentage;
@@ -418,6 +461,14 @@ Window_VisualMeter.prototype.updateValues = function(){
             })
         }
         if(temp != this._lastParamCurrent) {
+            if(temp > this._lastParamCurrent){
+                //going up
+                AudioManager.playSe(this._upSound);
+            }
+            if(temp < this._lastParamCurrent){
+                //Going down
+                AudioManager.playSe(this._downSound);
+            }
             this._lastParamTemp = this._lastParamCurrent;
             this._lastParamCurrent = temp;
             this._dirty = true;
