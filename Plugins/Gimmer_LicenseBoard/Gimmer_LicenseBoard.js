@@ -75,6 +75,11 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Default: 10
  * @default 10
  *
+ * @param Trigger Switch
+ * @parent ---Parameters---
+ * @type Switch
+ * @desc What switch needs to be true for the license board to be accessible?
+ *
  *
  * Terms of Use:
  * =======================================================================
@@ -94,6 +99,7 @@ Gimmer_Core.LicenseBoard.ShowSuccessPopup = (lbParams['Show Success Window'] ===
 Gimmer_Core.LicenseBoard.SuccessStayOpenFor = Number(lbParams['Success Frame Count']);
 Gimmer_Core.LicenseBoard.SuccessOpenSpeed = Number(lbParams['Success Open Percent']) / 100;
 Gimmer_Core.LicenseBoard.SuccessCloseSpeed = Number(lbParams['Success Close Percent']) / 100;
+Gimmer_Core.LicenseBoard.TriggerSwitch = Number(lbParams['Trigger Switch']);
 
 //Tracking Variables
 Gimmer_Core.LicenseBoard.maxX = 0;
@@ -162,12 +168,22 @@ Gimmer_Core.LicenseBoard.getCoordsById = function(licenseId){
     return this.getLicenseCoordinateString($dataLicenseBoard[licenseId]);
 }
 
+Gimmer_Core.LicenseBoard.isTriggered = function(){
+    let triggered = true;
+    if(Gimmer_Core.LicenseBoard.TriggerSwitch > 0){
+        triggered = $gameSwitches.value(Gimmer_Core.LicenseBoard.TriggerSwitch)
+    }
+    return triggered;
+}
+
 
 //Inject in LicenseBoard to menu commands
 Gimmer_Core.LicenseBoard._Window_MenuCommand_prototype_addMainCommands = Window_MenuCommand.prototype.addMainCommands;
 Window_MenuCommand.prototype.addMainCommands = function(){
     Gimmer_Core.LicenseBoard._Window_MenuCommand_prototype_addMainCommands.call(this);
-    this.addCommand(Gimmer_Core.LicenseBoard.BoardLabel,'board',true);
+    if(Gimmer_Core.LicenseBoard.isTriggered()){
+        this.addCommand(Gimmer_Core.LicenseBoard.BoardLabel,'board',true);
+    }
 }
 
 //Extend createCommandWindow to add a handler for the menuboard
