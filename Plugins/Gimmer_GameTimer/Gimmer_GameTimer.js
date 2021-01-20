@@ -27,10 +27,18 @@ Gimmer_Core['GameTimer'] = {'loaded':true};
  * @type variable
  * @desc What variable do you want snapshots to go to?
  *
- * @param Include Milliseconds
+ * @param Format
  * @parent ---Parameters---
- * @type Boolean
- * @desc Do you want the timer to include milliseconds?
+ * @type select
+ * @option HH:MM:SS
+ * @value 1
+ * @option HH:MM:SS:mmm
+ * @value 2
+ * @option MM:SS
+ * @value 3
+ * @option MM:SS:mmm
+ * @value 4
+ * @desc What format do you want?
  *
  */
 
@@ -40,7 +48,7 @@ Gimmer_Core.GameTimer.timerMS = 0;
 Gimmer_Core.GameTimer.paused = true; //Start paused
 let GameTimerParameters = PluginManager.parameters('Gimmer_GameTimer');
 Gimmer_Core.GameTimer.snapshotVariableId = Number(GameTimerParameters['Snapshot Variable']);
-Gimmer_Core.GameTimer.IncludeMilliseconds = (GameTimerParameters['Include Milliseconds'] === "true");
+Gimmer_Core.GameTimer.Format = GameTimerParameters['Format'];
 
 //Upgrade main loop to record real time
 Gimmer_Core.GameTimer.Scene_Map_prototype_updateMain = Scene_Map.prototype.updateMain;
@@ -94,7 +102,7 @@ Gimmer_Core.GameTimer.reset = function(){
     this.timerMS = 0;
 }
 
-Gimmer_Core.GameTimer.getTimeString = function(includeMS){
+Gimmer_Core.GameTimer.getTimeString = function(format){
     // 1- Convert to seconds:
     let seconds = Gimmer_Core.GameTimer.timerMS / 1000;
     // 2- Extract hours:
@@ -106,14 +114,37 @@ Gimmer_Core.GameTimer.getTimeString = function(includeMS){
     seconds = seconds % 60;
     let milliseconds = (seconds % 1 * 1000).toFixed();
     seconds = seconds.toFixed();
-    hours = hours.toString().padStart(2,"0");
-    minutes = minutes.toString().padStart(2,"0");
-    seconds = seconds.toString().padStart(2,"0");
-    let output = hours+":"+minutes+":"+seconds;
-    if(includeMS){
-        milliseconds = milliseconds.toString().padStart(3,"0");
-        output += ":"+milliseconds;
+    let output = "";
+    switch(format){
+        case '1':
+            hours = hours.toString().padStart(2,"0");
+            minutes = minutes.toString().padStart(2,"0");
+            seconds = seconds.toString().padStart(2,"0");
+            output = hours+":"+minutes+":"+seconds;
+            break;
+        case '2':
+            milliseconds = milliseconds.toString().padStart(3,"0");
+            hours = hours.toString().padStart(2,"0");
+            minutes = minutes.toString().padStart(2,"0");
+            seconds = seconds.toString().padStart(2,"0");
+            output = hours+":"+minutes+":"+seconds+":"+milliseconds;
+            break;
+        case '3':
+            //Todo add hours to minutes
+            minutes += (hours * 60);
+            minutes = minutes.toString().padStart(2,"0");
+            seconds = seconds.toString().padStart(2,"0");
+            output = minutes+":"+seconds;
+            break;
+        case '4':
+            minutes += (hours * 60);
+            minutes = minutes.toString().padStart(2,"0");
+            seconds = seconds.toString().padStart(2,"0");
+            milliseconds = milliseconds.toString().padStart(3,"0");
+            output = minutes+":"+seconds+":"+milliseconds;
+            break;
     }
+
     return output;
 }
 
@@ -126,7 +157,7 @@ Gimmer_Core.pluginCommands['GAMETIMERUNPAUSE'] = function(){
 }
 
 Gimmer_Core.pluginCommands['GAMETIMERSNAPSHOT'] = function(){
-    $gameVariables.setValue(Gimmer_Core.GameTimer.snapshotVariableId,Gimmer_Core.GameTimer.getTimeString(Gimmer_Core.GameTimer.IncludeMilliseconds));
+    $gameVariables.setValue(Gimmer_Core.GameTimer.snapshotVariableId,Gimmer_Core.GameTimer.getTimeString(Gimmer_Core.GameTimer.Format));
 }
 
 Gimmer_Core.pluginCommands['GAMETIMERRESET'] = function(){
