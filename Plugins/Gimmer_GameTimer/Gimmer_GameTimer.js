@@ -26,6 +26,12 @@ Gimmer_Core['GameTimer'] = {'loaded':true};
  * @parent ---Parameters---
  * @type variable
  * @desc What variable do you want snapshots to go to?
+ *
+ * @param Include Milliseconds
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc Do you want the timer to include milliseconds?
+ *
  */
 
 Gimmer_Core.GameTimer.startTime = '';
@@ -34,6 +40,7 @@ Gimmer_Core.GameTimer.timerMS = 0;
 Gimmer_Core.GameTimer.paused = true; //Start paused
 let GameTimerParameters = PluginManager.parameters('Gimmer_GameTimer');
 Gimmer_Core.GameTimer.snapshotVariableId = Number(GameTimerParameters['Snapshot Variable']);
+Gimmer_Core.GameTimer.IncludeMilliseconds = (GameTimerParameters['Include Milliseconds'] === "true");
 
 //Upgrade main loop to record real time
 Gimmer_Core.GameTimer.Scene_Map_prototype_updateMain = Scene_Map.prototype.updateMain;
@@ -95,7 +102,7 @@ Gimmer_Core.GameTimer.reset = function(){
     this.timerMS = 0;
 }
 
-Gimmer_Core.GameTimer.getTimeString = function(){
+Gimmer_Core.GameTimer.getTimeString = function(includeMS){
     // 1- Convert to seconds:
     let seconds = Gimmer_Core.GameTimer.timerMS / 1000;
     // 2- Extract hours:
@@ -105,11 +112,17 @@ Gimmer_Core.GameTimer.getTimeString = function(){
     let minutes = parseInt( seconds / 60 ); // 60 seconds in 1 minute
     // 4- Keep only seconds not extracted to minutes:
     seconds = seconds % 60;
+    let milliseconds = (seconds % 1 * 1000).toFixed();
     seconds = seconds.toFixed();
     hours = hours.toString().padStart(2,"0");
     minutes = minutes.toString().padStart(2,"0");
     seconds = seconds.toString().padStart(2,"0");
-    return hours+":"+minutes+":"+seconds;
+    let output = hours+":"+minutes+":"+seconds;
+    if(includeMS){
+        milliseconds = milliseconds.toString().padStart(3,"0");
+        output += ":"+milliseconds;
+    }
+    return output;
 }
 
 Gimmer_Core.pluginCommands['GAMETIMERPAUSE'] = function(){
@@ -121,7 +134,7 @@ Gimmer_Core.pluginCommands['GAMETIMERUNPAUSE'] = function(){
 }
 
 Gimmer_Core.pluginCommands['GAMETIMERSNAPSHOT'] = function(){
-    $gameVariables.setValue(Gimmer_Core.GameTimer.snapshotVariableId,Gimmer_Core.GameTimer.getTimeString());
+    $gameVariables.setValue(Gimmer_Core.GameTimer.snapshotVariableId,Gimmer_Core.GameTimer.getTimeString(Gimmer_Core.GameTimer.IncludeMilliseconds));
 }
 
 Gimmer_Core.pluginCommands['GAMETIMERRESET'] = function(){
