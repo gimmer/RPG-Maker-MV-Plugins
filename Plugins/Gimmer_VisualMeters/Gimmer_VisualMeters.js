@@ -194,7 +194,7 @@ var vmParameters = PluginManager.parameters('Gimmer_VisualMeters');
 
 Gimmer_Core.VisualMeters.meters = JSON.parse(vmParameters['Meter List']);
 Gimmer_Core.VisualMeters.FadeUnderPlayer = (vmParameters['Fade Under Player'] === "true");
-Gimmer_Core.VisualMeters.FadePercentage = Math.floor(Number(vmParameters['Fade Percentage']) / 100);
+Gimmer_Core.VisualMeters.FadePercentage = Number(vmParameters['Fade Percentage']) / 100;
 Gimmer_Core.VisualMeters.NumberStepPercentage = Number(vmParameters['Step Percentage']);
 
 Gimmer_Core.VisualMeters.meters.forEach(function(v,k){
@@ -437,7 +437,7 @@ Window_VisualMeter.prototype.drawLabel = function(){
 }
 
 Window_VisualMeter.prototype.update = function(){
-    if(this._canFade){
+    if(this._fadeForPlayer){
         this.updateFade();
     }
     this.refresh();
@@ -492,13 +492,6 @@ Window_VisualMeter.prototype.updateValues = function(){
         }
     }
 }
-
-//Hide a bunch of window garbage
-Window_VisualMeter.prototype._refreshFrame = function(){}
-Window_VisualMeter.prototype._refreshCursor = function(){}
-Window_VisualMeter.prototype._refreshPauseSign = function(){}
-Window_VisualMeter.prototype._refreshArrows = function (){}
-Window_VisualMeter.prototype._refreshBack = function(){}
 
 Window_VisualMeter.prototype._createAllParts = function() {
     this._windowSpriteContainer = new PIXI.Container();

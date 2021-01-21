@@ -150,11 +150,25 @@ WindowLayer.prototype._maskWindow = function(window, shift) {
     }
 }
 
+//Make a really simple Window
+function Window_Plain() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_Plain.prototype = Object.create(Window_Base.prototype);
+Window_Plain.prototype.constructor = Window_Plain;
+Window_Plain.prototype._refreshFrame = function(){}
+Window_Plain.prototype._refreshCursor = function(){}
+Window_Plain.prototype._refreshPauseSign = function(){}
+Window_Plain.prototype._refreshArrows = function (){}
+Window_Plain.prototype._refreshBack = function (){}
+
+
 function Window_Popup() {
     this.initialize.apply(this, arguments);
 }
 
-Window_Popup.prototype = Object.create(Window_Base.prototype);
+Window_Popup.prototype = Object.create(Window_Plain.prototype);
 Window_Popup.prototype.constructor = Window_Popup;
 
 Window_Popup.prototype.initialize = function(x,y,width,height, color, countToSpendOpen, openSpeed, closeSpeed){
@@ -179,10 +193,6 @@ Window_Popup.prototype.initialize = function(x,y,width,height, color, countToSpe
     this.refresh();
 }
 
-Window_Popup.prototype._refreshFrame = function(){}
-Window_Popup.prototype._refreshCursor = function(){}
-Window_Popup.prototype._refreshPauseSign = function(){}
-Window_Popup.prototype._refreshArrows = function (){}
 Window_Popup.prototype._refreshBack = function(){
     var w = this._width;
     var h = this._height;
@@ -283,11 +293,11 @@ function Window_Fade() {
     this.initialize.apply(this, arguments);
 }
 
-Window_Fade.prototype = Object.create(Window_Base.prototype);
+Window_Fade.prototype = Object.create(Window_Plain.prototype);
 Window_Fade.prototype.constructor = Window_Fade;
 
 Window_Fade.prototype.initialize = function(x, y, width, height){
-    Window_Base.prototype.initialize.call(this, x, y, width, height);
+    Window_Plain.prototype.initialize.call(this, x, y, width, height);
     this._fadeForPlayer = true;
     this.setOriginalAlpha();
     this._desinationAlpha = 0;
@@ -344,7 +354,7 @@ Window_Fade.prototype.fadeIn = function(){
 }
 
 Window_Fade.prototype.update = function(){
-    Window_Base.prototype.update.call(this);
+    Window_Plain.prototype.update.call(this);
     this.updateFade();
 }
 

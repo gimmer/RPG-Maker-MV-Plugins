@@ -514,7 +514,7 @@ Gimmer_Core.pluginCommands['SOBERUP'] = function(args){
     let SpriteSet = Scene._spriteset;
     if(!SpriteSet._soberingUp){
         if(args && args.length > 0 && Number(args[0]) > 0){
-            SpriteSet._drunkCount = Number(args[1]);
+            SpriteSet._drunkCount = Number(args[0]);
             SpriteSet._stayDrunk = false;
             SpriteSet._soberWait = -1;
         }
