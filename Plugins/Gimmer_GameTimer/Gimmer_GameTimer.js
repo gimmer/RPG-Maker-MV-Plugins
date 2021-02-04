@@ -18,6 +18,7 @@ Gimmer_Core['GameTimer'] = {'loaded':true};
  *
  * Plugin Commands:
  *
+ *
  * GameTimerPause: pause the timer
  * GameTimerUnpause: unpause the timer
  * GameTimerSnapShot: saves the current value of the timer to the specified game variable
@@ -146,10 +147,10 @@ Scene_GameEnd.prototype.commandToTitle = function() {
 };
 
 if(Gimmer_Core.GameTimer.TimerWindow){
-    Gimmer_Core.GameTimer._Scene_Map_prototype_createDisplayObjects = Scene_Map.prototype.createDisplayObjects;
-    Scene_Map.prototype.createDisplayObjects = function(){
-        Gimmer_Core.GameTimer._Scene_Map_prototype_createDisplayObjects.call(this);
+    Gimmer_Core.GameTimer._Scene_Map_prototype_allWindows = Scene_Map.prototype.createAllWindows
+    Scene_Map.prototype.createAllWindows = function(){
         this.createTimerWindow();
+        Gimmer_Core.GameTimer._Scene_Map_prototype_allWindows.call(this);
     }
 
     Scene_Map.prototype.createTimerWindow = function(){
