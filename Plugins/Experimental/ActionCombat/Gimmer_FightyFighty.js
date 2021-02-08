@@ -24,14 +24,16 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 //Extending Animation to support hitboxes being built around them
 Gimmer_Core.Fighty.nextHitboxId = 0;
 Gimmer_Core.Fighty.HitBoxAnimations = {
-    '121': [{width:50, height:25},{width:100, height: 25}],
-    '122': [{width:25, height:50},{width:25, height: 100}],
-    '123': [{width:50, height:25},{width:100, height: 25}],
-    '124': [{width:25, height:50},{width:25, height: 100}]
+    '121': [{width:50, height:25, angle: 0},{width:100, height: 25, angle: 0}],
+    '122': [{width:50, height:25, angle: 270},{width:100, height: 25, angle: 270}],
+    '123': [{width:50, height:25, angle: 180},{width:100, height: 25, angle: 180}],
+    '124': [{width:50, height:25, angle: 90},{width:100, height: 25, angle: 90}],
+    '125': [{width:40, height:10, angle: 225},{width:40, height:10, angle: 315}]
 };
 
 Gimmer_Core.Fighty.DebugAllyHitboxes = true;
 Gimmer_Core.Fighty.DebugEnemyHitboxes = true;
+Gimmer_Core.Fighty.DebugHurtBoxes = true;
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_setup = Sprite_Animation.prototype.setup;
 Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
@@ -43,36 +45,40 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
 
 Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
     //todo decouple hit boxes from damage amounts
-   this._hitboxFrames = hitboxes;
-   let type = (this._target._character._eventId > 0 ? 'event' : 'player');
-   let direction = this._target._character.direction();
-   this._hitbox = new Hitbox(type,new Rectangle(0,0,0,0),direction,this._target._character, 10, 1);
-   $gameScreen._allyHitBoxes.push(this._hitbox);
+    this._hitboxFrames = hitboxes;
+    this._lastModX = 0;
+    this._lastModY = 0;
+    let type = (this._target._character._eventId > 0 ? 'event' : 'player');
+    let direction = this._target._character.direction();
+    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction,this._target._character, 10, 1);
+    $gameScreen._allyHitBoxes.push(this._hitbox);
 }
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
-    //todo all four directions
     let hitboxX = this.x;
     let hitboxY = this.y;
     let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
     switch(direction){
         case 'right':
-            hitboxY -= Math.floor(Math.abs(this._hitbox.rectangle.height) / 2);
-            break;
-        case 'up':
-            hitboxX += Math.floor(Math.abs(this._hitbox.rectangle.width / 2));
+            this._lastModY = this.getModY();
+            hitboxY -= this._lastModY;
             break;
         case 'left':
-            hitboxY += Math.floor(Math.abs(this._hitbox.rectangle.height) / 2);
-            break;
-        case 'down':
-            hitboxX -= Math.floor(Math.abs(this._hitbox.rectangle.width / 2));
+            this._lastModY = this.getModY();
+            hitboxY -= this._lastModY;
             break;
     }
+    this._hitbox.updatePosition(hitboxX, hitboxY);
+}
 
-    this._hitbox.updatePosition(hitboxX,hitboxY, false, false, direction );
+Sprite_Animation.prototype.getModY = function(){
+    return (this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].height / 2 : this._lastModY);
+}
+
+Sprite_Animation.prototype.getModX = function(){
+    return (this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].width / 2 : this._lastModX);
 }
 
 Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
@@ -104,7 +110,7 @@ Sprite_Animation.prototype.updateFrame = function(){
     if(this._duration > 0){
         var frameIndex = this.currentFrameIndex();
         if(this._hitboxFrames[frameIndex]){
-            this._hitbox.updatePosition(false, false, this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height)
+            this._hitbox.updatePosition(false, false, this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle )
         }
     }
 }
@@ -135,12 +141,13 @@ Gimmer_Core.Fighty._Game_Character_prototype_update = Game_Character.prototype.u
 Game_Character.prototype.update = function(sceneActive){
     Gimmer_Core.Fighty._Game_Character_prototype_update.call(this,sceneActive);
     if(this._needsHurtBox){
-        let rect = this.getHurtBox();
-        SceneManager._scene._debugHitBoxWindow.contents.drawRectBorder(rect.x, rect.y, rect.width, rect.height, '#FFFFFF');
+        if(Gimmer_Core.Fighty.DebugHurtBoxes){
+            this.getHurtBox().render(SceneManager._scene._debugHitBoxWindow.contents,'#FFFFFF',1);
+        }
         this.resolveHitBoxes();
         if('_selfHitBox' in this){
             let rectangle = this.getHurtBox();
-            this._selfHitBox.updatePosition(rectangle.x, rectangle.y);
+            this._selfHitBox.updatePosition(rectangle.startingX, rectangle.startingY);
         }
     }
 }
@@ -165,7 +172,7 @@ Game_Player.prototype.updateAttacks = function(){
     if(Input.isTriggered('ok')  && !this._isAttacking){
         switch(Gimmer_Core.directionsToWords(this.direction())){
             case 'right':
-                this.requestAnimation(121);
+                this.requestAnimation(125);
                 break;
             case 'up':
                 this.requestAnimation(122);
@@ -209,7 +216,7 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
         hitbox.engaged = true;
         let actor = $gameActors._data[$gameParty._actors[this.characterIndex()]];
         let damage = -hitbox.damage;
-        actor.gainHp(damage)
+        //actor.gainHp(damage)
         if (hitbox.damage > 0) {
             actor.performMapDamage();
         }
@@ -360,7 +367,7 @@ Game_Character.prototype.getHurtBox = function(){
     let th = $gameMap.tileHeight()
     let x = this.screenX() - (tw / 2);
     let y = this.screenY() - th + this.shiftY();
-    return new Rectangle(x + this._hurtBoxModLeft, y + this._hurtBoxModTop, tw + this._hurtBoxModRight, th + this._hurtBoxModBottom);
+    return new Polygon('rectangle',x + this._hurtBoxModLeft, y + this._hurtBoxModTop, tw + this._hurtBoxModRight, th + this._hurtBoxModBottom);
 }
 
 Gimmer_Core.Fighty._Game_Screen_prototype_clear = Game_Screen.prototype.clear;
@@ -386,7 +393,7 @@ Game_Screen.prototype.updateHitBoxes = function(){
             delete this._allyHitBoxes[k];
         }
         if(Gimmer_Core.Fighty.DebugAllyHitboxes){
-            SceneManager._scene._debugHitBoxWindow.contents.drawRectBorder(hitbox.rectangle.x, hitbox.rectangle.y, hitbox.rectangle.width, hitbox.rectangle.height, '#FF0000');
+            hitbox.shape.render(SceneManager._scene._debugHitBoxWindow.contents, '#FF0000', 1);
         }
     }, this);
 
@@ -396,7 +403,7 @@ Game_Screen.prototype.updateHitBoxes = function(){
             delete this._enemyHitBoxes[k];
         }
         if(Gimmer_Core.Fighty.DebugEnemyHitboxes){
-            SceneManager._scene._debugHitBoxWindow.contents.drawRectBorder(hitbox.rectangle.x, hitbox.rectangle.y, hitbox.rectangle.width, hitbox.rectangle.height, '#FF0000');
+            hitbox.shape.render(SceneManager._scene._debugHitBoxWindow.contents, '#FF0000', 1);
         }
     }, this);
 }
@@ -408,9 +415,9 @@ Game_Screen.prototype.enemyHitBoxesAtLocation = function(playerHurtBox){
         return hittingBoxes;
     }
     this._enemyHitBoxes.forEach(function(hitbox){
-       if(!hitbox.engaged && hitbox.rectangle.intersects(playerHurtBox)){
-           hittingBoxes.push(hitbox);
-       }
+        if(!hitbox.engaged && hitbox.shape.intersects(playerHurtBox)){
+            hittingBoxes.push(hitbox);
+        }
     });
     return hittingBoxes;
 }
@@ -421,16 +428,164 @@ Game_Screen.prototype.allyHitBoxesAtLocation = function(enemyHurtBox){
         return hittingBoxes;
     }
     this._allyHitBoxes.forEach(function(hitbox){
-        if(!hitbox.engaged && hitbox.rectangle.intersects(enemyHurtBox)){
+        if(!hitbox.engaged && hitbox.shape.intersects(enemyHurtBox)){
             hittingBoxes.push(hitbox);
         }
     });
     return hittingBoxes;
 }
 
+class Polygon {
+    constructor(type, startingX, startingY, width, height, angle) {
+        this.type = type;
+        this.startingX = startingX;
+        this.startingY = startingY;
+        this.width = width;
+        this.height = height;
+        this.angle = angle;
+        this.updatePosition();
+    }
+
+    createPoints(){
+        let x = this.startingX;
+        let y = this.startingY;
+        let width = this.width;
+        let height = this.height;
+        this.points = [];
+        switch(this.type){
+            case 'triangle':
+                break;
+            case 'rectangle':
+                //Basic points
+                this.points.push({x:x, y:y});
+                this.points.push({x:x + width,y:y});
+                this.points.push({x:x + width,y:y + height});
+                this.points.push({x:x, y: y + height});
+                break;
+        }
+    }
+
+    updatePosition(x,y, width, height, angle){
+        x = x || this.startingX;
+        y = y || this.startingY;
+        width = width || this.width;
+        height = height || this.height;
+        angle = angle || this.angle;
+        this.startingX = x;
+        this.startingY = y;
+        this.width = width;
+        this.height = height;
+        this.angle = angle;
+        this.pivotPoint = {x:this.startingX, y: this.startingY + (this.height / 2)}
+        this.createPoints();
+        this.rotate();
+    }
+
+    rotate(){
+        if(this.angle > 0){
+            this.points.forEach(function(point, k){
+                this.points[k] = this.rotatePoint(point.x, point.y, this.pivotPoint.x, this.pivotPoint.y, this.angle);
+            }, this);
+            dd(this.points);
+        }
+    }
+
+    rotatePoint(pointX, pointY, originX, originY, angle) {
+        angle = angle * Math.PI / 180.0;
+        return {
+            x: Math.cos(angle) * (pointX-originX) - Math.sin(angle) * (pointY-originY) + originX,
+            y: Math.sin(angle) * (pointX-originX) + Math.cos(angle) * (pointY-originY) + originY
+        };
+    }
+
+    intersects(otherPolygon){
+        //this is always the hit box, otherPolygon is the hurt box
+
+        //If the box has no width or height, it can't hit anything
+        if(this.width === 0 || this.height === 0){
+            return false;
+        }
+
+        let a = this.points;
+        let b = otherPolygon.points;
+
+        var polygons = [a, b];
+        var minA, maxA, projected, i, i1, j, minB, maxB;
+
+        for (i = 0; i < polygons.length; i++) {
+
+            // for each polygon, look at each edge of the polygon, and determine if it separates
+            // the two shapes
+            var polygon = polygons[i];
+            for (i1 = 0; i1 < polygon.length; i1++) {
+
+                // grab 2 vertices to create an edge
+                var i2 = (i1 + 1) % polygon.length;
+                var p1 = polygon[i1];
+                var p2 = polygon[i2];
+
+                // find the line perpendicular to this edge
+                var normal = { x: p2.y - p1.y, y: p1.x - p2.x };
+
+                minA = maxA = undefined;
+                // for each vertex in the first shape, project it onto the line perpendicular to the edge
+                // and keep track of the min and max of these values
+                for (j = 0; j < a.length; j++) {
+                    projected = normal.x * a[j].x + normal.y * a[j].y;
+                    if (Gimmer_Core.isUndefined(minA) || projected < minA) {
+                        minA = projected;
+                    }
+                    if (Gimmer_Core.isUndefined(maxA) || projected > maxA) {
+                        maxA = projected;
+                    }
+                }
+
+                // for each vertex in the second shape, project it onto the line perpendicular to the edge
+                // and keep track of the min and max of these values
+                minB = maxB = undefined;
+                for (j = 0; j < b.length; j++) {
+                    projected = normal.x * b[j].x + normal.y * b[j].y;
+                    if (Gimmer_Core.isUndefined(minB) || projected < minB) {
+                        minB = projected;
+                    }
+                    if (Gimmer_Core.isUndefined(maxB) || projected > maxB) {
+                        maxB = projected;
+                    }
+                }
+
+                // if there is no overlap between the projects, the edge we are looking at separates the two
+                // polygons, and we know there is no overlap
+                if (maxA < minB || maxB < minA) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    render(bitmap, color, thickness){
+        let context = bitmap._context;
+        context.save();
+        context.strokeStyle = color;
+        context.lineWidth = thickness;
+        context.beginPath();
+        context.moveTo(this.points[0].x, this.points[0].y);
+
+        for (var j = 1; j < this.points.length; j++) {
+            context.lineTo(this.points[j].x, this.points[j].y);
+        }
+
+        context.lineTo(this.points[0].x, this.points[0].y);
+        context.closePath();
+        context.stroke();
+        context.restore();
+        bitmap._setDirty();
+    }
+}
+
 
 class Hitbox {
-    constructor(type, rectangle, direction, source, damage, pushback){
+    constructor(type, shape, direction, source, damage, pushback){
         this.type = type;
         this.direction = (direction === "self" ? direction : Gimmer_Core.directionsToWords(direction));
         this.damage = damage;
@@ -438,43 +593,11 @@ class Hitbox {
         this.source = source
         this.engaged = false;
         this.finished = false;
-        this.setContextRectangle(rectangle);
+        this.shape = shape;
     }
 
-    updatePosition(x,y, width, height, direction){
-        this.direction = direction || this.direction;
-        if(this.direction === "left" || this.direction === "up"){
-            if(width){
-                width *= -1;
-            }
-            if(height){
-                height *= -1;
-            }
-        }
-        x = x || this.rectangle.x;
-        y = y || this.rectangle.y;
-        width = width || this.rectangle.width;
-        height = height || this.rectangle.height;
-        this.rectangle.x = x;
-        this.rectangle.y = y;
-        this.rectangle.width = width;
-        this.rectangle.height = height;
-
-    }
-
-    setContextRectangle(rectangle){
-        if(this.direction === "left" || this.direction === "up"){
-            rectangle.width *= -1;
-            rectangle.height *= -1;
-        }
-        if(this.direction === "up" || this.direction === "down"){
-            let oldWidth = rectangle.width;
-            let oldHeight = rectangle.height;
-            rectangle.width = oldHeight;
-            rectangle.height = oldWidth;
-        }
-
-        this.rectangle = rectangle;
+    updatePosition(x,y, width, height, angle){
+        this.shape.updatePosition(x,y,width,height, angle);
     }
 }
 
