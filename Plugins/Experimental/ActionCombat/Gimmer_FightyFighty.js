@@ -34,43 +34,60 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
 Gimmer_Core.Fighty.DebugAllyHitboxes = true;
 Gimmer_Core.Fighty.DebugEnemyHitboxes = true;
 Gimmer_Core.Fighty.DebugHurtBoxes = true;
+Gimmer_Core.Fighty.PermaDeath = true;
+Gimmer_Core.Fighty.CanPassThroughEnemiesWhenHurt = true;
+
+
+Gimmer_Core.pluginCommands["RESPAWN"] = function(params){
+    if(params.length > 0){
+        $gameSelfSwitches.setValue([params[0],params[1],"D"], false);
+    }
+}
+
+DataManager._databaseFiles.push({name:'$dataHitboxes',src:'Hitboxes.json'});
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_setup = Sprite_Animation.prototype.setup;
 Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     Gimmer_Core.Fighty._Sprite_Animation_prototype_setup.call(this,target,animation,mirror,delay);
-    if(this._animation && this._animation.id.toString() in Gimmer_Core.Fighty.HitBoxAnimations){
-        this.setupHitboxes(Gimmer_Core.Fighty.HitBoxAnimations[this._animation.id.toString()])
+    if(SceneManager._scene.constructor === Scene_Map){
+        if(this._animation && this._animation.id.toString() in $dataHitboxes){
+            this.setupHitboxes($dataHitboxes[this._animation.id.toString()]);
+        }
+        else{
+            this.setupHitboxes([]);
+        }
     }
 }
 
 Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
-    //todo decouple hit boxes from damage amounts
     this._hitboxFrames = hitboxes;
     this._lastModX = 0;
     this._lastModY = 0;
     let type = (this._target._character._eventId > 0 ? 'event' : 'player');
     let direction = this._target._character.direction();
-    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction,this._target._character, 10, 1);
+    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction, this._target._character, 1);
     $gameScreen._allyHitBoxes.push(this._hitbox);
 }
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
-    let hitboxX = this.x;
-    let hitboxY = this.y;
-    let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
-    switch(direction){
-        case 'right':
-            this._lastModY = this.getModY();
-            hitboxY -= this._lastModY;
-            break;
-        case 'left':
-            this._lastModY = this.getModY();
-            hitboxY -= this._lastModY;
-            break;
+    if('_hitbox' in this){
+        let hitboxX = this.x;
+        let hitboxY = this.y;
+        let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
+        switch(direction){
+            case 'right':
+                this._lastModY = this.getModY();
+                hitboxY -= this._lastModY;
+                break;
+            case 'left':
+                this._lastModY = this.getModY();
+                hitboxY -= this._lastModY;
+                break;
+        }
+        this._hitbox.updatePosition(hitboxX, hitboxY);
     }
-    this._hitbox.updatePosition(hitboxX, hitboxY);
 }
 
 Sprite_Animation.prototype.getModY = function(){
@@ -91,10 +108,18 @@ Game_Player.prototype.canMove = function(){
     }
 }
 
+Game_Player.prototype.getActionHero = function(){
+    return $gameActors._data[$gameParty._actors[$gamePlayer._characterIndex]];
+}
+
+Game_Event.prototype.getActionHero = function(){
+    return this._enemy;
+}
+
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain = Sprite_Animation.prototype.updateMain;
 Sprite_Animation.prototype.updateMain = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain.call(this);
-    if(!this.isPlaying() && this.isReady()){
+    if(!this.isPlaying() && this.isReady() && '_hitbox' in this){
         this._hitbox.finished = true;
         if(this._hitbox.type === "player"){
             $gamePlayer._isAttacking = false;
@@ -109,7 +134,7 @@ Sprite_Animation.prototype.updateFrame = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updateFrame.call(this);
     if(this._duration > 0){
         var frameIndex = this.currentFrameIndex();
-        if(this._hitboxFrames[frameIndex]){
+        if('_hitboxFrames' in this && this._hitboxFrames[frameIndex]){
             this._hitbox.updatePosition(false, false, this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle )
         }
     }
@@ -141,7 +166,7 @@ Gimmer_Core.Fighty._Game_Character_prototype_update = Game_Character.prototype.u
 Game_Character.prototype.update = function(sceneActive){
     Gimmer_Core.Fighty._Game_Character_prototype_update.call(this,sceneActive);
     if(this._needsHurtBox){
-        if(Gimmer_Core.Fighty.DebugHurtBoxes){
+        if(Gimmer_Core.Fighty.DebugHurtBoxes && '_debugHitBoxWindow' in SceneManager._scene){
             this.getHurtBox().render(SceneManager._scene._debugHitBoxWindow.contents,'#FFFFFF',1);
         }
         this.resolveHitBoxes();
@@ -167,30 +192,18 @@ Game_Player.prototype.updateInvincibility = function(){
     }
 }
 
-//Todo resolve this better using player equipment to source animation, potentially hitboxes
 Game_Player.prototype.updateAttacks = function(){
     if(Input.isTriggered('ok')  && !this._isAttacking){
-        switch(Gimmer_Core.directionsToWords(this.direction())){
-            case 'right':
-                this.requestAnimation(125);
-                break;
-            case 'up':
-                this.requestAnimation(122);
-                break;
-            case 'left':
-                this.requestAnimation(123);
-                break;
-            case 'down':
-                this.requestAnimation(124);
-                break;
-
+        let direction = Gimmer_Core.directionsToWords(this.direction()).capitalize();
+        let weapon = this.getActionHero().weapons()[0];
+        let animationId = ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
+        if(animationId){
+            this.requestAnimation(animationId);
+            this._isAttacking = true;
+            Gimmer_Core.isPlayerStopped = true;
         }
-        this._isAttacking = true;
-        Gimmer_Core.isPlayerStopped = true;
     }
 }
-
-
 
 //Todo: fix to evaluate the first hitbox at location based on some kind of timestamp of creation time
 Game_Character.prototype.resolveHitBoxes = function(){
@@ -215,9 +228,8 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
     if(this._invincibilityCount === 0 && !hitbox.engaged){
         hitbox.engaged = true;
         let actor = $gameActors._data[$gameParty._actors[this.characterIndex()]];
-        let damage = -hitbox.damage;
-        //actor.gainHp(damage)
-        if (hitbox.damage > 0) {
+        let damage = hitbox.applyDamage(actor);
+        if (damage > 0) {
             actor.performMapDamage();
         }
         if(hitbox.pushback > 0){
@@ -232,11 +244,27 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
     }
 }
 
+Gimmer_Core.Fighty._Scene_Map_prototype_updateTransferPlayer = Scene_Map.prototype.updateTransferPlayer;
+Scene_Map.prototype.updateTransferPlayer = function(){
+    Gimmer_Core.Fighty._Scene_Map_prototype_updateTransferPlayer.call(this);
+    if ($gamePlayer.isTransferring()) {
+        $gameScreen.clearHitBoxes();
+    }
+}
+
 Gimmer_Core.Fighty._Game_Event_prototype_update = Game_Event.prototype.update;
 Game_Event.prototype.update = function(){
-    if(this._needsHurtBox && this._hp <= 0){
+    if(this._needsHurtBox && this._enemy.hp <= 0){
         this._needsHurtBox = false;
-        $gameMap.eraseEvent(this._eventId);
+        if('_selfHitBox' in this){
+            this._selfHitBox.finished = true;
+        }
+        if(this._permaDeathKey){
+            $gameSelfSwitches.setValue(this._permaDeathKey, true);
+        }
+        $gameMap.eraseEvent(this._eventId); //temp death, will respawn on next page load.
+        $gamePlayer.getActionHero().gainExp(this._enemy.exp());
+
     }
     Gimmer_Core.Fighty._Game_Event_prototype_update.call(this);
 }
@@ -277,15 +305,16 @@ Game_Character.prototype.resolvePushback = function(hitbox){
     }
 }
 
-Game_Event.prototype.takeDamage = function(damage){
-    this._hp -= damage;
-}
+/*Game_Event.prototype.takeDamage = function(damage){
+    this._enemy.gainHp(-damage);
+}*/
 
 Game_Event.prototype.resolveHitBox = function(hitbox){
     if(!hitbox.engaged){
         hitbox.engaged = true;
-        this.takeDamage(hitbox.damage);
-        if (hitbox.damage > 0) {
+        let damage = hitbox.applyDamage(this._enemy);
+        //let damage = hitbox.getDamage(this._enemy);
+        if (damage > 0) {
             //Todo animation for getting hurt
             SoundManager.playActorDamage();
         }
@@ -312,6 +341,7 @@ Gimmer_Core.Fighty._Game_Character_prototype_initialize = Game_Character.prototy
 Game_Character.prototype.initialize = function(){
     Gimmer_Core.Fighty._Game_Character_prototype_initialize.call(this);
     this._needsHurtBox = false;
+    this._permaDeathKey = false;
     this._hurtBoxModLeft = 0;
     this._hurtBoxModRight = 0;
     this._hurtBoxModTop = 0;
@@ -322,11 +352,21 @@ Gimmer_Core.Fighty._Game_Event_prototype_initialize = Game_Event.prototype.initi
 Game_Event.prototype.initialize = function(mapId, eventId){
     Gimmer_Core.Fighty._Game_Event_prototype_initialize.call(this,mapId, eventId);
     let data = this.getObjectData();
+    //This event is something to battle
     if('isEnemy' in data.meta && data.meta.isEnemy){
+        if(Gimmer_Core.Fighty.PermaDeath || 'permadeath' in data.meta){
+            //Already dead;
+            this._permaDeathKey = [mapId, eventId, "D"]
+            if($gameSelfSwitches.value(this._permaDeathKey)){
+                this.erase();
+                return;
+            }
+        }
+
+
+
         this._needsHurtBox = true;
-        //Todo: couple this to enemy block, rather than static data
-        this._mhp = data.meta.mhp;
-        this._hp = data.meta.mhp;
+        this._enemy = new Game_Enemy(data.meta.isEnemy);
 
         //Modify local hurtbox to go around the sprite, instead of being the tile
         this._hurtBoxModLeft = ('modLeft' in data.meta ? parseInt(data.meta.modLeft) : 0);
@@ -334,13 +374,12 @@ Game_Event.prototype.initialize = function(mapId, eventId){
         this._hurtBoxModTop = ('modTop' in data.meta ? parseInt(data.meta.modTop) : 0);
         this._hurtBoxModBottom = ('modBottom' in data.meta ? parseInt(data.meta.modBottom) : 0);
 
-        //Self Hitbox means the npc will hurt players by walking into them, or if walked into, use same dimenions as hurtbox
+        //Self Hitbox means the npc will hurt players by walking into them, or if walked into, use same dimensions as hurtbox
         if('selfHitbox' in data.meta && data.meta.selfHitbox){
             let rectangle = this.getHurtBox();
-            this._selfHitBox = new Hitbox('npc',rectangle,'self',this, 10, 1);
+            this._selfHitBox = new Hitbox('npc',rectangle,'self',this, 1);
             $gameScreen._enemyHitBoxes.push(this._selfHitBox);
         }
-
     }
 }
 
@@ -360,6 +399,21 @@ Game_Player.prototype.initialize = function(){
     this._needsHurtBox = true;
     this._isAttacking = false;
     this._invincibilityCount = 0;
+}
+
+Game_Player.prototype.isCollidedWithEvents = function(x, y){
+    let isCollided = Game_Character.prototype.isCollidedWithEvents.call(this,x,y)
+    if(!isCollided && this._invincibilityCount > 0 && !Gimmer_Core.Fighty.CanPassThroughEnemiesWhenHurt){
+        //If you can pass, check to see if there is a "through" event in the spot that has a hurtBox
+        let events = $gameMap.eventsXy(x,y);
+        isCollided = events.some(function(event){
+            return ('_selfHitBox' in event);
+        });
+
+
+
+    }
+    return isCollided;
 }
 
 Game_Character.prototype.getHurtBox = function(){
@@ -392,7 +446,7 @@ Game_Screen.prototype.updateHitBoxes = function(){
         if(hitbox.finished){
             delete this._allyHitBoxes[k];
         }
-        if(Gimmer_Core.Fighty.DebugAllyHitboxes){
+        if(Gimmer_Core.Fighty.DebugAllyHitboxes && '_debugHitBoxWindow' in SceneManager._scene){
             hitbox.shape.render(SceneManager._scene._debugHitBoxWindow.contents, '#FF0000', 1);
         }
     }, this);
@@ -402,7 +456,7 @@ Game_Screen.prototype.updateHitBoxes = function(){
         if(hitbox.finished){
             delete this._enemyHitBoxes[k];
         }
-        if(Gimmer_Core.Fighty.DebugEnemyHitboxes){
+        if(Gimmer_Core.Fighty.DebugEnemyHitboxes && '_debugHitBoxWindow' in SceneManager._scene){
             hitbox.shape.render(SceneManager._scene._debugHitBoxWindow.contents, '#FF0000', 1);
         }
     }, this);
@@ -433,6 +487,28 @@ Game_Screen.prototype.allyHitBoxesAtLocation = function(enemyHurtBox){
         }
     });
     return hittingBoxes;
+}
+
+//Extend Game_action
+Gimmer_Core.Fighty._Game_Action_prototype_initialize = Game_Action.prototype.initialize;
+Game_Action.prototype.initialize = function(subject, forcing){
+    this._cachedSubject = false;
+    //cached the subject you were given and return that
+    if(!subject.isActor() && subject.index() === -1){
+        this._cachedSubject = subject;
+    }
+    Gimmer_Core.Fighty._Game_Action_prototype_initialize.call(this,subject,forcing);
+}
+
+Gimmer_Core.Fighty._Game_Action_prototype_subject = Game_Action.prototype.subject;
+Game_Action.prototype.subject = function(){
+    //If you have a cached subject, return that. Don't get it from $gameTroop, because it's not there
+    if(this._cachedSubject){
+        return this._cachedSubject;
+    }
+    else{
+        return Gimmer_Core.Fighty._Game_Action_prototype_subject.call(this);
+    }
 }
 
 class Polygon {
@@ -486,7 +562,6 @@ class Polygon {
             this.points.forEach(function(point, k){
                 this.points[k] = this.rotatePoint(point.x, point.y, this.pivotPoint.x, this.pivotPoint.y, this.angle);
             }, this);
-            dd(this.points);
         }
     }
 
@@ -585,10 +660,9 @@ class Polygon {
 
 
 class Hitbox {
-    constructor(type, shape, direction, source, damage, pushback){
+    constructor(type, shape, direction, source, pushback){
         this.type = type;
         this.direction = (direction === "self" ? direction : Gimmer_Core.directionsToWords(direction));
-        this.damage = damage;
         this.pushback = pushback;
         this.source = source
         this.engaged = false;
@@ -596,27 +670,15 @@ class Hitbox {
         this.shape = shape;
     }
 
-    updatePosition(x,y, width, height, angle){
-        this.shape.updatePosition(x,y,width,height, angle);
-    }
-}
-
-Rectangle.prototype.intersects = function(rect) {
-    //rect = hurtbox
-    //this = hitbox
-    let width = this.width;
-    let height = this.height;
-
-    let comparison1 = rect.x > (this.x + width);
-    let comparison2 = (rect.x + rect.width) <  this.x;
-    let comparison3 = rect.y  > (this.y + height);
-    let comparison4 = (rect.y + rect.height) <  this.y;
-    if(width < 0){
-        comparison2 = (rect.x + rect.width) <  this.x + width;
-    }
-    if(height < 0){
-        comparison4 = (rect.y + rect.height) <  this.y + height;
+    applyDamage(target){
+        let action = new Game_Action(this.source.getActionHero()); // won't work for enemies, will need to change this
+        dd(action);
+        action.setAttack();
+        action.apply(target);
+        return target._result.hpDamage;
     }
 
-    return !(comparison1 || comparison2 || comparison3 || comparison4);
+    updatePosition(x,y, width, height, angle) {
+        this.shape.updatePosition(x, y, width, height, angle);
+    }
 }
