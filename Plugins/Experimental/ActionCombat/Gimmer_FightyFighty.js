@@ -22,13 +22,14 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 //todo: .. enemy ai?
 
 //Extending Animation to support hitboxes being built around them
-Gimmer_Core.Fighty.nextHitboxId = 0;
+
+
 Gimmer_Core.Fighty.HitBoxAnimations = {
     '121': [{width:50, height:25, angle: 0},{width:100, height: 25, angle: 0}],
     '122': [{width:50, height:25, angle: 270},{width:100, height: 25, angle: 270}],
-    '123': [{width:50, height:25, angle: 180},{width:100, height: 25, angle: 180}],
+    '123': [{modY: -12.5, width:50, height:25, angle: 180},{width:100, height: 25, angle: 180}],
     '124': [{width:50, height:25, angle: 90},{width:100, height: 25, angle: 90}],
-    '125': [{width:40, height:10, angle: 225},{width:40, height:10, angle: 315}]
+    '125': [{modX: 0, modY: 0, width:40, height:10, angle: 225},{modX: 15, modY: 0, width:40, height:10, angle: 315}]
 };
 
 Gimmer_Core.Fighty.DebugAllyHitboxes = true;
@@ -44,7 +45,20 @@ Gimmer_Core.pluginCommands["RESPAWN"] = function(params){
     }
 }
 
-DataManager._databaseFiles.push({name:'$dataHitboxes',src:'Hitboxes.json'});
+//DataManager._databaseFiles.push({name:'$dataHitboxes',src:'Hitboxes.json'});
+$dataHitboxes = Gimmer_Core.Fighty.HitBoxAnimations;
+
+Gimmer_Core.Fighty._Scene_Boot_loadSystemImages = Scene_Boot.loadSystemImages;
+Scene_Boot.loadSystemImages = function(){
+    Gimmer_Core.Fighty._Scene_Boot_loadSystemImages.call(this);
+    $dataActors.forEach(function(actor){
+        if(actor && actor.meta && 'actionSprite' in actor.meta){
+            ImageManager.reserveCharacter(actor.meta.actionSprite);
+        }
+    })
+
+}
+
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_setup = Sprite_Animation.prototype.setup;
 Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
@@ -55,6 +69,12 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
         }
         else{
             this.setupHitboxes([]);
+        }
+        let objectData = this._target._character.getObjectData();
+        if('meta' in objectData && 'actionSprite' in objectData.meta){
+            this._oldCharacterName = this._target._character._characterName;
+            this._oldCharacterIndex = this._target._character._characterIndex;
+            this._target._character.setImage(objectData.meta.actionSprite,0);
         }
     }
 }
@@ -75,7 +95,12 @@ Sprite_Animation.prototype.updatePosition = function(){
     if('_hitbox' in this){
         let hitboxX = this.x;
         let hitboxY = this.y;
-        let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
+
+        this._lastModX = this.getModX();
+        this._lastModY = this.getModY();
+        hitboxX += this._lastModX;
+        hitboxY += this._lastModY;
+        /*let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
         switch(direction){
             case 'right':
                 this._lastModY = this.getModY();
@@ -85,20 +110,21 @@ Sprite_Animation.prototype.updatePosition = function(){
                 this._lastModY = this.getModY();
                 hitboxY -= this._lastModY;
                 break;
-        }
+        }*/
+
         this._hitbox.updatePosition(hitboxX, hitboxY);
     }
 }
 
 Sprite_Animation.prototype.getModY = function(){
-    return (this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].height / 2 : this._lastModY);
+    return (this._hitboxFrames[this.currentFrameIndex()] && 'modY' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].modY : this._lastModY);
 }
 
 Sprite_Animation.prototype.getModX = function(){
-    return (this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].width / 2 : this._lastModX);
+    return (this._hitboxFrames[this.currentFrameIndex()] && 'modX' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].modX : this._lastModX);
 }
 
-Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
+/*Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(){
     if(this._isAttacking){
         return false;
@@ -106,7 +132,7 @@ Game_Player.prototype.canMove = function(){
     else{
         return Gimmer_Core.Fighty._Game_Player_prototype_canMove.call(this);
     }
-}
+}*/
 
 Game_Player.prototype.getActionHero = function(){
     return $gameActors._data[$gameParty._actors[$gamePlayer._characterIndex]];
@@ -119,11 +145,18 @@ Game_Event.prototype.getActionHero = function(){
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain = Sprite_Animation.prototype.updateMain;
 Sprite_Animation.prototype.updateMain = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain.call(this);
-    if(!this.isPlaying() && this.isReady() && '_hitbox' in this){
-        this._hitbox.finished = true;
-        if(this._hitbox.type === "player"){
-            $gamePlayer._isAttacking = false;
-            Gimmer_Core.isPlayerStopped = false;
+    if(!this.isPlaying() && this.isReady()){
+        if('_oldCharacterName' in this){
+            this._target._character.setImage(this._oldCharacterName, this._oldCharacterIndex);
+        }
+
+        if('_hitbox' in this){
+            this._hitbox.finished = true;
+            if(this._hitbox.type === "player"){
+                $gamePlayer.setImage('$RainOG',0);
+                $gamePlayer._isAttacking = false;
+                Gimmer_Core.isPlayerStopped = false;
+            }
         }
     }
 }
@@ -141,8 +174,6 @@ Sprite_Animation.prototype.updateFrame = function(){
 }
 
 
-
-/* previous work */
 
 //HACK FOR DEBUGGING
 Gimmer_Core.Fighty.Scene_Map_prototype_createAllWindows = Scene_Map.prototype.createAllWindows;
@@ -304,10 +335,6 @@ Game_Character.prototype.resolvePushback = function(hitbox){
             break;
     }
 }
-
-/*Game_Event.prototype.takeDamage = function(damage){
-    this._enemy.gainHp(-damage);
-}*/
 
 Game_Event.prototype.resolveHitBox = function(hitbox){
     if(!hitbox.engaged){
@@ -511,6 +538,36 @@ Game_Action.prototype.subject = function(){
     }
 }
 
+Gimmer_Core.Fighty._Game_CharacterBase_prototype_updatePattern = Game_CharacterBase.prototype.updatePattern;
+Game_Player.prototype.updatePattern = function() {
+    if(this._isAttacking){
+        this._stopCount = 0;
+    }
+    Gimmer_Core.Fighty._Game_CharacterBase_prototype_updatePattern.call(this);
+};
+
+Gimmer_Core.Fighty._Game_CharacterBase_prototype_updateAnimationCount = Game_CharacterBase.prototype.updateAnimationCount;
+Game_Player.prototype.updateAnimationCount = function(){
+    if(this._isAttacking){
+        this._animationCount++;
+    }
+    else{
+        Gimmer_Core.Fighty._Game_CharacterBase_prototype_updateAnimationCount.call(this);
+    }
+}
+
+//Gimmer_Core.Fighty._Game_CharacterBase_prototype_updateAnimation = Game_CharacterBase.prototype.updateAnimation;
+//Prevent animations if the character is attacking
+/*Game_Player.prototype.updateAnimation = function() {
+    if(this._isAttacking){
+
+    }
+    else{
+        Game_CharacterBase.prototype.updateAnimation.call(this);
+    }
+};*/
+
+
 class Polygon {
     constructor(type, startingX, startingY, width, height, angle) {
         this.type = type;
@@ -672,7 +729,6 @@ class Hitbox {
 
     applyDamage(target){
         let action = new Game_Action(this.source.getActionHero()); // won't work for enemies, will need to change this
-        dd(action);
         action.setAttack();
         action.apply(target);
         return target._result.hpDamage;
