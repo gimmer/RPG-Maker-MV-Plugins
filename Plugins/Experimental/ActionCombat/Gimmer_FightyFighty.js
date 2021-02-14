@@ -30,7 +30,18 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
     '122': [{width:50, height:25, angle: 270},{width:100, height: 25, angle: 270}],
     '123': [{modY: -12.5, width:50, height:25, angle: 180},{width:100, height: 25, angle: 180}],
     '124': [{width:50, height:25, angle: 90},{width:100, height: 25, angle: 90}],
-    '125': [{modX: 0, modY: 0, width:40, height:10, angle: 225},{modX: 0, modY: 0, width:40, height:10, angle: 270},{modX: 15, modY: 0, width:40, height:10, angle: 315}]
+    '125': [
+        {modX: 0, modY: 0, width:35, height:10, angle: 225},
+        {modX: 25, modY: 0, width:35, height:10, angle: 315},
+        {modX: 0, modY: 0, width:35, height:10, angle: 270},
+        {modX: 0, modY: 0, width:35, height:10, angle: 257.5},
+        {modX: 0, modY: 0, width:35, height:10, angle: 245},
+        {modX: 0, modY: 0, width:35, height:10, angle: 230}
+    ],
+    '126': [
+        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveX: 6, moveY:0},
+        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveX: 6, moveY:0}
+    ]
 };
 
 Gimmer_Core.Fighty.DebugAllyHitboxes = true;
@@ -42,6 +53,13 @@ Gimmer_Core.Fighty.hitboxTypes = {
     EVENT: 'event',
     PLAYER: 'player'
 }
+
+//Action type 0 = swing, 1 = stab, 2 = shoot
+Gimmer_Core.Fighty.actionTypes = [
+    "Swing",
+    "Stab",
+    "Shoot"
+]
 
 
 Gimmer_Core.pluginCommands["RESPAWN"] = function(params){
@@ -57,9 +75,19 @@ Gimmer_Core.Fighty._Scene_Boot_loadSystemImages = Scene_Boot.loadSystemImages;
 Scene_Boot.loadSystemImages = function(){
     Gimmer_Core.Fighty._Scene_Boot_loadSystemImages.call(this);
     $dataActors.forEach(function(actor){
-        if(actor && actor.meta && 'actionSprite' in actor.meta){
-            ImageManager.reserveCharacter(actor.meta.actionSprite);
+        if(actor && actor.meta){
+            Gimmer_Core.Fighty.actionTypes.forEach(function(type){
+                //Get indiviual action sprites
+                if('actionSprite'+type in actor.meta){
+                    ImageManager.reserveCharacter(actor.meta['actionSprite'+type]);
+                }
+            });
+            //Get global action sprite
+            if('actionSprite' in actor.meta){
+                ImageManager.reserveCharacter(actor.meta.actionSprite);
+            }
         }
+
     })
 
 }
@@ -72,6 +100,9 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     this._oldCharacterIndex = false;
     this._hitbox = false;
     this._hitboxFrames = [];
+    this._startingX = -1;
+    this._startingY = -1;
+    this._canBeForcedToLiveForever = true;
     if(SceneManager._scene.constructor === Scene_Map){
         if(this._animation && this._animation.id.toString() in $dataHitboxes){
             this.setupHitboxes($dataHitboxes[this._animation.id.toString()]);
@@ -80,13 +111,28 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
             this.setupHitboxes([]);
         }
         let objectData = this._target._character.getObjectData();
-        if('meta' in objectData && 'actionSprite' in objectData.meta){
+        let newCharacterName = this.getNewCharacterName(objectData);
+        if(newCharacterName && this._target._character._isAttacking !== Gimmer_Core.Fighty.actionTypes[2]){
             this._oldCharacterName = this._target._character._characterName;
             this._oldCharacterIndex = this._target._character._characterIndex;
-            this._target._character.setImage(objectData.meta.actionSprite,0);
+            this._target._character.setImage(newCharacterName,0);
             this._target._character._actionAnimationInUse = true;
         }
     }
+}
+
+Sprite_Animation.prototype.getNewCharacterName = function(objectData){
+    let attackType = this._target._character._isAttacking;
+    let newCharacterName =  false;
+    if('meta' in objectData){
+        if('actionSprite'+attackType in objectData.meta){
+            newCharacterName = objectData.meta['actionSprite'+attackType];
+        }
+        else if('actionSprite' in objectData.meta){
+            newCharacterName = objectData.meta.actionSprite;
+        }
+    }
+    return newCharacterName;
 }
 
 Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
@@ -101,33 +147,62 @@ Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
-    Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
+    let isShooting = this._target._character._isAttacking === Gimmer_Core.Fighty.actionTypes[2];
+    if(isShooting){
+        if(this._startingX < 0 || this._startingY < 0){
+            Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
+            this._startingX = this.x;
+            this._startingY = this.y;
+        }
+    }
+    else{
+        Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
+    }
     if(this._hitbox){
         let hitboxX = this.x;
         let hitboxY = this.y;
 
+        if(isShooting){
+            //If you are shooting, the animation has to move with the hitboxes, using moveX and moveY
+            let moveX = this.getMoveX();
+            let moveY = this.getMoveY();
+            hitboxX += moveX;
+            hitboxY += moveY;
+
+            this.x = hitboxX;
+            this.y = hitboxY;
+        }
+
+        //modify hitbox position based on it's size, frame dependent
         this._lastModX = this.getModX();
         this._lastModY = this.getModY();
         hitboxX += this._lastModX;
         hitboxY += this._lastModY;
-        /*let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
-        switch(direction){
-            case 'right':
-                this._lastModY = this.getModY();
-                hitboxY -= this._lastModY;
-                break;
-            case 'left':
-                this._lastModY = this.getModY();
-                hitboxY -= this._lastModY;
-                break;
-        }*/
+        //let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
 
         this._hitbox.updatePosition(hitboxX, hitboxY);
+        if(isShooting){
+            dd(this._target._character._attackRange);
+            //dd(Math.abs(this.x - this._startingX));
+            //todo: get dad's help with lines
+            if(Math.abs(this.x - this._startingX) > this._target._character._attackRange || Math.abs(this.y - this._startingY) > this._target._character._attackRange){
+                this._canBeForcedToLiveForever = false;
+                this._duration = 0;
+            }
+        }
     }
 }
 
 Sprite_Animation.prototype.getModY = function(){
     return (this._hitboxFrames[this.currentFrameIndex()] && 'modY' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].modY : this._lastModY);
+}
+
+Sprite_Animation.prototype.getMoveX = function(){
+    return (this._hitboxFrames[this.currentFrameIndex()] && 'moveX' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].moveX : 0);
+}
+
+Sprite_Animation.prototype.getMoveY = function(){
+    return (this._hitboxFrames[this.currentFrameIndex()] && 'moveY' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].moveY : 0);
 }
 
 Sprite_Animation.prototype.getModX = function(){
@@ -136,7 +211,7 @@ Sprite_Animation.prototype.getModX = function(){
 
 Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(){
-    if(this._isAttacking){
+    if(this._isAttacking && this._isAttacking !== Gimmer_Core.Fighty.actionTypes[2]){
         return false;
     }
     else{
@@ -155,6 +230,11 @@ Game_Event.prototype.getActionHero = function(){
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain = Sprite_Animation.prototype.updateMain;
 Sprite_Animation.prototype.updateMain = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain.call(this);
+    if(this._target._character._isAttacking === Gimmer_Core.Fighty.actionTypes[2]){
+        if(this._duration === 0 && this._canBeForcedToLiveForever){
+            this.setupDuration();
+        }
+    }
     if(!this.isPlaying() && this.isReady()){
         if(this._hitbox){
             this._hitbox.finished = true;
@@ -181,6 +261,10 @@ Sprite_Animation.prototype.updateFrame = function(){
         if(this._target._character._actionAnimationInUse){
             this._target._character._attackAnimationFrame = frameIndex;
         }
+    }
+    //Todo: make this delay a parameter of the plugin? The animation? i dunno
+    if(this._delay === 0){
+        this._delay = 1;
     }
 }
 
@@ -238,10 +322,14 @@ Game_Player.prototype.updateAttacks = function(){
     if(Input.isTriggered('ok')  && !this._isAttacking){
         let direction = Gimmer_Core.directionsToWords(this.direction()).capitalize();
         let weapon = this.getActionHero().weapons()[0];
-        let animationId = ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
-        if(animationId){
-            this.requestAnimation(animationId);
-            this._isAttacking = true;
+        let animationData= ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
+        if(animationData){
+            animationData = animationData.split(",");
+            this.requestAnimation(parseInt(animationData[0]));
+            this._isAttacking = animationData[1];
+            if(animationData[1] === Gimmer_Core.Fighty.actionTypes[2]){
+                this._attackRange = animationData[2];
+            }
         }
     }
 }
@@ -386,6 +474,7 @@ Game_Character.prototype.initialize = function(){
     this._hurtBoxModBottom = 0;
     this._actionAnimationInUse = false;
     this._attackAnimationFrame = 0;
+    this._attackRange = 0;
 }
 
 Gimmer_Core.Fighty._Game_Event_prototype_initialize = Game_Event.prototype.initialize;
@@ -553,7 +642,7 @@ Game_Action.prototype.subject = function(){
 //Animations
 Gimmer_Core.Fighty._Game_CharacterBase_prototype_updatePattern = Game_CharacterBase.prototype.updatePattern;
 Game_Character.prototype.updatePattern = function() {
-    if(this._isAttacking){
+    if(this._isAttacking && this._isAttacking !== Gimmer_Core.Fighty.actionTypes[2]){
         this._stopCount = 0;
     }
     Gimmer_Core.Fighty._Game_CharacterBase_prototype_updatePattern.call(this);
@@ -571,7 +660,8 @@ Game_Character.prototype.updateAnimationCount = function(){
 
 Gimmer_Core.Fighty._Game_Character_prototype_pattern =  Game_Character.prototype.pattern;
 Game_Character.prototype.pattern = function(){
-    if(this._isAttacking && this._actionAnimationInUse){
+    if(this._isAttacking && this._isAttacking !== Gimmer_Core.Fighty.actionTypes[2] && this._actionAnimationInUse){
+        dd("ATK FRAME:" +this._attackAnimationFrame)
         return this._attackAnimationFrame;
     }
     else{
@@ -582,6 +672,10 @@ Game_Character.prototype.pattern = function(){
 Gimmer_Core.Fighty._Sprite_Character_prototype_characterPatternX =  Sprite_Character.prototype.characterPatternX;
 Sprite_Character.prototype.characterPatternX = function(){
     let characterPatternX = Gimmer_Core.Fighty._Sprite_Character_prototype_characterPatternX.call(this);
+    if(this._character === $gamePlayer && $gamePlayer._isAttacking){
+        dd("patternX:"+characterPatternX);
+        dd("max:"+this.determineMaxPatternX());
+    }
     characterPatternX = characterPatternX.clamp(0,this.determineMaxPatternX());
     return characterPatternX;
 }
