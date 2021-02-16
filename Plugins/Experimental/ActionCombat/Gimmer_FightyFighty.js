@@ -39,8 +39,8 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
         {modX: 0, modY: 0, width:35, height:10, angle: 230}
     ],
     '126': [
-        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveX: 6, moveY:0},
-        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveX: 6, moveY:0}
+        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveSpeed: 6},
+        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveSpeed: 6}
     ]
 };
 
@@ -153,6 +153,7 @@ Sprite_Animation.prototype.updatePosition = function(){
             Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
             this._startingX = this.x;
             this._startingY = this.y;
+            this._startingDirection = Gimmer_Core.directionsToWords(this._target._character.direction());
         }
     }
     else{
@@ -163,32 +164,45 @@ Sprite_Animation.prototype.updatePosition = function(){
         let hitboxY = this.y;
 
         if(isShooting){
-            //If you are shooting, the animation has to move with the hitboxes, using moveX and moveY
-            let moveX = this.getMoveX();
-            let moveY = this.getMoveY();
-            hitboxX += moveX;
-            hitboxY += moveY;
+            //If you are shooting, the animation has to move with the hitboxes, using movement and the starting direction
+            let movement = this.getMoveSpeed();
+
+            let direction = this._startingDirection;
+
+            if(direction === "left" || direction === "up"){
+                movement *= -1;
+            }
+
+            if(direction === "up" || direction === "down"){
+                hitboxY += movement;
+            }
+            else{
+                hitboxX += movement;
+            }
 
             this.x = hitboxX;
             this.y = hitboxY;
         }
 
         //modify hitbox position based on it's size, frame dependent
+        //Todo, add in optional directional modifiers for shooting animations
+
         this._lastModX = this.getModX();
         this._lastModY = this.getModY();
         hitboxX += this._lastModX;
         hitboxY += this._lastModY;
-        //let direction = Gimmer_Core.directionsToWords(this._target._character.direction());
+
 
         this._hitbox.updatePosition(hitboxX, hitboxY);
         if(isShooting){
-            dd(this._target._character._attackRange);
-            //dd(Math.abs(this.x - this._startingX));
-            //todo: get dad's help with lines
-            if(Math.abs(this.x - this._startingX) > this._target._character._attackRange || Math.abs(this.y - this._startingY) > this._target._character._attackRange){
+            let distance = Math.sqrt(Math.pow((this._startingX - this.x),2) + Math.pow((this._startingY - this.y),2));
+            if(distance > this._target._character._attackRange || this._hitbox.engaged){
                 this._canBeForcedToLiveForever = false;
                 this._duration = 0;
             }
+        }
+        if(this._hitbox.engaged && this._target._character._finishedAnimationId > 0){
+            this._hitbox.engaged.requestAnimation(this._target._character._finishedAnimationId);
         }
     }
 }
@@ -197,12 +211,8 @@ Sprite_Animation.prototype.getModY = function(){
     return (this._hitboxFrames[this.currentFrameIndex()] && 'modY' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].modY : this._lastModY);
 }
 
-Sprite_Animation.prototype.getMoveX = function(){
-    return (this._hitboxFrames[this.currentFrameIndex()] && 'moveX' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].moveX : 0);
-}
-
-Sprite_Animation.prototype.getMoveY = function(){
-    return (this._hitboxFrames[this.currentFrameIndex()] && 'moveY' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].moveY : 0);
+Sprite_Animation.prototype.getMoveSpeed = function(){
+    return (this._hitboxFrames[this.currentFrameIndex()] && 'moveSpeed' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].moveSpeed : 0);
 }
 
 Sprite_Animation.prototype.getModX = function(){
@@ -328,7 +338,10 @@ Game_Player.prototype.updateAttacks = function(){
             this.requestAnimation(parseInt(animationData[0]));
             this._isAttacking = animationData[1];
             if(animationData[1] === Gimmer_Core.Fighty.actionTypes[2]){
-                this._attackRange = animationData[2];
+                this._attackRange = (animationData.length >= 3 ? Number(animationData[2]) : Math.max(Graphics.boxWidth, Graphics.boxHeight));
+                if(animationData.length >= 4){
+                    this._finishedAnimationId = Number(animationData[3]);
+                }
             }
         }
     }
@@ -355,7 +368,7 @@ Game_Event.prototype.resolveHitBoxes = function(){
 
 Game_Player.prototype.resolveHitBox = function(hitbox){
     if(this._invincibilityCount === 0 && !hitbox.engaged){
-        hitbox.engaged = true;
+        hitbox.engaged = this;
         let actor = $gameActors._data[$gameParty._actors[this.characterIndex()]];
         let damage = hitbox.applyDamage(actor);
         if (damage > 0) {
@@ -436,9 +449,8 @@ Game_Character.prototype.resolvePushback = function(hitbox){
 
 Game_Event.prototype.resolveHitBox = function(hitbox){
     if(!hitbox.engaged){
-        hitbox.engaged = true;
+        hitbox.engaged = this;
         let damage = hitbox.applyDamage(this._enemy);
-        //let damage = hitbox.getDamage(this._enemy);
         if (damage > 0) {
             //Todo animation for getting hurt
             SoundManager.playActorDamage();
@@ -475,6 +487,7 @@ Game_Character.prototype.initialize = function(){
     this._actionAnimationInUse = false;
     this._attackAnimationFrame = 0;
     this._attackRange = 0;
+    this._finishedAnimationId = 0;
 }
 
 Gimmer_Core.Fighty._Game_Event_prototype_initialize = Game_Event.prototype.initialize;
@@ -491,8 +504,6 @@ Game_Event.prototype.initialize = function(mapId, eventId){
                 return;
             }
         }
-
-
 
         this._needsHurtBox = true;
         this._enemy = new Game_Enemy(data.meta.isEnemy);
@@ -661,7 +672,6 @@ Game_Character.prototype.updateAnimationCount = function(){
 Gimmer_Core.Fighty._Game_Character_prototype_pattern =  Game_Character.prototype.pattern;
 Game_Character.prototype.pattern = function(){
     if(this._isAttacking && this._isAttacking !== Gimmer_Core.Fighty.actionTypes[2] && this._actionAnimationInUse){
-        dd("ATK FRAME:" +this._attackAnimationFrame)
         return this._attackAnimationFrame;
     }
     else{
@@ -672,10 +682,6 @@ Game_Character.prototype.pattern = function(){
 Gimmer_Core.Fighty._Sprite_Character_prototype_characterPatternX =  Sprite_Character.prototype.characterPatternX;
 Sprite_Character.prototype.characterPatternX = function(){
     let characterPatternX = Gimmer_Core.Fighty._Sprite_Character_prototype_characterPatternX.call(this);
-    if(this._character === $gamePlayer && $gamePlayer._isAttacking){
-        dd("patternX:"+characterPatternX);
-        dd("max:"+this.determineMaxPatternX());
-    }
     characterPatternX = characterPatternX.clamp(0,this.determineMaxPatternX());
     return characterPatternX;
 }
