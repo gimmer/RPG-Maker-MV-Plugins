@@ -2,6 +2,8 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
+Imported = Imported || {};
+
 Gimmer_Core['Fighty'] = {'loaded':true};
 
 //=============================================================================
@@ -21,7 +23,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 //Todo: make plugin command for enemies to attack.
 //todo: .. enemy ai? <-- Separate plugin
 //Todo: enemy health meters <-- separate plugin to interface with VisualMeters
-//todo: move Game_Player stuff relating to isAttacking to be more global to reuse
 //todo: reorganize the code so all extensions of classes are grouped together instead of being random
 
 
@@ -53,6 +54,7 @@ Gimmer_Core.Fighty.hitboxTypes = {
     EVENT: 'event',
     PLAYER: 'player'
 }
+Gimmer_Core.Fighty.InvincibilityFrames = 60;
 
 //Action type 0 = swing, 1 = stab, 2 = shoot
 Gimmer_Core.Fighty.actionTypes = [
@@ -92,7 +94,6 @@ Scene_Boot.loadSystemImages = function(){
 
 }
 
-
 Gimmer_Core.Fighty._Sprite_Animation_prototype_setup = Sprite_Animation.prototype.setup;
 Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     Gimmer_Core.Fighty._Sprite_Animation_prototype_setup.call(this,target,animation,mirror,delay);
@@ -102,6 +103,13 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     this._hitboxFrames = [];
     this._startingX = -1;
     this._startingY = -1;
+    this._staticAnimation = false;
+    if(this._target._character._nextStaticAnimation && this._target._character._nextStaticAnimation.id === this._animation.id){
+        this.x = this._target._character._nextStaticAnimation.x;
+        this.y = this._target._character._nextStaticAnimation.y;
+        this._staticAnimation = true;
+        this._target._character._nextStaticAnimation = false;
+    }
     this._canBeForcedToLiveForever = true;
     if(SceneManager._scene.constructor === Scene_Map){
         if(this._animation && this._animation.id.toString() in $dataHitboxes){
@@ -112,7 +120,7 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
         }
         let objectData = this._target._character.getObjectData();
         let newCharacterName = this.getNewCharacterName(objectData);
-        if(newCharacterName && this._target._character._isAttacking !== Gimmer_Core.Fighty.actionTypes[2]){
+        if(newCharacterName && this.getShootingStage() < 2){
             this._oldCharacterName = this._target._character._characterName;
             this._oldCharacterIndex = this._target._character._characterIndex;
             this._target._character.setImage(newCharacterName,0);
@@ -141,14 +149,36 @@ Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
     this._lastModY = 0;
     let type = (this._target._character._eventId > 0 ? Gimmer_Core.Fighty.hitboxTypes.EVENT : Gimmer_Core.Fighty.hitboxTypes.PLAYER);
     let direction = this._target._character.direction();
-    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction, this._target._character, 1);
+    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction, this._target._character, 0);
     $gameScreen._allyHitBoxes.push(this._hitbox);
+}
+
+Sprite_Animation.prototype.getShootingStage = function(){
+    let stage = -1;
+    if(this._target._character._isAttacking === Gimmer_Core.Fighty.actionTypes[2]){
+        switch(this._animation.id){
+            case this._target._character._attackAnimationId:
+                stage = 1;
+                break;
+            case this._target._character._projectileAnimationId:
+                stage = 2;
+                break;
+            case this._target._character._finishedAnimationId:
+                stage = 3;
+                break;
+        }
+    }
+
+    return stage;
 }
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
-    let isShooting = this._target._character._isAttacking === Gimmer_Core.Fighty.actionTypes[2];
-    if(isShooting){
+    if(this._staticAnimation){
+        return;
+    }
+    let isProjectile = (this.getShootingStage() === 2);
+    if(isProjectile){
         if(this._startingX < 0 || this._startingY < 0){
             Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
             this._startingX = this.x;
@@ -163,7 +193,7 @@ Sprite_Animation.prototype.updatePosition = function(){
         let hitboxX = this.x;
         let hitboxY = this.y;
 
-        if(isShooting){
+        if(isProjectile){
             //If you are shooting, the animation has to move with the hitboxes, using movement and the starting direction
             let movement = this.getMoveSpeed();
 
@@ -180,29 +210,70 @@ Sprite_Animation.prototype.updatePosition = function(){
                 hitboxX += movement;
             }
 
-            this.x = hitboxX;
-            this.y = hitboxY;
+            //Check where on the map the projectile is.
+            let newMapX = hitboxX / $gameMap.tileWidth();
+            let newMapY = hitboxY / $gameMap.tileHeight();
+
+            //Disabled Galv's Pixelmove, as for some reason it thinks the wall is passable
+            let flippedGalv = false;
+            let oldMove;
+            if(Imported.Galv_PixelMove) {
+                oldMove = $gamePlayer._normMove;
+                $gamePlayer._normMove = true;
+                flippedGalv = true;
+            }
+
+            //If the shooter can't pass something, the projectile can't either, end it
+            if(this._target._character.canPass(newMapX, newMapY, Gimmer_Core.wordsToDirections(direction))){
+                this.x = hitboxX;
+                this.y = hitboxY;
+                if(flippedGalv){
+                    $gamePlayer._normMove = oldMove;
+                }
+            }
+            else{
+                this._canBeForcedToLiveForever = false;
+                this._duration = 0;
+                if(this._target._character._finishedAnimationId > 0){
+                    this._target._character._nextStaticAnimation = {id: this._target._character._finishedAnimationId, x: hitboxX, y:hitboxY}
+                    this._target._character.requestAnimation(this._target._character._finishedAnimationId);
+                }
+
+                if(flippedGalv){
+                    $gamePlayer._normMove = oldMove;
+                }
+                return;
+            }
         }
 
         //modify hitbox position based on it's size, frame dependent
-        //Todo, add in optional directional modifiers for shooting animations
-
         this._lastModX = this.getModX();
         this._lastModY = this.getModY();
+        if(isProjectile){
+            let direction = this._startingDirection;
+            if(direction === "left"){
+                this._lastModX *= 2;
+            }
+        }
         hitboxX += this._lastModX;
         hitboxY += this._lastModY;
 
 
         this._hitbox.updatePosition(hitboxX, hitboxY);
-        if(isShooting){
+        if(isProjectile){
             let distance = Math.sqrt(Math.pow((this._startingX - this.x),2) + Math.pow((this._startingY - this.y),2));
-            if(distance > this._target._character._attackRange || this._hitbox.engaged){
+            if(distance > this._target._character._projectileAttackRange || this._hitbox.engaged){
                 this._canBeForcedToLiveForever = false;
                 this._duration = 0;
+                if(!this._hitbox.engaged){
+                    this._target._character._isAttacking = false; //you missed
+                }
             }
         }
         if(this._hitbox.engaged && this._target._character._finishedAnimationId > 0){
+            this._hitbox.engaged._nextStaticAnimation = {id:this._target._character._finishedAnimationId, x: this.x, y: this.y};
             this._hitbox.engaged.requestAnimation(this._target._character._finishedAnimationId);
+            this._target._character._isAttacking = false;
         }
     }
 }
@@ -240,7 +311,7 @@ Game_Event.prototype.getActionHero = function(){
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain = Sprite_Animation.prototype.updateMain;
 Sprite_Animation.prototype.updateMain = function(){
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updateMain.call(this);
-    if(this._target._character._isAttacking === Gimmer_Core.Fighty.actionTypes[2]){
+    if(this.getShootingStage() === 2){
         if(this._duration === 0 && this._canBeForcedToLiveForever){
             this.setupDuration();
         }
@@ -248,13 +319,18 @@ Sprite_Animation.prototype.updateMain = function(){
     if(!this.isPlaying() && this.isReady()){
         if(this._hitbox){
             this._hitbox.finished = true;
-            if(this._oldCharacterName){
-                this._target._character.setImage(this._oldCharacterName,this._oldCharacterIndex);
-                this._target._character._actionAnimationInUse = false;
+            if(this.getShootingStage() === -1 || this.getShootingStage() === 3){
+                this._target._character._isAttacking = false;
             }
+        }
 
-            this._target._character._isAttacking = false;
+        if(this.getShootingStage() === 1){// You did the shooting one, now do the projectile
+            this._target._character.requestAnimation(this._target._character._projectileAnimationId);
+        }
 
+        if(this._oldCharacterName){
+            this._target._character.setImage(this._oldCharacterName,this._oldCharacterIndex);
+            this._target._character._actionAnimationInUse = false;
         }
     }
 }
@@ -325,6 +401,12 @@ Game_Player.prototype.updateInvincibility = function(){
     //TOdo add somekind of flash effect;
     if(this._invincibilityCount > 0){
         this._invincibilityCount--;
+        if(this._invincibilityCount === 0){
+            this.setOpacity(this._originalOpacity);
+        }
+        else{
+            this.setOpacity((this._invincibilityCount % 2 ? this._originalOpacity / 2 : this._originalOpacity));
+        }
     }
 }
 
@@ -334,14 +416,33 @@ Game_Player.prototype.updateAttacks = function(){
         let weapon = this.getActionHero().weapons()[0];
         let animationData= ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
         if(animationData){
+            //Structure: animationId|finishedAnimationId,PlayerAnimation, Range ~OR~ animationId|FinishedAnimationId,PlayerAnimation
             animationData = animationData.split(",");
-            this.requestAnimation(parseInt(animationData[0]));
+            let animationIds = animationData[0].split("|");
+            if(animationIds.length === 3){
+                this._attackAnimationId = Number(animationIds[0]);
+                this._projectileAnimationId = Number(animationIds[1]);
+                this._finishedAnimationId = Number(animationIds[2]);
+
+            }
+            else{
+                this._attackAnimationId = Number(animationIds[0]);
+                if(animationIds.length > 1){
+                    this._finishedAnimationId = Number(animationIds[1]);
+                }
+            }
+
+            //If the first animation for a projectile is false, just shoot the projectile: there's no windup
+            if(this._attackAnimationId > 0){
+                this.requestAnimation(this._attackAnimationId);
+            }
+            else if(this._projectileAnimationId > 0){
+                this.requestAnimation(this._projectileAnimationId);
+            }
+
             this._isAttacking = animationData[1];
             if(animationData[1] === Gimmer_Core.Fighty.actionTypes[2]){
-                this._attackRange = (animationData.length >= 3 ? Number(animationData[2]) : Math.max(Graphics.boxWidth, Graphics.boxHeight));
-                if(animationData.length >= 4){
-                    this._finishedAnimationId = Number(animationData[3]);
-                }
+                this._projectileAttackRange = (animationData.length >= 3 ? Number(animationData[2]) : Math.max(Graphics.boxWidth, Graphics.boxHeight));
             }
         }
     }
@@ -382,7 +483,8 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
         if(hitbox.direction === 'self'){
             hitbox.engaged = false;
         }
-        this._invincibilityCount = 60; //todo: param
+        this._invincibilityCount = Gimmer_Core.Fighty.InvincibilityFrames;
+        this._originalOpacity = this.opacity();
     }
 }
 
@@ -478,16 +580,24 @@ Gimmer_Core.Fighty._Game_Character_prototype_initialize = Game_Character.prototy
 Game_Character.prototype.initialize = function(){
     Gimmer_Core.Fighty._Game_Character_prototype_initialize.call(this);
     this._needsHurtBox = false;
-    this._isAttacking = false;
     this._permaDeathKey = false;
     this._hurtBoxModLeft = 0;
     this._hurtBoxModRight = 0;
     this._hurtBoxModTop = 0;
     this._hurtBoxModBottom = 0;
+
+    //attack variables
+    this._isAttacking = false;
+    this._attackAnimationId = 0;
+    this._projectileAnimationId = 0;
+    this._finishedAnimationId = 0;
+    this._projectileAttackRange = 0;
+
     this._actionAnimationInUse = false;
     this._attackAnimationFrame = 0;
-    this._attackRange = 0;
-    this._finishedAnimationId = 0;
+
+    this._nextStaticAnimation = false;
+
 }
 
 Gimmer_Core.Fighty._Game_Event_prototype_initialize = Game_Event.prototype.initialize;
@@ -517,7 +627,7 @@ Game_Event.prototype.initialize = function(mapId, eventId){
         //Self Hitbox means the npc will hurt players by walking into them, or if walked into, use same dimensions as hurtbox
         if('selfHitbox' in data.meta && data.meta.selfHitbox){
             let rectangle = this.getHurtBox();
-            this._selfHitBox = new Hitbox(Gimmer_Core.Fighty.hitboxTypes.EVENT,rectangle,'self',this, 1);
+            this._selfHitBox = new Hitbox(Gimmer_Core.Fighty.hitboxTypes.EVENT,rectangle,'self',this);
             $gameScreen._enemyHitBoxes.push(this._selfHitBox);
         }
     }
@@ -548,9 +658,6 @@ Game_Player.prototype.isCollidedWithEvents = function(x, y){
         isCollided = events.some(function(event){
             return ('_selfHitBox' in event);
         });
-
-
-
     }
     return isCollided;
 }
@@ -671,7 +778,7 @@ Game_Character.prototype.updateAnimationCount = function(){
 
 Gimmer_Core.Fighty._Game_Character_prototype_pattern =  Game_Character.prototype.pattern;
 Game_Character.prototype.pattern = function(){
-    if(this._isAttacking && this._isAttacking !== Gimmer_Core.Fighty.actionTypes[2] && this._actionAnimationInUse){
+    if(this._isAttacking && this._actionAnimationInUse){
         return this._attackAnimationFrame;
     }
     else{
@@ -851,14 +958,23 @@ class Polygon {
 
 
 class Hitbox {
-    constructor(type, shape, direction, source, pushback){
+    constructor(type, shape, direction, source){
         this.type = type;
         this.direction = (direction === "self" ? direction : Gimmer_Core.directionsToWords(direction));
-        this.pushback = pushback;
         this.source = source
         this.engaged = false;
         this.finished = false;
         this.shape = shape;
+        this.setupPushBack();
+    }
+
+    setupPushBack(){
+        if(this.type === Gimmer_Core.Fighty.hitboxTypes.PLAYER){
+            this.pushback = Number(this.source.getActionHero().weapons()[0].meta['pushback'] || 0);
+        }
+        else{
+            this.pushback = Number((this.source.getObjectData().meta['pushback'] || 0));
+        }
     }
 
     applyDamage(target){
