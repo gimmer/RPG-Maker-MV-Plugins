@@ -11,11 +11,11 @@
     * On attributes, this is the amount of the attribute they will get
     * On weapons / armor tiles, this is the corresponding weaponId or armorId they will learn to use
     * Skills are different, see below
-7. On any skill / magic nodes, add an event a blank event. Define in this event the following notes:
+7. On any skill / magic nodes, add a blank event. Define in this event the following notes:
     * \<description:whatever> to be the description
     * \<cost:whatever> to be the cost
     * \<value:1,2,3> to be the skills learned. Can be a single value as well
-8. (optional) on any other node, define an event with the same properties to define those, otherwise defaults will be calculated
+8. (optional) On any other node, you can a blank event with the description, cost, or value tags (as seen in step 7) in order to define those statically, otherwise defaults will be calculated / set.
 9. Add to the map the following notes that will act as equations used to calculate license costs based on type and value
     * \<hp: ...> : This would mean .
     * \<mp: ...> 
