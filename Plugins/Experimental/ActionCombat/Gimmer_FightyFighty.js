@@ -20,10 +20,21 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  *
  */
 
-//Todo: make plugin command for enemies to attack.
+//Todo: Enemies attacking <-- probably number 1
+//Todo: Preload enemies attack animations when entering a map
+
 //todo: .. enemy ai? <-- Separate plugin
 //Todo: enemy health meters <-- separate plugin to interface with VisualMeters
+
 //todo: reorganize the code so all extensions of classes are grouped together instead of being random
+//Todo: button bind for attack button, shouldn't just be "ok"
+
+//Todo: Other skills to attack with? This will take some restructuring, but not necessarily?
+
+//todo: plugin command / note tag level disable attack / hitboxes
+//todo: params
+
+//Todo: fix projectile hitbox weirdness with left, up, down
 
 
 Gimmer_Core.Fighty.HitBoxAnimations = {
@@ -40,21 +51,29 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
         {modX: 0, modY: 0, width:35, height:10, angle: 230}
     ],
     '126': [
-        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveSpeed: 6},
-        {modX: -6.5, modY: -12.5, width: 25, height: 25, angle: 0, moveSpeed: 6}
+        {
+            modXright: -6.5, modYright: -12.5,
+            modXleft: -15, modYleft: -12.5,
+            modXup: -12, modYup: -16,
+            modXdown: -12, modYdown: -10,
+            width: 25, height: 25, angle: 0, moveSpeed: 6
+        },
+        {width: 25, height: 25, angle: 0, moveSpeed: 6}
     ]
 };
 
-Gimmer_Core.Fighty.DebugAllyHitboxes = true;
-Gimmer_Core.Fighty.DebugEnemyHitboxes = true;
-Gimmer_Core.Fighty.DebugHurtBoxes = true;
-Gimmer_Core.Fighty.PermaDeath = true;
-Gimmer_Core.Fighty.CanPassThroughEnemiesWhenHurt = true;
+Gimmer_Core.Fighty.DebugAllyHitboxes = true; //param
+Gimmer_Core.Fighty.DebugEnemyHitboxes = true; //param
+Gimmer_Core.Fighty.DebugHurtBoxes = true; //param
+Gimmer_Core.Fighty.PermaDeath = true; //param
+Gimmer_Core.Fighty.CanPassThroughEnemiesWhenHurt = true; //param
+Gimmer_Core.Fighty.InvincibilityFrames = 60; //param
+
+//Constants
 Gimmer_Core.Fighty.hitboxTypes = {
     EVENT: 'event',
     PLAYER: 'player'
 }
-Gimmer_Core.Fighty.InvincibilityFrames = 60;
 
 //Action type 0 = swing, 1 = stab, 2 = shoot
 Gimmer_Core.Fighty.actionTypes = [
@@ -63,7 +82,7 @@ Gimmer_Core.Fighty.actionTypes = [
     "Shoot"
 ]
 
-
+//Plugin commands
 Gimmer_Core.pluginCommands["RESPAWN"] = function(params){
     if(params.length > 0){
         $gameSelfSwitches.setValue([params[0],params[1],"D"], false);
@@ -79,7 +98,7 @@ Scene_Boot.loadSystemImages = function(){
     $dataActors.forEach(function(actor){
         if(actor && actor.meta){
             Gimmer_Core.Fighty.actionTypes.forEach(function(type){
-                //Get indiviual action sprites
+                //Get individual action sprites
                 if('actionSprite'+type in actor.meta){
                     ImageManager.reserveCharacter(actor.meta['actionSprite'+type]);
                 }
@@ -89,11 +108,10 @@ Scene_Boot.loadSystemImages = function(){
                 ImageManager.reserveCharacter(actor.meta.actionSprite);
             }
         }
-
-    })
-
+    });
 }
 
+//Extend Sprite Animation to hold a lot more stuff, potentially be static, have hitboxes, trigger character animation frames, etc.
 Gimmer_Core.Fighty._Sprite_Animation_prototype_setup = Sprite_Animation.prototype.setup;
 Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     Gimmer_Core.Fighty._Sprite_Animation_prototype_setup.call(this,target,animation,mirror,delay);
@@ -123,12 +141,13 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
         if(newCharacterName && this.getShootingStage() < 2){
             this._oldCharacterName = this._target._character._characterName;
             this._oldCharacterIndex = this._target._character._characterIndex;
-            this._target._character.setImage(newCharacterName,0);
+            this._target._character.setImage(newCharacterName,this._target._character._characterIndex);
             this._target._character._actionAnimationInUse = true;
         }
     }
 }
 
+//Helper function to get the character name needed to load action sprites for the character doing the thing
 Sprite_Animation.prototype.getNewCharacterName = function(objectData){
     let attackType = this._target._character._isAttacking;
     let newCharacterName =  false;
@@ -189,7 +208,7 @@ Sprite_Animation.prototype.updatePosition = function(){
     else{
         Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
     }
-    if(this._hitbox){
+    if(this._hitbox.shape.height > 0 && this._hitbox.shape.width > 0){
         let hitboxX = this.x;
         let hitboxY = this.y;
 
@@ -246,17 +265,22 @@ Sprite_Animation.prototype.updatePosition = function(){
             }
         }
 
-        //modify hitbox position based on it's size, frame dependent
-        this._lastModX = this.getModX();
-        this._lastModY = this.getModY();
-        if(isProjectile){
-            let direction = this._startingDirection;
-            if(direction === "left"){
-                this._lastModX *= 2;
-            }
+
+        if(!isProjectile){
+            this._lastModX = this.getModX();
+            this._lastModY = this.getModY();
         }
-        hitboxX += this._lastModX;
+        else{
+            this._lastModX = this.getModX(this._startingDirection);
+            dd(this._lastModX);
+            dd(this._lastModY);
+            this._lastModY = this.getModY(this._startingDirection);
+        }
+        //modify hitbox position based on it's size, frame dependent
         hitboxY += this._lastModY;
+        hitboxX += this._lastModX;
+
+
 
 
         this._hitbox.updatePosition(hitboxX, hitboxY);
@@ -278,16 +302,24 @@ Sprite_Animation.prototype.updatePosition = function(){
     }
 }
 
-Sprite_Animation.prototype.getModY = function(){
-    return (this._hitboxFrames[this.currentFrameIndex()] && 'modY' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].modY : this._lastModY);
+Sprite_Animation.prototype.getModY = function(startingDirection){
+    let field = 'modY';
+    if(startingDirection){
+        field = 'modY'+startingDirection;
+    }
+    return (this._hitboxFrames[this.currentFrameIndex()] && field in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()][field] : this._lastModY);
 }
 
 Sprite_Animation.prototype.getMoveSpeed = function(){
     return (this._hitboxFrames[this.currentFrameIndex()] && 'moveSpeed' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].moveSpeed : 0);
 }
 
-Sprite_Animation.prototype.getModX = function(){
-    return (this._hitboxFrames[this.currentFrameIndex()] && 'modX' in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()].modX : this._lastModX);
+Sprite_Animation.prototype.getModX = function(startingDirection){
+    let field = 'modX';
+    if(startingDirection){
+        field = 'modX'+startingDirection;
+    }
+    return (this._hitboxFrames[this.currentFrameIndex()] && field in this._hitboxFrames[this.currentFrameIndex()] ? this._hitboxFrames[this.currentFrameIndex()][field] : this._lastModX);
 }
 
 Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
@@ -493,6 +525,7 @@ Scene_Map.prototype.updateTransferPlayer = function(){
     Gimmer_Core.Fighty._Scene_Map_prototype_updateTransferPlayer.call(this);
     if ($gamePlayer.isTransferring()) {
         $gameScreen.clearHitBoxes();
+        $gamePlayer._isAttacking = false;
     }
 }
 
@@ -797,6 +830,10 @@ Sprite_Character.prototype.determineMaxPatternX = function (){
     return (this.bitmap.width / this.patternWidth()) -1;
 }
 
+Game_Enemy.prototype.getObjectData = function(){
+    return $dataEnemies[this._enemyId]
+}
+
 //Gimmer_Core.Fighty._Game_CharacterBase_prototype_updateAnimation = Game_CharacterBase.prototype.updateAnimation;
 //Prevent animations if the character is attacking
 /*Game_Player.prototype.updateAnimation = function() {
@@ -973,12 +1010,12 @@ class Hitbox {
             this.pushback = Number(this.source.getActionHero().weapons()[0].meta['pushback'] || 0);
         }
         else{
-            this.pushback = Number((this.source.getObjectData().meta['pushback'] || 0));
+            this.pushback = Number(this.source.getActionHero().getObjectData().meta['pushback'] || 0);
         }
     }
 
     applyDamage(target){
-        let action = new Game_Action(this.source.getActionHero()); // won't work for enemies, will need to change this
+        let action = new Game_Action(this.source.getActionHero());
         action.setAttack();
         action.apply(target);
         return target._result.hpDamage;
