@@ -20,7 +20,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  *
  */
 
-//Todo: Enemies attacking <-- probably number 1
 //Todo: Preload enemies attack animations when entering a map
 
 //todo: .. enemy ai? <-- Separate plugin
@@ -62,9 +61,11 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
     ]
 };
 
+//Debug
 Gimmer_Core.Fighty.DebugAllyHitboxes = true; //param
 Gimmer_Core.Fighty.DebugEnemyHitboxes = true; //param
 Gimmer_Core.Fighty.DebugHurtBoxes = true; //param
+
 Gimmer_Core.Fighty.PermaDeath = true; //param
 Gimmer_Core.Fighty.CanPassThroughEnemiesWhenHurt = true; //param
 Gimmer_Core.Fighty.InvincibilityFrames = 60; //param
@@ -138,7 +139,7 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
         }
         let objectData = this._target._character.getObjectData();
         let newCharacterName = this.getNewCharacterName(objectData);
-        if(newCharacterName && this.getShootingStage() < 2){
+        if(newCharacterName && this.getShootingStage() < 2 && !this._staticAnimation){
             this._oldCharacterName = this._target._character._characterName;
             this._oldCharacterIndex = this._target._character._characterIndex;
             this._target._character.setImage(newCharacterName,this._target._character._characterIndex);
@@ -168,8 +169,14 @@ Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
     this._lastModY = 0;
     let type = (this._target._character._eventId > 0 ? Gimmer_Core.Fighty.hitboxTypes.EVENT : Gimmer_Core.Fighty.hitboxTypes.PLAYER);
     let direction = this._target._character.direction();
-    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction, this._target._character, 0);
-    $gameScreen._allyHitBoxes.push(this._hitbox);
+    this._hitbox = new Hitbox(type,new Polygon('rectangle',0,0,0,0, 0),direction, this._target._character);
+    if(type === Gimmer_Core.Fighty.hitboxTypes.EVENT){
+        $gameScreen._enemyHitBoxes.push(this._hitbox);
+    }
+    else{
+        $gameScreen._allyHitBoxes.push(this._hitbox);
+    }
+
 }
 
 Sprite_Animation.prototype.getShootingStage = function(){
@@ -272,8 +279,6 @@ Sprite_Animation.prototype.updatePosition = function(){
         }
         else{
             this._lastModX = this.getModX(this._startingDirection);
-            dd(this._lastModX);
-            dd(this._lastModY);
             this._lastModY = this.getModY(this._startingDirection);
         }
         //modify hitbox position based on it's size, frame dependent
@@ -332,6 +337,14 @@ Game_Player.prototype.canMove = function(){
     }
 }
 
+//Prevent moving during attacks even on forced movement routes
+Gimmer_Core.Fighty._Game_Character_prototype_updateRoutineMove = Game_Character.prototype.updateRoutineMove;
+Game_Character.prototype.updateRoutineMove = function() {
+    if(!this._isAttacking || this._isAttacking === Gimmer_Core.Fighty.actionTypes[2]){
+        Gimmer_Core.Fighty._Game_Character_prototype_updateRoutineMove.call(this)
+    }
+};
+
 Game_Player.prototype.getActionHero = function(){
     return $gameActors._data[$gameParty._actors[$gamePlayer._characterIndex]];
 }
@@ -381,9 +394,9 @@ Sprite_Animation.prototype.updateFrame = function(){
         }
     }
     //Todo: make this delay a parameter of the plugin? The animation? i dunno
-    if(this._delay === 0){
+    /*if(this._delay === 0){
         this._delay = 1;
-    }
+    }*/
 }
 
 
@@ -444,38 +457,9 @@ Game_Player.prototype.updateInvincibility = function(){
 
 Game_Player.prototype.updateAttacks = function(){
     if(Input.isTriggered('ok')  && !this._isAttacking){
-        let direction = Gimmer_Core.directionsToWords(this.direction()).capitalize();
         let weapon = this.getActionHero().weapons()[0];
-        let animationData= ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
-        if(animationData){
-            //Structure: animationId|finishedAnimationId,PlayerAnimation, Range ~OR~ animationId|FinishedAnimationId,PlayerAnimation
-            animationData = animationData.split(",");
-            let animationIds = animationData[0].split("|");
-            if(animationIds.length === 3){
-                this._attackAnimationId = Number(animationIds[0]);
-                this._projectileAnimationId = Number(animationIds[1]);
-                this._finishedAnimationId = Number(animationIds[2]);
-
-            }
-            else{
-                this._attackAnimationId = Number(animationIds[0]);
-                if(animationIds.length > 1){
-                    this._finishedAnimationId = Number(animationIds[1]);
-                }
-            }
-
-            //If the first animation for a projectile is false, just shoot the projectile: there's no windup
-            if(this._attackAnimationId > 0){
-                this.requestAnimation(this._attackAnimationId);
-            }
-            else if(this._projectileAnimationId > 0){
-                this.requestAnimation(this._projectileAnimationId);
-            }
-
-            this._isAttacking = animationData[1];
-            if(animationData[1] === Gimmer_Core.Fighty.actionTypes[2]){
-                this._projectileAttackRange = (animationData.length >= 3 ? Number(animationData[2]) : Math.max(Graphics.boxWidth, Graphics.boxHeight));
-            }
+        if(weapon){
+            this.resolveAttackAnimation(weapon);
         }
     }
 }
@@ -544,6 +528,52 @@ Game_Event.prototype.update = function(){
 
     }
     Gimmer_Core.Fighty._Game_Event_prototype_update.call(this);
+    if(this._canAttack){
+        this.updateAttacks();
+    }
+}
+
+Game_Event.prototype.updateAttacks = function(){
+    if(this._enemy && this._pendingAttack && !this._isAttacking){
+        this._pendingAttack = false;
+        this.resolveAttackAnimation(this._enemy.getObjectData());
+    }
+}
+
+Game_Character.prototype.resolveAttackAnimation = function(metasource){
+    let direction = Gimmer_Core.directionsToWords(this.direction()).capitalize();
+    let weapon = metasource
+    let animationData= ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
+    if(animationData){
+        //Structure: animationId|finishedAnimationId,PlayerAnimation, Range ~OR~ animationId|FinishedAnimationId,PlayerAnimation
+        animationData = animationData.split(",");
+        let animationIds = animationData[0].split("|");
+        if(animationIds.length === 3){
+            this._attackAnimationId = Number(animationIds[0]);
+            this._projectileAnimationId = Number(animationIds[1]);
+            this._finishedAnimationId = Number(animationIds[2]);
+
+        }
+        else{
+            this._attackAnimationId = Number(animationIds[0]);
+            if(animationIds.length > 1){
+                this._finishedAnimationId = Number(animationIds[1]);
+            }
+        }
+
+        //If the first animation for a projectile is false, just shoot the projectile: there's no windup
+        if(this._attackAnimationId > 0){
+            this.requestAnimation(this._attackAnimationId);
+        }
+        else if(this._projectileAnimationId > 0){
+            this.requestAnimation(this._projectileAnimationId);
+        }
+
+        this._isAttacking = animationData[1];
+        if(animationData[1] === Gimmer_Core.Fighty.actionTypes[2]){
+            this._projectileAttackRange = (animationData.length >= 3 ? Number(animationData[2]) : Math.max(Graphics.boxWidth, Graphics.boxHeight));
+        }
+    }
 }
 
 Game_Character.prototype.resolvePushback = function(hitbox){
@@ -638,6 +668,8 @@ Game_Event.prototype.initialize = function(mapId, eventId){
     Gimmer_Core.Fighty._Game_Event_prototype_initialize.call(this,mapId, eventId);
     let data = this.getObjectData();
     //This event is something to battle
+    this._canAttack = !!('canAttack' in data.meta && data.meta.canAttack);
+    this._enemy = false;
     if('isEnemy' in data.meta && data.meta.isEnemy){
         if(Gimmer_Core.Fighty.PermaDeath || 'permadeath' in data.meta){
             //Already dead;
@@ -647,7 +679,7 @@ Game_Event.prototype.initialize = function(mapId, eventId){
                 return;
             }
         }
-
+        this._pendingAttack = false;
         this._needsHurtBox = true;
         this._enemy = new Game_Enemy(data.meta.isEnemy);
 
