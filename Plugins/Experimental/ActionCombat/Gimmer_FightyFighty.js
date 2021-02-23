@@ -33,7 +33,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 //todo: plugin command / note tag level disable attack / hitboxes
 //todo: params
 
-//Todo: fix projectile hitbox weirdness with left, up, down
 
 
 Gimmer_Core.Fighty.HitBoxAnimations = {
@@ -123,6 +122,7 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     this._startingX = -1;
     this._startingY = -1;
     this._staticAnimation = false;
+    this._target._character._projectilePhase = this.getShootingStage();
     if(this._target._character._nextStaticAnimation && this._target._character._nextStaticAnimation.id === this._animation.id){
         this.x = this._target._character._nextStaticAnimation.x;
         this.y = this._target._character._nextStaticAnimation.y;
@@ -237,8 +237,8 @@ Sprite_Animation.prototype.updatePosition = function(){
             }
 
             //Check where on the map the projectile is.
-            let newMapX = hitboxX / $gameMap.tileWidth();
-            let newMapY = hitboxY / $gameMap.tileHeight();
+            let newMapX = Math.floor(hitboxX / $gameMap.tileWidth());
+            let newMapY = Math.floor(hitboxY / $gameMap.tileHeight());
 
             //Disabled Galv's Pixelmove, as for some reason it thinks the wall is passable
             let flippedGalv = false;
@@ -249,8 +249,8 @@ Sprite_Animation.prototype.updatePosition = function(){
                 flippedGalv = true;
             }
 
-            //If the shooter can't pass something, the projectile can't either, end it
-            if(this._target._character.canPass(newMapX, newMapY, Gimmer_Core.wordsToDirections(direction))){
+            //Hit walls
+            if($gameMap.isPassable(newMapX, newMapY, Gimmer_Core.wordsToDirections(direction))){
                 this.x = hitboxX;
                 this.y = hitboxY;
                 if(flippedGalv){
@@ -285,9 +285,6 @@ Sprite_Animation.prototype.updatePosition = function(){
         hitboxY += this._lastModY;
         hitboxX += this._lastModX;
 
-
-
-
         this._hitbox.updatePosition(hitboxX, hitboxY);
         if(isProjectile){
             let distance = Math.sqrt(Math.pow((this._startingX - this.x),2) + Math.pow((this._startingY - this.y),2));
@@ -300,12 +297,13 @@ Sprite_Animation.prototype.updatePosition = function(){
             }
         }
         if(this._hitbox.engaged && this._target._character._finishedAnimationId > 0){
-            this._hitbox.engaged._nextStaticAnimation = {id:this._target._character._finishedAnimationId, x: this.x, y: this.y};
-            this._hitbox.engaged.requestAnimation(this._target._character._finishedAnimationId);
+            this._target._character._nextStaticAnimation = {id:this._target._character._finishedAnimationId, x: this.x, y: this.y};
+            this._target._character.requestAnimation(this._target._character._finishedAnimationId);
             this._target._character._isAttacking = false;
         }
     }
 }
+
 
 Sprite_Animation.prototype.getModY = function(startingDirection){
     let field = 'modY';
@@ -409,7 +407,8 @@ Scene_Map.prototype.createAllWindows = function(){
 }
 
 Scene_Map.prototype.addDebugHitBoxWindow = function(){
-    this._debugHitBoxWindow = new Window_Plain(-18,-18,Graphics.width,Graphics.height);
+    let temp = new Window_Base();
+    this._debugHitBoxWindow = new Window_Plain(-temp.standardPadding(),-temp.standardPadding(),Graphics.width + temp.standardPadding() * 2,Graphics.height + temp.standardPadding() * 2);
     this.addChild(this._debugHitBoxWindow);
 }
 Gimmer_Core.Fighty._Scene_Map_prototype_update = Scene_Map.prototype.update;
@@ -525,7 +524,11 @@ Game_Event.prototype.update = function(){
         }
         $gameMap.eraseEvent(this._eventId); //temp death, will respawn on next page load.
         $gamePlayer.getActionHero().gainExp(this._enemy.exp());
-
+        this._enemy = false;
+        this._canAttack = false;
+        if(Gimmer_Core.FightySmarts){
+            this._canAggro = false;
+        }
     }
     Gimmer_Core.Fighty._Game_Event_prototype_update.call(this);
     if(this._canAttack){
@@ -589,6 +592,16 @@ Game_Character.prototype.resolvePushback = function(hitbox){
         }
     }
     let d = Gimmer_Core.wordsToDirections(hitboxDirection);
+    let flippedGalv = false;
+    let oldMove;
+    if(this === $gamePlayer){
+        //Disabled Galv's Pixelmove, as for some reason it thinks the wall is passable
+        if(Imported.Galv_PixelMove) {
+            oldMove = $gamePlayer._normMove;
+            $gamePlayer._normMove = true;
+            flippedGalv = true;
+        }
+    }
 
     switch(hitboxDirection){
         case 'left':
@@ -609,6 +622,9 @@ Game_Character.prototype.resolvePushback = function(hitbox){
                 }
             }
             break;
+    }
+    if(flippedGalv){
+        $gamePlayer._normMove = oldMove;
     }
 }
 
@@ -655,6 +671,7 @@ Game_Character.prototype.initialize = function(){
     this._projectileAnimationId = 0;
     this._finishedAnimationId = 0;
     this._projectileAttackRange = 0;
+    this._projectilePhase = -1;
 
     this._actionAnimationInUse = false;
     this._attackAnimationFrame = 0;
