@@ -2,6 +2,10 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
+if(Gimmer_Core.AnimateAnywhere === undefined){
+    throw "Gimmer_AnimateAnywhere is required for this plugin";
+}
+
 Imported = Imported || {};
 
 Gimmer_Core['Fighty'] = {'loaded':true};
@@ -22,7 +26,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 
 //Todo: Preload enemies attack animations when entering a map
 
-//todo: .. enemy ai? <-- Separate plugin
 //Todo: enemy health meters <-- separate plugin to interface with VisualMeters
 
 //todo: reorganize the code so all extensions of classes are grouped together instead of being random
@@ -32,7 +35,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 
 //todo: plugin command / note tag level disable attack / hitboxes
 //todo: params
-
 
 
 Gimmer_Core.Fighty.HitBoxAnimations = {
@@ -121,13 +123,8 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     this._hitboxFrames = [];
     this._startingX = -1;
     this._startingY = -1;
-    this._staticAnimation = false;
-    this._target._character._projectilePhase = this.getShootingStage();
-    if(this._target._character._nextStaticAnimation && this._target._character._nextStaticAnimation.id === this._animation.id){
-        this.x = this._target._character._nextStaticAnimation.x;
-        this.y = this._target._character._nextStaticAnimation.y;
-        this._staticAnimation = true;
-        this._target._character._nextStaticAnimation = false;
+    if(this.getShootingStage() === 2){
+        this._startingDirection = this._target._character._projectileLastDirection;
     }
     this._canBeForcedToLiveForever = true;
     if(SceneManager._scene.constructor === Scene_Map){
@@ -139,7 +136,7 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
         }
         let objectData = this._target._character.getObjectData();
         let newCharacterName = this.getNewCharacterName(objectData);
-        if(newCharacterName && this.getShootingStage() < 2 && !this._staticAnimation){
+        if(newCharacterName && this.getShootingStage() < 2){
             this._oldCharacterName = this._target._character._characterName;
             this._oldCharacterIndex = this._target._character._characterIndex;
             this._target._character.setImage(newCharacterName,this._target._character._characterIndex);
@@ -181,7 +178,7 @@ Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
 
 Sprite_Animation.prototype.getShootingStage = function(){
     let stage = -1;
-    if(this._target._character._isAttacking === Gimmer_Core.Fighty.actionTypes[2]){
+    if(this._animation){
         switch(this._animation.id){
             case this._target._character._attackAnimationId:
                 stage = 1;
@@ -200,16 +197,12 @@ Sprite_Animation.prototype.getShootingStage = function(){
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
-    if(this._staticAnimation){
-        return;
-    }
     let isProjectile = (this.getShootingStage() === 2);
     if(isProjectile){
         if(this._startingX < 0 || this._startingY < 0){
             Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
             this._startingX = this.x;
             this._startingY = this.y;
-            this._startingDirection = Gimmer_Core.directionsToWords(this._target._character.direction());
         }
     }
     else{
@@ -240,34 +233,18 @@ Sprite_Animation.prototype.updatePosition = function(){
             let newMapX = Math.floor(hitboxX / $gameMap.tileWidth());
             let newMapY = Math.floor(hitboxY / $gameMap.tileHeight());
 
-            //Disabled Galv's Pixelmove, as for some reason it thinks the wall is passable
-            let flippedGalv = false;
-            let oldMove;
-            if(Imported.Galv_PixelMove) {
-                oldMove = $gamePlayer._normMove;
-                $gamePlayer._normMove = true;
-                flippedGalv = true;
-            }
-
             //Hit walls
             if($gameMap.isPassable(newMapX, newMapY, Gimmer_Core.wordsToDirections(direction))){
                 this.x = hitboxX;
                 this.y = hitboxY;
-                if(flippedGalv){
-                    $gamePlayer._normMove = oldMove;
-                }
             }
             else{
                 this._canBeForcedToLiveForever = false;
                 this._duration = 0;
-                if(this._target._character._finishedAnimationId > 0){
-                    this._target._character._nextStaticAnimation = {id: this._target._character._finishedAnimationId, x: hitboxX, y:hitboxY}
-                    this._target._character.requestAnimation(this._target._character._finishedAnimationId);
+                if(this._target._character._finishedAnimationId > 0 && SceneManager._scene.constructor === Scene_Map){
+                    SceneManager._scene.addAnimation(this._target._character._finishedAnimationId, this._target._character,false,hitboxX, hitboxY, 0);
                 }
 
-                if(flippedGalv){
-                    $gamePlayer._normMove = oldMove;
-                }
                 return;
             }
         }
@@ -291,15 +268,13 @@ Sprite_Animation.prototype.updatePosition = function(){
             if(distance > this._target._character._projectileAttackRange || this._hitbox.engaged){
                 this._canBeForcedToLiveForever = false;
                 this._duration = 0;
-                if(!this._hitbox.engaged){
-                    this._target._character._isAttacking = false; //you missed
-                }
             }
         }
-        if(this._hitbox.engaged && this._target._character._finishedAnimationId > 0){
-            this._target._character._nextStaticAnimation = {id:this._target._character._finishedAnimationId, x: this.x, y: this.y};
-            this._target._character.requestAnimation(this._target._character._finishedAnimationId);
+        if(this._hitbox.engaged){
             this._target._character._isAttacking = false;
+            if(this._target._character._finishedAnimationId > 0 && SceneManager._scene.constructor === Scene_Map){
+                SceneManager._scene.addAnimation(this._target._character._finishedAnimationId, this._target._character,false,this.x, this.y, 0);
+            }
         }
     }
 }
@@ -327,7 +302,7 @@ Sprite_Animation.prototype.getModX = function(startingDirection){
 
 Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(){
-    if(this._isAttacking && this._isAttacking !== Gimmer_Core.Fighty.actionTypes[2]){
+    if(this._isAttacking){
         return false;
     }
     else{
@@ -338,7 +313,7 @@ Game_Player.prototype.canMove = function(){
 //Prevent moving during attacks even on forced movement routes
 Gimmer_Core.Fighty._Game_Character_prototype_updateRoutineMove = Game_Character.prototype.updateRoutineMove;
 Game_Character.prototype.updateRoutineMove = function() {
-    if(!this._isAttacking || this._isAttacking === Gimmer_Core.Fighty.actionTypes[2]){
+    if(!this._isAttacking){
         Gimmer_Core.Fighty._Game_Character_prototype_updateRoutineMove.call(this)
     }
 };
@@ -362,13 +337,13 @@ Sprite_Animation.prototype.updateMain = function(){
     if(!this.isPlaying() && this.isReady()){
         if(this._hitbox){
             this._hitbox.finished = true;
-            if(this.getShootingStage() === -1 || this.getShootingStage() === 3){
-                this._target._character._isAttacking = false;
-            }
         }
 
-        if(this.getShootingStage() === 1){// You did the shooting one, now do the projectile
-            this._target._character.requestAnimation(this._target._character._projectileAnimationId);
+        this._target._character._isAttacking = false;
+
+
+        if(this.getShootingStage() === 1 && SceneManager._scene.constructor === Scene_Map){// You did the shooting one, now do the projectile
+            SceneManager._scene.addAnimation(this._target._character._projectileAnimationId, this._target._character,false,this.x, this.y,0);
         }
 
         if(this._oldCharacterName){
@@ -413,7 +388,9 @@ Scene_Map.prototype.addDebugHitBoxWindow = function(){
 }
 Gimmer_Core.Fighty._Scene_Map_prototype_update = Scene_Map.prototype.update;
 Scene_Map.prototype.update = function(){
-    this._debugHitBoxWindow.contents.clear();
+    if(this._debugHitBoxWindow){
+        this._debugHitBoxWindow.contents.clear();
+    }
     Gimmer_Core.Fighty._Scene_Map_prototype_update.call(this);
 }
 
@@ -426,7 +403,7 @@ Game_Character.prototype.update = function(sceneActive){
             this.getHurtBox().render(SceneManager._scene._debugHitBoxWindow.contents,'#FFFFFF',1);
         }
         this.resolveHitBoxes();
-        if('_selfHitBox' in this){
+        if(this._selfHitBox){
             let rectangle = this.getHurtBox();
             this._selfHitBox.updatePosition(rectangle.startingX, rectangle.startingY);
         }
@@ -516,7 +493,7 @@ Gimmer_Core.Fighty._Game_Event_prototype_update = Game_Event.prototype.update;
 Game_Event.prototype.update = function(){
     if(this._needsHurtBox && this._enemy.hp <= 0){
         this._needsHurtBox = false;
-        if('_selfHitBox' in this){
+        if(this._selfHitBox){
             this._selfHitBox.finished = true;
         }
         if(this._permaDeathKey){
@@ -543,19 +520,33 @@ Game_Event.prototype.updateAttacks = function(){
     }
 }
 
+Game_Event.prototype.getAttackRange = function(){
+    let weapon = this._enemy.getObjectData();
+    let direction = Gimmer_Core.directionsToWords(this.direction()).capitalize();
+    let animationData= ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
+    dd(animationData);
+    if(animationData){
+        animationData = animationData.split(",");
+        if(animationData.length >= 3){
+            return Number(animationData[2]);
+        }
+    }
+    return 0;
+}
+
 Game_Character.prototype.resolveAttackAnimation = function(metasource){
     let direction = Gimmer_Core.directionsToWords(this.direction()).capitalize();
-    let weapon = metasource
+    let weapon = metasource;
     let animationData= ('animation'+direction in weapon.meta ? weapon.meta['animation'+direction] : false);
     if(animationData){
-        //Structure: animationId|finishedAnimationId,PlayerAnimation, Range ~OR~ animationId|FinishedAnimationId,PlayerAnimation
+        //Structure: animationId|finishedAnimationId,PlayerAnimation, Range ~OR~ animationId|FinishedAnimationId,PlayerAnimation, Range
         animationData = animationData.split(",");
         let animationIds = animationData[0].split("|");
         if(animationIds.length === 3){
             this._attackAnimationId = Number(animationIds[0]);
             this._projectileAnimationId = Number(animationIds[1]);
             this._finishedAnimationId = Number(animationIds[2]);
-
+            this._projectileLastDirection = Gimmer_Core.directionsToWords(this.direction());
         }
         else{
             this._attackAnimationId = Number(animationIds[0]);
@@ -575,6 +566,11 @@ Game_Character.prototype.resolveAttackAnimation = function(metasource){
         this._isAttacking = animationData[1];
         if(animationData[1] === Gimmer_Core.Fighty.actionTypes[2]){
             this._projectileAttackRange = (animationData.length >= 3 ? Number(animationData[2]) : Math.max(Graphics.boxWidth, Graphics.boxHeight));
+        }
+        else{
+            if(animationData.length >= 3){
+                this._regularAttackRange = Number(animationData[2]);
+            }
         }
     }
 }
@@ -659,6 +655,7 @@ Gimmer_Core.Fighty._Game_Character_prototype_initialize = Game_Character.prototy
 Game_Character.prototype.initialize = function(){
     Gimmer_Core.Fighty._Game_Character_prototype_initialize.call(this);
     this._needsHurtBox = false;
+    this._selfHitBox = false;
     this._permaDeathKey = false;
     this._hurtBoxModLeft = 0;
     this._hurtBoxModRight = 0;
@@ -671,13 +668,11 @@ Game_Character.prototype.initialize = function(){
     this._projectileAnimationId = 0;
     this._finishedAnimationId = 0;
     this._projectileAttackRange = 0;
-    this._projectilePhase = -1;
+    this._regularAttackRange = 0;
+    this._projectileLastDirection = false;
 
     this._actionAnimationInUse = false;
     this._attackAnimationFrame = 0;
-
-    this._nextStaticAnimation = false;
-
 }
 
 Gimmer_Core.Fighty._Game_Event_prototype_initialize = Game_Event.prototype.initialize;
@@ -738,7 +733,7 @@ Game_Player.prototype.isCollidedWithEvents = function(x, y){
         //If you can pass, check to see if there is a "through" event in the spot that has a hurtBox
         let events = $gameMap.eventsXy(x,y);
         isCollided = events.some(function(event){
-            return ('_selfHitBox' in event);
+            return (event._selfHitBox);
         });
     }
     return isCollided;
@@ -772,17 +767,19 @@ Game_Screen.prototype.update = function(){
 Game_Screen.prototype.updateHitBoxes = function(){
     this._allyHitBoxes.forEach(function(hitbox, k){
         if(hitbox.finished){
-            delete this._allyHitBoxes[k];
+            this._allyHitBoxes.splice(k,1);
         }
+
         if(Gimmer_Core.Fighty.DebugAllyHitboxes && '_debugHitBoxWindow' in SceneManager._scene){
             hitbox.shape.render(SceneManager._scene._debugHitBoxWindow.contents, '#FF0000', 1);
         }
+
     }, this);
 
 
     this._enemyHitBoxes.forEach(function(hitbox, k){
         if(hitbox.finished){
-            delete this._enemyHitBoxes[k];
+            this._enemyHitBoxes.splice(k,1);
         }
         if(Gimmer_Core.Fighty.DebugEnemyHitboxes && '_debugHitBoxWindow' in SceneManager._scene){
             hitbox.shape.render(SceneManager._scene._debugHitBoxWindow.contents, '#FF0000', 1);

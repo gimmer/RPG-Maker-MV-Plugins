@@ -405,3 +405,65 @@ Gimmer_Core.reverseObject = function(object){
     }
     return ret;
 }
+
+Gimmer_Core.directionsToWords = function(d){
+    let directionWord = "";
+    switch(d){
+        case 2:
+            directionWord = "down";
+            break;
+        case 4:
+            directionWord = "left";
+            break;
+        case 6:
+            directionWord = "right";
+            break;
+        case 8:
+            directionWord = "up";
+            break;
+
+    }
+    return directionWord;
+}
+
+Gimmer_Core.wordsToDirections = function(d){
+    let direction;
+    switch(d){
+        case "down":
+            direction = 2;
+            break;
+        case "left":
+            direction = 4;
+            break;
+        case "right":
+            direction = 6;
+            break;
+        case "up":
+            direction = 8;
+            break;
+
+    }
+    return direction;
+}
+
+//Helper to draw a rectangle border without a fill.
+Bitmap.prototype.drawRectBorder = function(x, y, width, height, borderColor, thickness = 1){
+    var context = this._context;
+    context.save();
+    context.strokeStyle = borderColor;
+    context.lineWidth = thickness;
+    context.strokeRect(x, y, width, height);
+    context.rotation = 45;
+    context.restore();
+    this._setDirty();
+}
+
+//Helper to check for undefined
+Gimmer_Core.isUndefined = function(variable){
+    return (typeof variable === 'undefined');
+}
+
+//Helper to capitalize a string
+String.prototype.capitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1)
+}
