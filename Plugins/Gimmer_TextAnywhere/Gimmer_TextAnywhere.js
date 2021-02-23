@@ -78,8 +78,7 @@ Scene_Map.prototype.createAllWindows = function(){
 
 Scene_Map.prototype.addTextOverlay = function(){
     let temp = new Window_Base();
-    let padding = temp.standardPadding();
-    this._textOverLay = new Window_Plain(-padding,-padding,Graphics.width,Graphics.height);
+    this._textOverLay = new Window_Plain(-temp.standardPadding(),-temp.standardPadding(),Graphics.width + temp.standardPadding() * 2,Graphics.height + temp.standardPadding() * 2);
     this.addChild(this._textOverLay);
 }
 
