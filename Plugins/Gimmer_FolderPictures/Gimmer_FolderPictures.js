@@ -56,6 +56,11 @@ Gimmer_Core['FolderPictures'] = {'loaded':true};
  *
  * Cool eh?
  *
+ * But Gimmer, I hear you say: I already have 1000 pictures in my project. I don't want to make stubs to all of them manually so I can keep using the editor
+ * Included is the file: folderPictureHelper.exe!
+ * Run the following from a command prompt: folderPictureHelper.exe "C:\path\To\My\Pictures\Folder"
+ * And the program will crawl your pictures folder and put stubs in the root for you
+ *
  * VIDEO TUTORIAL:
  * ============================
  * https://youtu.be/07WOFNOOx9I

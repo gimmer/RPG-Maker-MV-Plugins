@@ -30,6 +30,10 @@ Required Arguments and their accepted inputs:
   folderpicture_path_to_the_image.png
   * Put Show Picture into your code, and select that picture. The interface will let you choose it. What will really load is the real picture that you put in img/pictures/path/to/the/image.png
   * Be done
+##### Already have files?
+ * Put all the pictures into folders
+ * Run folderPictureHelper.exe "c:\full\path\to\pictures\folder" to generate stubs for every picture in those folders. 
+ * Add more pictures? Run it again and again!
 
 ## Terms of Use:
 
