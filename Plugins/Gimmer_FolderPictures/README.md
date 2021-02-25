@@ -34,6 +34,9 @@ Required Arguments and their accepted inputs:
  * Put all the pictures into folders
  * Run folderPictureHelper.exe "c:\full\path\to\pictures\folder" to generate stubs for every picture in those folders. 
  * Add more pictures? Run it again and again!
+#### Already used your old pictures in Show Picture Commands?
+ * Run fixPicturesInDatabase.exe "c:\oath\to\project\directory" to automatically fix all show picture events to load using the stub
+ * All modified files will be backed up before this happens 
 
 ## Terms of Use:
 

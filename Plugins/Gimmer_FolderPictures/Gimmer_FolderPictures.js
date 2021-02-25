@@ -58,8 +58,14 @@ Gimmer_Core['FolderPictures'] = {'loaded':true};
  *
  * But Gimmer, I hear you say: I already have 1000 pictures in my project. I don't want to make stubs to all of them manually so I can keep using the editor
  * Included is the file: folderPictureHelper.exe!
- * Run the following from a command prompt: folderPictureHelper.exe "C:\path\To\My\Pictures\Folder"
+ * Run the following from a command prompt: folderPictureHelper.exe "C:\mygame\img\pictures"
  * And the program will crawl your pictures folder and put stubs in the root for you
+ *
+ * But Gimmer, I hear you say: I already used those same 1000 pictures in Show Pictures commands everywhere. You canot expect me to go through every map event, commonevent, and battle event to fix it to load a stub!
+ * Included is the file: fixPicturesInDatabase.exe
+ * Run the following from a command prompt: fixPicturesInDatabase.exe "C:\mygame"
+ * The program will backup any map.json files, commonevents.json, and troops.json and find any and all show picture events and fix them to use the stub version of the image
+ *
  *
  * VIDEO TUTORIAL:
  * ============================
