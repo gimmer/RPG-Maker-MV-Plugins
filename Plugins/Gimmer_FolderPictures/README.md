@@ -12,11 +12,12 @@ View Here: https://youtu.be/07WOFNOOx9I
 
 The plugin command:
 
-ShowPicture ID Filename X Y Scale-W Scale-H BlendOpacity BlendMode
+ShowPicture ID Filename Origin X Y Scale-W Scale-H BlendOpacity BlendMode
 
 Required Arguments and their accepted inputs:
  * ID = Any number handle you want to use to manipulate the image
  * Filename = Filename/with/unlimited/folders/relative/to/the/pictures/directory
+ * Origin UPPERLEFT or CENTER
  * X = Integer, var:num if you want to use the value in a variable, anything with Graphics. in it will be evaluated like a javascript entry
  * Y = Integer, var:num if you want to use the value in a variable, anything with Graphics. in it will be evaluated like a javascript entry
  * Scale-W = Number
