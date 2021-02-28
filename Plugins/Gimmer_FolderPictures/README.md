@@ -39,6 +39,10 @@ Required Arguments and their accepted inputs:
  * Run fixPicturesInDatabase.exe "c:\oath\to\project\directory" to automatically fix all show picture events to load using the stub
  * All modified files will be backed up before this happens 
 
+### Program Warnings:
+Microsoft Defender seems to be flagging these programs as trojans. They aren't, it's a false positive because I compiled them using a free compiler that a lot of virus makers apparently also use.
+I'll look into how to compile them properly if it becomes a problem. I don't want to hack you.
+
 ## Terms of Use:
 
 Free for both commercial and non-commercial use, with credit.
