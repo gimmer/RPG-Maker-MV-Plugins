@@ -32,6 +32,8 @@ Gimmer_Core['FightySmarts'] = {'loaded':true};
  */
 
 //Todo: add attack frequency
+//Todo: swap frequency with move speed? Experiment with both
+//Todo: Bug: try to fix distance to target to not include diagonals to prevent the invulnerable diagonal problem
 
 //Todo make into parameters
 Gimmer_Core.FightySmarts.DefaultAggroDistance = 3;
@@ -77,10 +79,12 @@ Game_Event.prototype.initialize = function(mapId, eventId){
 Gimmer_Core.FightySmarts._Game_Event_prototype_update = Game_Event.prototype.update;
 Game_Event.prototype.update = function(){
     Gimmer_Core.FightySmarts._Game_Event_prototype_update.call(this);
-    if(!this._erased){
-        this.updateAggro();
-        if(this._hpRegenPulseFrequency > 0 && this._hpRegenPulsePercentage > 0 && !this._isAggro && !this._isReturning){
-            this.updateRegen();
+    if(Gimmer_Core.Fighty.Enabled){
+        if(!this._erased){
+            this.updateAggro();
+            if(this._hpRegenPulseFrequency > 0 && this._hpRegenPulsePercentage > 0 && !this._isAggro && !this._isReturning){
+                this.updateRegen();
+            }
         }
     }
 }
@@ -129,7 +133,7 @@ Game_Event.prototype.setupAggro = function (){
 Gimmer_Core.FightySmarts._Game_Event_prototype_resolveHitBox = Game_Event.prototype.resolveHitBox;
 Game_Event.prototype.resolveHitBox = function (hitbox){
     if(!hitbox.engaged && this._canAggro){
-       this.setupAggro();
+        this.setupAggro();
     }
     Gimmer_Core.FightySmarts._Game_Event_prototype_resolveHitBox.call(this,hitbox);
 }
@@ -164,12 +168,12 @@ Game_Event.prototype.screenDistanceToPlayer = function(){
 }
 
 Game_Event.prototype.executeAggroAction = function(){
-    let distance = this.distanceToPlayer();
     let screenDistance = this.screenDistanceToPlayer();
     if(this._canAttack){
+        let attackRange = this.getAttackRange();
         if(this._currentAttackCoolDown > 0){
             //What to do on attack cooldown and you are in combat range
-            if(distance <= 2){
+            if(screenDistance <= attackRange){
                 //RETREAT
                 this.turnTowardPlayer();
                 this.setDirectionFix(true);
@@ -178,8 +182,6 @@ Game_Event.prototype.executeAggroAction = function(){
             }
         }
         else{
-            let attackRange = this.getAttackRange();
-            dd(screenDistance+" "+attackRange);
 
             if(attackRange > 0){
                 if(screenDistance <= attackRange){
