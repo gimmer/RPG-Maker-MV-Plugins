@@ -19,8 +19,19 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  * Gimmer_FightyFighty
  * ================
  *
- * tbd
+ * @param ---Parameters---
  *
+ * @param Use Ok For Attack
+ * @parent ---Parameters---
+ * @desc Use the same button for ok as for attack? If false, you need to bind a specific keyboard button to attack
+ * @type boolean
+ * Default true
+ * @default true
+ *
+ * @param Button Id for Attack
+ * @parent ---Parameters---
+ * @desc If not using Ok for attack, choose the id of the button you want to use for an attack. See https://keycode.info/ to find button ids
+ * @type Number
  *
  */
 
@@ -57,22 +68,17 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 *
 */
 
-//todo: death handling for player (prevent default game over)
-
-
+//Other plugins
 //Todo: enemy health meters <-- separate plugin to interface with VisualMeters
+//Todo: Other skills to attack with? This will take some restructuring, but not necessarily? <-- seperate plugin
 
-//Todo: button bind for attack button, shouldn't just be "ok"
-//Todo: Other skills to attack with? This will take some restructuring, but not necessarily?
-
-
-
-//todo: plugin command / note tag level disable attack / hitboxes
-
+//Stupid crap I have to do eventually
 //todo: params
-
-//todo: try to dynamically generate hitboxes based on animation frames: fuck me if this is even possible.
 //todo: reorganize the code so all extensions of classes are grouped together instead of being random
+
+//Experimentation
+//todo: try to dynamically generate hitboxes based on animation frames: fuck me if this is even possible.
+
 
 //temp until json solution
 Gimmer_Core.Fighty.HitBoxAnimations = {
@@ -100,6 +106,8 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
     ]
 };
 
+var FightyParams = PluginManager.parameters('Gimmer_FightyFighty');
+
 //Debug
 Gimmer_Core.Fighty.DebugAllyHitboxes = true; //param
 Gimmer_Core.Fighty.DebugEnemyHitboxes = true; //param
@@ -113,6 +121,16 @@ Gimmer_Core.Fighty.PermaDeath = true; //param
 Gimmer_Core.Fighty.InvincibilityFramesPlayer = 60; //param
 Gimmer_Core.Fighty.InvincibilityFramesEnemy = 60; //param
 Gimmer_Core.Fighty.FlashDamageForPlayer = true; //param
+Gimmer_Core.Fighty.DeathCommonEventId = 2; //param
+Gimmer_Core.Fighty.UseOkForAttack = (FightyParams['Use Ok For Attack'] === "true");
+if(Gimmer_Core.Fighty.UseOkForAttack){
+    Gimmer_Core.Fighty.AttackButton = 'ok';
+}
+else{
+    Gimmer_Core.Fighty.AttackButton = 'attack';
+    Input.keyMapper[Number(FightyParams['Button Id for Attack'])] = 'attack';
+}
+
 
 //Sounds
 Gimmer_Core.Fighty.UseDefaultPlayerDamageSound = true;
@@ -245,7 +263,7 @@ Sprite_Animation.prototype.setupHitboxes = function(hitboxes){
 
 Sprite_Animation.prototype.getShootingStage = function(){
     let stage = -1;
-    if(this._animation){
+    if(this._animation && this._target._character){
         switch(this._animation.id){
             case this._target._character._attackAnimationId:
                 stage = 1;
@@ -275,7 +293,7 @@ Sprite_Animation.prototype.updatePosition = function(){
     else{
         Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
     }
-    if(this._hitbox.shape.height > 0 && this._hitbox.shape.width > 0){
+    if(this._hitbox && this._hitbox.shape.height > 0 && this._hitbox.shape.width > 0){
         let hitboxX = this.x;
         let hitboxY = this.y;
 
@@ -406,8 +424,9 @@ Sprite_Animation.prototype.updateMain = function(){
             this._hitbox.finished = true;
         }
 
-        this._target._character._isAttacking = false;
-
+        if(this._target._character){
+            this._target._character._isAttacking = false;
+        }
 
         if(this.getShootingStage() === 1 && SceneManager._scene.constructor === Scene_Map){// You did the shooting one, now do the projectile
             SceneManager._scene.addAnimation(this._target._character._projectileAnimationId, this._target._character,false,this.x, this.y,0);
@@ -429,7 +448,7 @@ Sprite_Animation.prototype.updateFrame = function(){
         if(this._hitbox && this._hitboxFrames[frameIndex]){
             this._hitbox.updatePosition(false, false, this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle )
         }
-        if(this._target._character._actionAnimationInUse){
+        if(this._target._character && this._target._character._actionAnimationInUse){
             this._target._character._attackAnimationFrame = frameIndex;
         }
     }
@@ -503,7 +522,8 @@ Game_Character.prototype.updateInvincibility = function(){
 }
 
 Game_Player.prototype.updateAttacks = function(){
-    if(Input.isTriggered('ok')  && !this._isAttacking){
+    let buttonIsDoingSomething = (!$gameMap.isEventRunning() && Gimmer_Core.Fighty.UseOkForAttack);
+    if(!$gameMap.isEventRunning() && Input.isTriggered(Gimmer_Core.Fighty.AttackButton)  && !this._isAttacking){
         let weapon = this.getActionHero().weapons()[0];
         if(weapon){
             this.resolveAttackAnimation(weapon);
@@ -1057,6 +1077,19 @@ Sprite_Character.prototype.determineMaxPatternX = function (){
 Game_Enemy.prototype.getObjectData = function(){
     return $dataEnemies[this._enemyId]
 }
+
+Gimmer_Core.Fighty._Scene_Base_prototype_checkGameover = Scene_Base.prototype.checkGameover;
+Scene_Base.prototype.checkGameover = function() {
+    if($gameParty.isAllDead() && Gimmer_Core.Fighty.DeathCommonEventId > 0){
+        Gimmer_Core.reserveCommonEventWithCallback(Gimmer_Core.Fighty.DeathCommonEventId, function(){
+            Gimmer_Core.Fighty._Scene_Base_prototype_checkGameover.call(this);
+        })
+    }
+    else{
+        Gimmer_Core.Fighty._Scene_Base_prototype_checkGameover.call(this);
+    }
+};
+
 
 //Polygon class to be used inside of hitboxes. Can be created, and then rotated using math
 //The math is provided with the disclaimer that it came from the internet rather than my brain
