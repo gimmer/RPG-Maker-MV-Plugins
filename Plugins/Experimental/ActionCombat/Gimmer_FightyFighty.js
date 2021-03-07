@@ -12,7 +12,7 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Support for active battle with hit and hurt boxes on players npc.
+ * @plugindesc Support for active battle with hit and hurt boxes on players and npcs.
  * @author Gimmer
  * @help
  * ================
@@ -68,6 +68,8 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 *
 */
 
+//Todo:: function to get meta variables from sources in priority order, with a key
+
 //Other plugins
 //Todo: enemy health meters <-- separate plugin to interface with VisualMeters
 //Todo: Other skills to attack with? This will take some restructuring, but not necessarily? <-- seperate plugin
@@ -87,12 +89,12 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
     '123': [{modY: -12.5, width:50, height:25, angle: 180},{width:100, height: 25, angle: 180}],
     '124': [{width:50, height:25, angle: 90},{width:100, height: 25, angle: 90}],
     '125': [
-        {modX: 0, modY: 0, width:35, height:10, angle: 225},
-        {modX: 25, modY: 0, width:35, height:10, angle: 315},
-        {modX: 0, modY: 0, width:35, height:10, angle: 270},
-        {modX: 0, modY: 0, width:35, height:10, angle: 257.5},
-        {modX: 0, modY: 0, width:35, height:10, angle: 245},
-        {modX: 0, modY: 0, width:35, height:10, angle: 230}
+        {modX: 0, modY: 0, width:0, height:0, angle: 0},
+        {modX: 0, modY: 0, width:0, height:0, angle: 0},
+        {modX: 0, modY: 0, width:0, height:0, angle: 0},
+        {modX: 0, modY: 9, width:50, height:11, angle: 340},
+        {modX: 0, modY: 0, width:0, height:0, angle: 0},
+        {modX: 0, modY: 0, width:0, height:0, angle: 0}
     ],
     '126': [
         {
@@ -138,6 +140,7 @@ Gimmer_Core.Fighty.PlayerHitSoundEffect = false; //param of type se
 Gimmer_Core.Fighty.DefaultEnemyHitSoundEffect = false; //Param of type se
 Gimmer_Core.Fighty.UseSystemDefaultEnemyHitSoundEffect = true; //param
 Gimmer_Core.Fighty.DefaultEnemyDeathSound = false; //param
+Gimmer_Core.Fighty.UseDefaultImpactSoundEffect = false;
 
 //Constants
 Gimmer_Core.Fighty.hitboxTypes = {
@@ -179,6 +182,23 @@ Gimmer_Core.Fighty.getDefaultPlayerHitSoundEffect = function(){
     return $dataSystem.sounds[14];
 }
 
+Gimmer_Core.Fighty.getDefaultImpactSoundEffect = function(){
+    return $dataSystem.sounds[20];
+}
+
+Gimmer_Core.Fighty.getMetaKey = function(metaObjectArray, key, defaultReturn){
+    let returnVal = defaultReturn;
+    metaObjectArray.some(function(object){
+        if(key in object){
+            returnVal = object[key];
+            return true;
+        }
+        return false;
+    });
+
+    return returnVal;
+}
+
 Gimmer_Core.Fighty._Scene_Boot_loadSystemImages = Scene_Boot.loadSystemImages;
 Scene_Boot.loadSystemImages = function(){
     Gimmer_Core.Fighty._Scene_Boot_loadSystemImages.call(this);
@@ -208,6 +228,7 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     this._hitboxFrames = [];
     this._startingX = -1;
     this._startingY = -1;
+    this._muteSounds = false;
     if(this.getShootingStage() === 2){
         this._startingDirection = this._target._character._projectileLastDirection;
     }
@@ -293,7 +314,19 @@ Sprite_Animation.prototype.updatePosition = function(){
     else{
         Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
     }
-    if(this._hitbox && this._hitbox.shape.height > 0 && this._hitbox.shape.width > 0){
+
+    let widthToBe = this._hitbox.width;
+    if(this._hitboxFrames[this.currentFrameIndex()] && 'width' in this._hitboxFrames[this.currentFrameIndex()]){
+        widthToBe = this._hitboxFrames[this.currentFrameIndex()].width;
+    }
+
+    let heightToBe = this._hitbox.height;
+    if(this._hitboxFrames[this.currentFrameIndex()] && 'height' in this._hitboxFrames[this.currentFrameIndex()]){
+        heightToBe = this._hitboxFrames[this.currentFrameIndex()].height;
+    }
+
+
+    if(this._hitbox && heightToBe > 0 && widthToBe > 0){
         let hitboxX = this.x;
         let hitboxY = this.y;
 
@@ -358,7 +391,9 @@ Sprite_Animation.prototype.updatePosition = function(){
         if(this._hitbox.engaged){
             this._target._character._isAttacking = false;
             if(this._target._character._finishedAnimationId > 0 && SceneManager._scene.constructor === Scene_Map){
-                SceneManager._scene.addAnimation(this._target._character._finishedAnimationId, this._target._character,false,this.x, this.y, 0);
+                dd(this._hitbox.engaged);
+                let box = this._hitbox.engaged.getHurtBox();
+                SceneManager._scene.addAnimation(this._target._character._finishedAnimationId, this._target._character,false,this._hitbox.engaged.screenX() + (box.width / 2), this._hitbox.engaged.screenY() - (box.height / 2), 0);
             }
         }
     }
@@ -442,22 +477,59 @@ Sprite_Animation.prototype.updateMain = function(){
 
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updateFrame = Sprite_Animation.prototype.updateFrame;
 Sprite_Animation.prototype.updateFrame = function(){
+    var frameIndex = this.currentFrameIndex();
+    if(this.visible && this._hitbox && this._hitboxFrames[frameIndex] && $gameMap.willHitboxHitWall(this._hitbox,this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle)){
+        this.playImpactSound();
+        this.visible = false; //hide the animation, no more hitboxes
+        this._muteSounds = true;
+        this._hitbox.finished = true;
+    }
+
     Gimmer_Core.Fighty._Sprite_Animation_prototype_updateFrame.call(this);
-    if(this._duration > 0){
-        var frameIndex = this.currentFrameIndex();
+    if(this._duration > 0 && this.visible){
         if(this._hitbox && this._hitboxFrames[frameIndex]){
             this._hitbox.updatePosition(false, false, this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle )
         }
+
         if(this._target._character && this._target._character._actionAnimationInUse){
             this._target._character._attackAnimationFrame = frameIndex;
         }
     }
-    //Todo: make this delay a parameter of the plugin? The animation? i dunno
-    /*if(this._delay === 0){
-        this._delay = 1;
-    }*/
 }
 
+Gimmer_Core.Fighty._Sprite_Animation_prototype_processTimingData = Sprite_Animation.prototype.processTimingData;
+Sprite_Animation.prototype.processTimingData = function(timing){
+    if(!this._muteSounds){
+        Gimmer_Core.Fighty._Sprite_Animation_prototype_processTimingData.call(this, timing);
+    }
+}
+
+Sprite_Animation.prototype.playImpactSound = function (){
+    let seTemplate = Gimmer_Core.Fighty.getDefaultImpactSoundEffect();
+    let seName = false;
+    let se = false;
+    if(this._target._character._eventId > 0){
+        let meta = this._target._character.getObjectData().meta;
+        let enemyMeta = this._target._character._enemy.getObjectData().meta;
+        seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'ImpactSe', seName);
+    }
+    else{
+        let meta = this._target._character.getActionHero().weapons()[0].meta;
+        seName = Gimmer_Core.Fighty.getMetaKey([meta],'ImpactSe',seName);
+    }
+
+    if(seName){
+        seTemplate.name = seName;
+        se = seTemplate;
+    }
+    else if(Gimmer_Core.Fighty.UseDefaultImpactSoundEffect){
+        se = seTemplate;
+    }
+
+    if(se){
+        AudioManager.playSe(se);
+    }
+}
 
 
 //HACK FOR DEBUGGING
@@ -605,19 +677,12 @@ Game_Event.prototype.update = function(){
         //Sound handling
         let se = false;
         let seTemplate = Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect();
+
         let meta = this.getObjectData().meta;
-        let enemyMeta = this.getActionHero().meta;
-        //If event has unique death
-        if('DeathSe' in meta){
-            seTemplate.name = meta.DeathSe;
-            se = seTemplate;
-        }
-        else if('DeathSe' in enemyMeta){ //if the enemy has a unit death
-            seTemplate.name = enemyMeta.DeathSe;
-            se = seTemplate;
-        }
-        else if(Gimmer_Core.Fighty.DefaultEnemyDeathSound){ //if you want the default sound
-            seTemplate.name = Gimmer_Core.Fighty.DefaultEnemyDeathSound;
+        let enemyMeta = this._enemy.getObjectData().meta;
+        let seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'DeathSe', Gimmer_Core.Fighty.DefaultEnemyDeathSound);
+        if(seName){
+            seTemplate.name = seName;
             se = seTemplate;
         }
 
@@ -646,7 +711,7 @@ Game_Event.prototype.update = function(){
 //Allow events to walk into players if they have self hurt boxs, but cannot attack
 Gimmer_Core.Fighty._Game_Event_prototype_isCollidedWithPlayerCharacters = Game_Event.prototype.isCollidedWithPlayerCharacters
 Game_Event.prototype.isCollidedWithPlayerCharacters = function(x, y) {
-    if(this._selfHitBox && !this._canAttack){
+    if(this._selfHitBox && !this._canAttack && $gamePlayer._invincibilityCount <= 0){
         return false;
     }
     else{
@@ -730,13 +795,11 @@ Game_Character.prototype.resolvePushback = function(hitbox){
     let d = Gimmer_Core.wordsToDirections(hitboxDirection);
     let flippedGalv = false;
     let oldMove;
-    if(this === $gamePlayer){
+    if(this === $gamePlayer && Imported.Galv_PixelMove){
         //Disabled Galv's Pixelmove, as for some reason it thinks the wall is passable
-        if(Imported.Galv_PixelMove) {
-            oldMove = $gamePlayer._normMove;
-            $gamePlayer._normMove = true;
-            flippedGalv = true;
-        }
+        oldMove = $gamePlayer._normMove;
+        $gamePlayer._normMove = true;
+        flippedGalv = true;
     }
 
     switch(hitboxDirection){
@@ -768,11 +831,15 @@ Game_Event.prototype.resolveHitBox = function(hitbox){
     if(this._invincibilityCount === 0 && !hitbox.engaged){
         hitbox.engaged = this;
         let damage = hitbox.applyDamage(this._enemy);
-        let meta = this.getObjectData();
+        let meta = this.getObjectData().meta;
+        let enemyMeta = this._enemy.getObjectData().meta;
+        let seTemplate = Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect();
         let customSe = false;
-        if('DamageSe' in meta){
-            customSe = Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect();
-            customSe.name = meta.DamageSe;
+        let customSeName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'DamageSe',false);
+
+        if(customSeName){
+            seTemplate.name = customSeName;
+            customSe = seTemplate;
         }
         if (damage > 0) {
             if(customSe){
@@ -784,7 +851,6 @@ Game_Event.prototype.resolveHitBox = function(hitbox){
             else if(Gimmer_Core.Fighty.UseSystemDefaultEnemyHitSoundEffect){
                 AudioManager.playSe(Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect());
             }
-
         }
 
         if(hitbox.pushback > 0){
@@ -1090,6 +1156,69 @@ Scene_Base.prototype.checkGameover = function() {
     }
 };
 
+Game_Map.prototype.willHitboxHitWall = function(hitbox, width, height, angle){
+    if(width === 0 || height === 0){
+        return false;
+    }
+    let shape = hitbox.shape;
+    let pretendShape = shape.cloneBase();
+
+    width = width || pretendShape.width;
+    height = height || pretendShape.height;
+    angle = angle || pretendShape.angle;
+
+    pretendShape.updatePosition(false,false,width,height);
+    let minX = false;
+    let minY = false;
+    let maxX = false;
+    let maxY = false;
+    pretendShape.points.forEach(function(pointObj){
+        let x = pointObj.x;
+        let y = pointObj.y;
+        if(!minX || x < minX){
+            minX = x;
+        }
+        if(!minY || y < minY){
+            minY = y;
+        }
+
+        if(!maxY || y > maxY){
+            maxY = y;
+        }
+
+        if(!maxX || x > maxX){
+            maxX = x;
+        }
+
+
+    }, this);
+
+    pretendShape.points = [];
+    for(let newX = minX; newX <= maxX; newX++){
+        for(let newY = minY; newY <= maxY; newY++){
+            pretendShape.points.push({x:newX, y:newY})
+        }
+    }
+
+    pretendShape.angle = angle;
+    pretendShape.rotate();
+
+    let impacts = [];
+    //let potentialImpacts = [];
+    pretendShape.points.forEach(function(pointObj){
+        let x = Math.floor(pointObj.x / this.tileWidth());
+        let y = Math.floor(pointObj.y / this.tileHeight());
+        //potentialImpacts.push(x+","+y);
+        if(!$gameMap.isPassable(x, y, Gimmer_Core.wordsToDirections(hitbox.direction)) && width > 0 && height > 0){
+            impacts.push(x+","+y);
+        }
+    }, this);
+
+    //potentialImpacts = [...new Set(potentialImpacts)];
+    impacts = [...new Set(impacts)];
+
+    return impacts.length;
+}
 
 //Polygon class to be used inside of hitboxes. Can be created, and then rotated using math
 //The math is provided with the disclaimer that it came from the internet rather than my brain
@@ -1102,6 +1231,10 @@ class Polygon {
         this.height = height;
         this.angle = angle;
         this.updatePosition();
+    }
+
+    cloneBase(){
+        return new Polygon(this.type, this.startingX, this.startingY, this.width, this.height, 0);
     }
 
     createPoints(){
