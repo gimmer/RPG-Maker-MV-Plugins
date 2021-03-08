@@ -21,14 +21,19 @@ Gimmer_Core['FightySmarts'] = {'loaded':true};
  * Add the following note tags to an event to make them aggro, so long as isEnemy is defined on the event as per the FightyFighty Plugin:
  * <canAggro>
  *
+ * The following tags can be set on the Event's, or the enemies that are associated with the event's "<isEnemy:x>" tag.
+ * The plugin will load the tag from the event first, then the enemy, and then finally the default as set in the parameters.
+ *
  * Optionally add these note tags to override the defaults on anything that has canAggro set:
- * <aggroDistance:x> where x is how far in squares from the player that aggro will start
+ * <aggroDistance:x> where x is how far in squares from the player that aggro will start. Set this to 0 to prevent proximity based aggro.
  * <chaseDistance:x> where x is how many steps the npc will chase the player before rubber banding back to their starting position
  * <aggroBalloonId:x> where x is the id of the balloon you want to go over their head. -1 to suppress if you want to not have balloons
  * <aggroMoveSpeed:x> Where x is the move speed you want when aggro. You don't really want this to be faster than your character can move, especially if an enemy has a self hit box.
  * <aggroMoveFrequency:x> Where x is the move frequency you want when aggro. 5 is a good choice, but it may depend on how fast your character can move.
- * <hpRegenPulseFrequency:x> Where x is the number of frames to fire a regen pulse when unaggroed
- * <hpRegenPulsePercentage:x> Where x is the percentage of max hp to fire per regen pulse
+ * <hpRegenPulseFrequency:x> Where x is the number of frames to fire a regen pulse when un-aggro'd. Set to -1 to prevent regeneration of un-aggro'd enemies.
+ * <hpRegenPulsePercentage:x> Where x is the percentage of max hp to fire per regen pulse.
+ * <attackCoolDownMin:x> Where x is the minimum number of frames the enemy will wait before attacking again.
+ * <attackCoolDownMax:x> Where x is the maximum number of frames the enemy will wait before attacking again. Used with it's minimum to randomly refresh attacks.
  *
  * @param ---Defaults---
  *
@@ -95,40 +100,14 @@ Gimmer_Core['FightySmarts'] = {'loaded':true};
  * Default 90
  * @default 90
  *
+ * @param Use Default Aggro Sound Effect
+ * @parent ---Defaults---
+ * @desc Use Default Aggro Sound Effect? This will be the sound associted with "Battle Start" in the system menu
+ * @type Boolean
+ * Default true
+ * @default true
+ *
  */
-
-/*~struct~se:
-* @param name
-* @type file
-* @dir audio/se/
-* @require 1
-* @desc What filename?
-*
-* @param volume
-* @type Number
-* @min 1
-* @max 100
-* Default 90
-* @default 90
-* @desc What volume to play at?
-*
-* @param pitch
-* @type Number
-* @min 50
-* @max 150
-* @default 100
-* Default 100
-* @desc What pitch to play at?
-*
-* @param pan
-* @type Text
-* @min -100
-* @max 100
-* @default 0
-* Default 0
-* @desc Where to pan left or right?
-*
-*/
 
 var FightySmartParams = PluginManager.parameters('Gimmer_FightySmarts');
 Gimmer_Core.FightySmarts.DefaultAggroDistance = Number(FightySmartParams['Default Aggro Distance'] || 3);
@@ -137,11 +116,16 @@ Gimmer_Core.FightySmarts.DefaultAggroBalloonId = Number(FightySmartParams['Defau
 Gimmer_Core.FightySmarts.DefaultAggroMoveFrequency = Number(FightySmartParams['Default Aggro Move Frequency'] || 1);
 Gimmer_Core.FightySmarts.DefaultHpRegenPulseFrequency = Number(FightySmartParams['Default Hp Regen Pulse Frequency'] || 60);
 Gimmer_Core.FightySmarts.DefaultHpRegenPulsePercentage = Number(FightySmartParams['Default Hp Regen Pulse Frequency'] || 5);
-Gimmer_Core.FightySmarts.DefaultAggroMoveSpeed = Number(FightySmartParams['Default Aggro Move Speed'] || 4);
+Gimmer_Core.FightySmarts.DefaultAggroMoveSpeed = Number(FightySmartParams['Default Aggro Move Speed'] || 3);
 Gimmer_Core.FightySmarts.DefaultAttackCoolDownMin = Number(FightySmartParams['Default Attack Cooldown Min'] || 60);
 Gimmer_Core.FightySmarts.DefaultAttackCoolDownMax = Number(FightySmartParams['Default Attack Cooldown Max'] || 90);
+Gimmer_Core.FightySmarts.UseDefaultAggroSound = (FightySmartParams['Use Default Aggro Sound Effect'] === "true");
 
-//Todo:: sound effects for aggro?
+Gimmer_Core.FightySmarts.getDefaultAggroSound = function(){
+    return $dataSystem.sounds[7];
+}
+
+//Todo update aggro range logic to include distance to player
 
 //Add parameters unique to FightySmarts events
 Gimmer_Core.FightySmarts._Game_Event_prototype_initialize = Game_Event.prototype.initialize;
@@ -166,23 +150,32 @@ Game_Event.prototype.initialize = function(mapId, eventId){
     this._attackCoolDownMax = 0;
     this._currentAttackCoolDown = 0;
     this._balloonFired = false;
+    this._soundPlayed = false;
+    this._aggroSe = Gimmer_Core.FightySmarts.getDefaultAggroSound();
     if(this._enemy){
         let meta = this.getObjectData().meta;
         let enemyMeta = this._enemy.getObjectData().meta;
-        this._canAggro = ('canAggro' in meta);
+        this._canAggro = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'canAggro',false);
         if(this._canAggro){
-            //Event Meta
-            this._aggroDistance = ('aggroDistance' in meta ? Number(meta.aggroDistance) : Gimmer_Core.FightySmarts.DefaultAggroDistance);
-            this._chaseDistance = ('chaseDistance' in meta ? Number(meta.chaseDistance) : Gimmer_Core.FightySmarts.DefaultChaseDistance);
-            this._aggroBalloonId = ('aggroBalloonId' in meta ? Number(meta.aggroBalloonId) : (Gimmer_Core.FightySmarts.DefaultAggroBalloonId > 0 ? Gimmer_Core.FightySmarts.DefaultAggroBalloonId : -1))
-            this._aggroMoveFrequency = ('aggroMoveFrequency' in meta ? Number(meta.aggroMoveFrequency) : Gimmer_Core.FightySmarts.DefaultAggroMoveFrequency);
-            this._aggroMoveSpeed = ('aggroMoveSpeed' in meta ? Number(meta.aggroMoveSpeed) : Gimmer_Core.FightySmarts.DefaultAggroMoveSpeed);
-            this._hpRegenPulseFrequency = ('hpRegenPulseFrequency' in meta ? Number(meta.hpRegenPulseFrequency) : Gimmer_Core.FightySmarts.DefaultHpRegenPulseFrequency);
-            this._hpRegenPulsePercentage = ('hpRegenPulsePercentage ' in meta ? Number(meta.hpRegenPulsePercentage) : Gimmer_Core.FightySmarts.DefaultHpRegenPulsePercentage);
+            this._aggroDistance = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'aggroDistance',Gimmer_Core.FightySmarts.DefaultAggroDistance));
+            this._chaseDistance = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'chaseDistance',Gimmer_Core.FightySmarts.DefaultChaseDistance));
+            this._aggroBalloonId = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'aggroBalloonId',(Gimmer_Core.FightySmarts.DefaultAggroBalloonId > 0 ? Gimmer_Core.FightySmarts.DefaultAggroBalloonId : -1)));
+            this._aggroMoveFrequency = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'aggroMoveFrequency',Gimmer_Core.FightySmarts.DefaultAggroMoveFrequency));
+            this._aggroMoveSpeed = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'aggroMoveSpeed',Gimmer_Core.FightySmarts.DefaultAggroMoveSpeed));
+            this._hpRegenPulseFrequency = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'hpRegenPulseFrequency',Gimmer_Core.FightySmarts.DefaultHpRegenPulseFrequency));
+            this._hpRegenPulsePercentage = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'hpRegenPulsePercentage',Gimmer_Core.FightySmarts.DefaultHpRegenPulsePercentage));
+            this._attackCoolDownMin = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'attackCoolDownMin',Gimmer_Core.FightySmarts.DefaultAttackCoolDownMin));
+            this._attackCoolDownMax = Number(Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'attackCoolDownMax',Gimmer_Core.FightySmarts.DefaultAttackCoolDownMax));
 
-            //Enemy Meta
-            this._attackCoolDownMin = ('attackCoolDownMin' in enemyMeta ? Number(enemyMeta.attackCoolDownMin) : Gimmer_Core.FightySmarts.DefaultAttackCoolDownMin);
-            this._attackCoolDownMax = ('attackCoolDownMax' in enemyMeta ? Number(enemyMeta.attackCoolDownMax) : Gimmer_Core.FightySmarts.DefaultAttackCoolDownMax);
+            //Se handling
+            let customSe =  Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'AggroSe',false);
+            if(customSe){
+                this._aggroSe.name = customSe;
+            }
+
+            if(!customSe && !Gimmer_Core.FightySmarts.UseDefaultAggroSound){
+                this._aggroSe = false;
+            }
         }
     }
 }
@@ -194,10 +187,33 @@ Game_Event.prototype.update = function(){
     if(Gimmer_Core.Fighty.Enabled){
         if(!this._erased){
             this.updateAggro();
+            this.updateInvadingPersonalSpace();
             this.updateRegen();
         }
     }
 }
+
+Game_Event.prototype.updateInvadingPersonalSpace = function(){
+    if(this._selfHitBox && this._realX === $gamePlayer.x && this._realY === $gamePlayer.y){
+        //Ooops, you are crowding the player
+        this.setDirectionFix(true);
+        this.moveTowardCharacter({x:this._startingX, y: this._startingY});
+        this.setDirectionFix(false);
+    }
+}
+
+Gimmer_Core.FightySmarts.Game_Character_prototype_moveTowardCharacter = Game_Character.prototype.moveTowardCharacter;
+Game_Character.prototype.moveTowardCharacter = function(character){
+    Gimmer_Core.FightySmarts.Game_Character_prototype_moveTowardCharacter.call(this, character);
+    if(!this.isMovementSucceeded()){
+        //Ok, the default pathing isn't working, build a better path.
+        let newDirection = this.findDirectionTo(character.x, character.y);
+        if(newDirection > 0){
+            this.moveStraight(newDirection);
+        }
+    }
+}
+
 
 //Update aggro triggers and trigger aggro if need be
 Game_Event.prototype.updateAggro = function(){
@@ -229,6 +245,11 @@ Game_Event.prototype.setupAggro = function (){
     if(!this._isAggro && this._aggroBalloonId > 0 && !this._balloonFired){
         this.requestBalloon(this._aggroBalloonId);
         this._balloonFired = true;
+    }
+
+    if(!this._isAggro && this._aggroSe && !this._soundPlayed){
+        AudioManager.playSe(this._aggroSe);
+        this._soundPlayed = true;
     }
 
     this._chasedCount = 0;
@@ -273,6 +294,7 @@ Game_Event.prototype.updateSelfMovement = function (){
                 this._chasedCount = 0;
                 this._hpRegenPulseWait = this._hpRegenPulseFrequency;
                 this._balloonFired = false;
+                this._soundPlayed = false;
             }
         } else {
             Gimmer_Core.FightySmarts._Game_Event_prototype_updateSelfMovement.call(this);
@@ -310,10 +332,10 @@ Game_Event.prototype.executeAggroAction = function(){
         if(this._currentAttackCoolDown > 0){
             //What to do on attack cooldown and you are in combat range
             if(screenDistance <= attackRange && !this._pendingAttack && !this._isAttacking){
-                //RETREAT
+                //RETREAT randomly?
                 this.turnTowardPlayer();
                 this.setDirectionFix(true);
-                this.moveAwayFromPlayer();
+                //this.moveAwayFromPlayer();
                 this.setDirectionFix(false);
             }
         }
@@ -323,7 +345,7 @@ Game_Event.prototype.executeAggroAction = function(){
                     if(this._currentAttackCoolDown <= 0){
                         this.turnTowardPlayer();
                         this._pendingAttack = true;
-                        this._currentAttackCoolDown = this.setAttackCoolDown()
+                        this._currentAttackCoolDown = this.setAttackCoolDown();
                         this._chasedCount = 0;
                     }
                 }
@@ -360,8 +382,11 @@ Game_Event.prototype.setAttackCoolDown = function(){
 //Function to chase the player
 Game_Event.prototype.chasePlayer = function (){
     //Chase the player
-    this.moveTowardPlayer();
-    this._chasedCount++;
+    if(!this.isMoving()){
+        this.moveTowardPlayer();
+        this._chasedCount++;
+    }
+
     //If you've chased for long enough, go home.
     if (this._chasedCount >= this._chaseDistance) {
         this._isReturning = true;
