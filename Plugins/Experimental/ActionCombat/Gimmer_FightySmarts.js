@@ -152,6 +152,9 @@ Game_Event.prototype.initialize = function(mapId, eventId){
     this._balloonFired = false;
     this._soundPlayed = false;
     this._aggroSe = Gimmer_Core.FightySmarts.getDefaultAggroSound();
+    //Todo param this too
+    this._minimumPuttyDistance = 2;
+    this._maximumPuttyDistance = 3;
     if(this._enemy){
         let meta = this.getObjectData().meta;
         let enemyMeta = this._enemy.getObjectData().meta;
@@ -332,11 +335,7 @@ Game_Event.prototype.executeAggroAction = function(){
         if(this._currentAttackCoolDown > 0){
             //What to do on attack cooldown and you are in combat range
             if(screenDistance <= attackRange && !this._pendingAttack && !this._isAttacking){
-                //RETREAT randomly?
-                this.turnTowardPlayer();
-                this.setDirectionFix(true);
-                //this.moveAwayFromPlayer();
-                this.setDirectionFix(false);
+                this.puttyAround();
             }
         }
         else{
@@ -353,25 +352,51 @@ Game_Event.prototype.executeAggroAction = function(){
                     this.chasePlayer();
                 }
             }
-            else if(this._selfHitBox){
-                //Hurts to be bumped into? they're going to run into you
-                this.chasePlayer();
-            }
             else{
                 //They can't hurt you even though they have _canAttack set
                 this.moveAwayFromPlayer();
             }
         }
-        if(this._currentAttackCoolDown > 0){
+
+        if(this._currentAttackCoolDown > 0 && !this._isAttacking){
             this._currentAttackCoolDown--;
         }
     }
     else if(this._selfHitBox){
-        this.chasePlayer();
+        if(this._selfHitBox.engaged && this._currentAttackCoolDown === 0){
+            this._currentAttackCoolDown = this.setAttackCoolDown();
+            this._chasedCount = 0;
+        }
+        if(this._currentAttackCoolDown > 0){
+            this.puttyAround();
+            this._currentAttackCoolDown--;
+            if(this._currentAttackCoolDown === 0){
+                this._selfHitBox.engaged = false;
+            }
+        }
+        else{
+            this.chasePlayer();
+        }
+
     }
     else{
         //They can't attack and they have aggro, run for it
         this.moveAwayFromPlayer();
+    }
+}
+
+//Function to randomly move around the character. Like a putty from power rangers? https://www.youtube.com/watch?v=PhCiue3INIw
+Game_Event.prototype.puttyAround = function(){
+    if(this._minimumPuttyDistance > 0 && this._maximumPuttyDistance > 0){
+        if(this.distanceToPlayer() < this._minimumPuttyDistance){
+            this.moveAwayFromPlayer();
+        }
+        else if(this.distanceToPlayer() > this._maximumPuttyDistance){
+            this.moveTowardPlayer();
+        }
+        else{
+            this.moveRandom();
+        }
     }
 }
 
