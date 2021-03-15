@@ -71,23 +71,23 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
  * @desc list of hexcodes you want for below 33 percent, below 66 percent, and above 66 percent. Put three hex codes in that exact order. Want them all the same? Just put it in three times
  *
  * @param Meter X
- * @type Number
+ * @type String
  * @desc Where do you want the meter on the x axis to start?
  * @default 0
  * Default 0
  *
  * @param Meter Y
- * @type Number
+ * @type String
  * @desc Where do you want the meter on the y axis to start?
  * @default 0
  * Default 0
  *
  * @param Meter Width
- * @type Number
+ * @type String
  * @desc How many pixels wide?
  *
  * @param Meter Height
- * @type Number
+ * @type String
  * @desc How many pixels high?
  *
  * @param Meter Label
@@ -223,10 +223,10 @@ Gimmer_Core.VisualMeters.meters.forEach(function(v,k){
         }
     }
     v['Color Of Meter'] = JSON.parse(v['Color Of Meter']);
-    v['Meter Height'] = Number(v['Meter Height']);
-    v['Meter Width'] = Number(v['Meter Width']);
-    v['Meter X'] = Number(v['Meter X']);
-    v['Meter Y'] = Number(v['Meter Y']);
+    v['Meter Height'] = v['Meter Height'];
+    v['Meter Width'] = v['Meter Width'];
+    v['Meter X'] = v['Meter X'];
+    v['Meter Y'] = v['Meter Y'];
     v['Show Border'] = (v['Show Border'] === "true");
     v['Show Solid Background'] = (v['Show Solid Background'] === "true");
     v['Meter Label Padding Right'] = Number(v['Meter Label Padding Right']);
@@ -257,10 +257,10 @@ Scene_Base.prototype.createWindowLayer = function() {
     this.addChild(this._windowUILayer);
 };
 
-Gimmer_Core.VisualMeters._Scene_Map_prototype_createDisplayObjects = Scene_Map.prototype.createDisplayObjects;
-Scene_Map.prototype.createDisplayObjects = function() {
-    Gimmer_Core.VisualMeters._Scene_Map_prototype_createDisplayObjects.call(this);
+Gimmer_Core.VisualMeters._Scene_Map_prototype_createAllWindows = Scene_Map.prototype.createAllWindows;
+Scene_Map.prototype.createAllWindows = function() {
     this.addVisualMeters();
+    Gimmer_Core.VisualMeters._Scene_Map_prototype_createAllWindows.call(this);
 };
 
 Gimmer_Core.pluginCommands['HIDEUILAYER'] = function(){
@@ -333,7 +333,7 @@ Window_VisualMeter.prototype.initialize = function(meter){
     this._eventActive = false;
     this._upSound = (meter['Sound When Value Goes Up'].length ? JSON.parse(meter['Sound When Value Goes Up']) : false );
     this._downSound = (meter['Sound When Value Goes Down'].length ? JSON.parse(meter['Sound When Value Goes Down']) : false);
-    Window_Fade.prototype.initialize.call(this, meter['Meter X'], meter['Meter Y'], meter['Meter Width'], meter['Meter Height']);
+    Window_Fade.prototype.initialize.call(this, Number(eval(meter['Meter X'])), Number(eval(meter['Meter Y'])), Number(eval(meter['Meter Width'])), Number(eval(meter['Meter Height'])));
     this._fadeForPlayer = Gimmer_Core.VisualMeters.FadeUnderPlayer;
     this._desinationAlpha = Gimmer_Core.VisualMeters.FadePercentage;
     this._dirty = true;
@@ -536,17 +536,6 @@ Game_Screen.prototype.updateFadeOut = function() {
         this._fadeOutDuration--;
     }
 };
-
-//Helper to draw a rectangle border without a fill.
-Bitmap.prototype.drawRectBorder = function(x, y, width, height, borderColor, thickness = 1){
-    var context = this._context;
-    context.save();
-    context.strokeStyle = borderColor;
-    context.lineWidth = thickness;
-    context.strokeRect(x, y, width, height);
-    context.restore();
-    this._setDirty();
-}
 
 /**
  * Returns the height of the specified text.

@@ -73,7 +73,7 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 
 //Other plugins
 //Todo: enemy health meters <-- separate plugin to interface with VisualMeters
-//Todo: Other skills to attack with? This will take some restructuring, but not necessarily? <-- seperate plugin
+//Todo: Other skills to attack with? This will take some restructuring, but not necessarily? <-- separate plugin
 
 //Stupid crap I have to do eventually
 //todo: params
@@ -304,15 +304,10 @@ Sprite_Animation.prototype.getShootingStage = function(){
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
     let isProjectile = (this.getShootingStage() === 2);
-    if(isProjectile){
-        if(this._startingX < 0 || this._startingY < 0){
-            Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
-            this._startingX = this.x;
-            this._startingY = this.y;
-        }
-    }
-    else{
-        Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
+    Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
+    if(isProjectile &&(this._startingX < 0 || this._startingY < 0)) {
+        this._startingX = this.x;
+        this._startingY = this.y;
     }
 
     let widthToBe = this._hitbox.width;
@@ -324,7 +319,6 @@ Sprite_Animation.prototype.updatePosition = function(){
     if(this._hitboxFrames[this.currentFrameIndex()] && 'height' in this._hitboxFrames[this.currentFrameIndex()]){
         heightToBe = this._hitboxFrames[this.currentFrameIndex()].height;
     }
-
 
     if(this._hitbox && heightToBe > 0 && widthToBe > 0){
         let hitboxX = this.x;
@@ -441,8 +435,6 @@ Sprite_Animation.prototype.updateMain = function(){
         }
 
         if(this._target._character._oldCharacterName){
-            dd('hello?');
-            dd(this._target._character._oldCharacterName);
             this._target._character.setImage(this._target._character._oldCharacterName,this._target._character._oldCharacterIndex);
             this._target._character._actionAnimationInUse = false;
         }
@@ -454,6 +446,7 @@ Gimmer_Core.Fighty._Sprite_Animation_prototype_updateFrame = Sprite_Animation.pr
 Sprite_Animation.prototype.updateFrame = function(){
     var frameIndex = this.currentFrameIndex();
     if(this.visible && this._hitbox && this._hitboxFrames[frameIndex] && $gameMap.willHitboxHitWall(this._hitbox,this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle)){
+        dd('impact');
         this.playImpactSound();
         this.visible = false; //hide the animation, no more hitboxes
         this._muteSounds = true;
@@ -484,9 +477,13 @@ Sprite_Animation.prototype.playImpactSound = function (){
     let seName = false;
     let se = false;
     if(this._target._character._eventId > 0){
-        let meta = this._target._character.getObjectData().meta;
-        let enemyMeta = this._target._character._enemy.getObjectData().meta;
-        seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'ImpactSe', seName);
+        //If by chance the enemy has died during this, the object might be gone
+        if(this._target._character._enemy){
+            let meta = this._target._character.getObjectData().meta;
+            let enemyMeta = this._target._character._enemy.getObjectData().meta;
+            seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'ImpactSe', seName);
+        }
+
     }
     else{
         let meta = this._target._character.getActionHero().weapons()[0].meta;
@@ -508,7 +505,7 @@ Sprite_Animation.prototype.playImpactSound = function (){
 
 
 //GAME PLAYER AREA
-Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
+/*Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(){
     if(this._isAttacking){
         return false;
@@ -516,7 +513,7 @@ Game_Player.prototype.canMove = function(){
     else{
         return Gimmer_Core.Fighty._Game_Player_prototype_canMove.call(this);
     }
-}
+}*/
 
 //Prevent moving during attacks even on forced movement routes
 Gimmer_Core.Fighty._Game_Character_prototype_updateRoutineMove = Game_Character.prototype.updateRoutineMove;
@@ -531,7 +528,7 @@ Game_Player.prototype.getActionHero = function(){
 }
 
 Game_Event.prototype.getActionHero = function(){
-    return this._enemy;
+    return this._enemy || new Game_Enemy();
 }
 
 //SCENE MAP AREA
@@ -627,8 +624,7 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
     if(this._invincibilityCount === 0 && !hitbox.engaged){
         hitbox.engaged = this;
         let actor = $gameActors._data[$gameParty._actors[this.characterIndex()]];
-        //let damage = hitbox.applyDamage(actor);
-        let damage = 10;
+        let damage = hitbox.applyDamage(actor);
         if (damage > 0) {
             if(Gimmer_Core.Fighty.FlashDamageForPlayer){
                 actor.performMapDamage();
@@ -646,7 +642,7 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
                 this.resolvePushback(hitbox);
             }
         }
-        if(hitbox.direction === 'self'){
+        if(hitbox.direction === 'self' && Gimmer_Core.FightySmarts === undefined){
             hitbox.engaged = false;
         }
         this._invincibilityCount = Gimmer_Core.Fighty.InvincibilityFramesPlayer;
@@ -1259,162 +1255,6 @@ Game_Map.prototype.willHitboxHitWall = function(hitbox, width, height, angle){
 }
 
 //CUSTOM CLASSES
-
-//Polygon class to be used inside of hitboxes. Can be created, and then rotated using math
-//The math is provided with the disclaimer that it came from the internet rather than my brain
-class Polygon {
-    constructor(type, startingX, startingY, width, height, angle) {
-        this.type = type;
-        this.startingX = startingX;
-        this.startingY = startingY;
-        this.width = width;
-        this.height = height;
-        this.angle = angle;
-        this.updatePosition();
-    }
-
-    cloneBase(){
-        return new Polygon(this.type, this.startingX, this.startingY, this.width, this.height, 0);
-    }
-
-    createPoints(){
-        let x = this.startingX;
-        let y = this.startingY;
-        let width = this.width;
-        let height = this.height;
-        this.points = [];
-        switch(this.type){
-            case 'triangle':
-                break;
-            case 'rectangle':
-                //Basic points
-                this.points.push({x:x, y:y});
-                this.points.push({x:x + width,y:y});
-                this.points.push({x:x + width,y:y + height});
-                this.points.push({x:x, y: y + height});
-                break;
-        }
-    }
-
-    updatePosition(x,y, width, height, angle){
-        x = x || this.startingX;
-        y = y || this.startingY;
-        width = width || this.width;
-        height = height || this.height;
-        angle = angle || this.angle;
-        this.startingX = x;
-        this.startingY = y;
-        this.width = width;
-        this.height = height;
-        this.angle = angle;
-        this.pivotPoint = {x:this.startingX, y: this.startingY + (this.height / 2)}
-        this.createPoints();
-        this.rotate();
-    }
-
-    rotate(){
-        if(this.angle > 0){
-            this.points.forEach(function(point, k){
-                this.points[k] = this.rotatePoint(point.x, point.y, this.pivotPoint.x, this.pivotPoint.y, this.angle);
-            }, this);
-        }
-    }
-
-    rotatePoint(pointX, pointY, originX, originY, angle) {
-        angle = angle * Math.PI / 180.0;
-        return {
-            x: Math.cos(angle) * (pointX-originX) - Math.sin(angle) * (pointY-originY) + originX,
-            y: Math.sin(angle) * (pointX-originX) + Math.cos(angle) * (pointY-originY) + originY
-        };
-    }
-
-    //Flat out copied this from stack overflow
-    intersects(otherPolygon){
-        //this is always the hit box, otherPolygon is the hurt box
-
-        //If the box has no width or height, it can't hit anything
-        if(this.width === 0 || this.height === 0){
-            return false;
-        }
-
-        let a = this.points;
-        let b = otherPolygon.points;
-
-        var polygons = [a, b];
-        var minA, maxA, projected, i, i1, j, minB, maxB;
-
-        for (i = 0; i < polygons.length; i++) {
-
-            // for each polygon, look at each edge of the polygon, and determine if it separates
-            // the two shapes
-            var polygon = polygons[i];
-            for (i1 = 0; i1 < polygon.length; i1++) {
-
-                // grab 2 vertices to create an edge
-                var i2 = (i1 + 1) % polygon.length;
-                var p1 = polygon[i1];
-                var p2 = polygon[i2];
-
-                // find the line perpendicular to this edge
-                var normal = { x: p2.y - p1.y, y: p1.x - p2.x };
-
-                minA = maxA = undefined;
-                // for each vertex in the first shape, project it onto the line perpendicular to the edge
-                // and keep track of the min and max of these values
-                for (j = 0; j < a.length; j++) {
-                    projected = normal.x * a[j].x + normal.y * a[j].y;
-                    if (Gimmer_Core.isUndefined(minA) || projected < minA) {
-                        minA = projected;
-                    }
-                    if (Gimmer_Core.isUndefined(maxA) || projected > maxA) {
-                        maxA = projected;
-                    }
-                }
-
-                // for each vertex in the second shape, project it onto the line perpendicular to the edge
-                // and keep track of the min and max of these values
-                minB = maxB = undefined;
-                for (j = 0; j < b.length; j++) {
-                    projected = normal.x * b[j].x + normal.y * b[j].y;
-                    if (Gimmer_Core.isUndefined(minB) || projected < minB) {
-                        minB = projected;
-                    }
-                    if (Gimmer_Core.isUndefined(maxB) || projected > maxB) {
-                        maxB = projected;
-                    }
-                }
-
-                // if there is no overlap between the projects, the edge we are looking at separates the two
-                // polygons, and we know there is no overlap
-                if (maxA < minB || maxB < minA) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    //Helper function to render the polygon on the page. This is only used in debug mode
-    render(bitmap, color, thickness){
-        let context = bitmap._context;
-        context.save();
-        context.strokeStyle = color;
-        context.lineWidth = thickness;
-        context.beginPath();
-        context.moveTo(this.points[0].x, this.points[0].y);
-
-        for (var j = 1; j < this.points.length; j++) {
-            context.lineTo(this.points[j].x, this.points[j].y);
-        }
-
-        context.lineTo(this.points[0].x, this.points[0].y);
-        context.closePath();
-        context.stroke();
-        context.restore();
-        bitmap._setDirty();
-    }
-}
-
 
 //Helper class that makes up the hitbox. Handles the appropriate game_action (although can only do basic attacks so far)
 class Hitbox {

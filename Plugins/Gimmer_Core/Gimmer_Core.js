@@ -360,29 +360,20 @@ Window_Fade.prototype.update = function(){
 
 Window_Fade.prototype.updateFade = function(){
     if(this._fadeForPlayer){
-        //Check X
-        let minX = this.x;
-        let maxX = this.x + this.width;
-        let minY = this.y;
-        let maxY = this.y + this.height;
-        let playerX = $gamePlayer.screenX();
-        let playerXmin = playerX - ($gameMap.tileWidth() / 2);
-        let playerXmax = playerX + ($gameMap.tileWidth() / 2);
-        let playerY = $gamePlayer.screenY();
-        let playerYmin = playerY - $gameMap.tileHeight()
-        let playerYmax = playerY;
-        if( ((playerXmin > minX && playerXmin <= maxX) || (playerXmax > minX && playerXmax <= maxX))
-            && ((playerYmin > minY && playerYmin <= maxY) || (playerYmax > minY && playerYmax <= maxY))){
+        let windowPolygon = new Polygon('rectangle',this.x, this.y, this.width, this.height, 0);
+        let playerStartingY = (ImageManager.isBigCharacter($gamePlayer._characterName) ? $gamePlayer.y * $gameMap.tileHeight() - ($gameMap.tileHeight() / 2) : $gamePlayer.y * $gameMap.tileHeight());
+        let playerHeight = (ImageManager.isBigCharacter($gamePlayer._characterName) ? $gameMap.tileHeight() * 1.5 : $gameMap.tileHeight());
+        let playerPolygon = new Polygon('rectangle',$gamePlayer.x * $gameMap.tileWidth(), playerStartingY, $gameMap.tileWidth(), playerHeight, 0);
+        if(playerPolygon.intersects(windowPolygon)){
             if(this._fadeLevel === 1){
                 this.reserveFade();
             }
         }
-        else {
+        else{
             if(this._fadeLevel === -1 && !$gamePlayer.isMoving()){
                 this.reserveUnFade();
             }
         }
-
     }
     if(this._isFading){
         if(this._fadeLevel > 0){
@@ -466,4 +457,159 @@ Gimmer_Core.isUndefined = function(variable){
 //Helper to capitalize a string
 String.prototype.capitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1)
+}
+
+//Polygon class to be used inside of hitboxes. Can be created, and then rotated using math
+//The math is provided with the disclaimer that it came from the internet rather than my brain
+class Polygon {
+    constructor(type, startingX, startingY, width, height, angle) {
+        this.type = type;
+        this.startingX = startingX;
+        this.startingY = startingY;
+        this.width = width;
+        this.height = height;
+        this.angle = angle;
+        this.updatePosition();
+    }
+
+    cloneBase(){
+        return new Polygon(this.type, this.startingX, this.startingY, this.width, this.height, 0);
+    }
+
+    createPoints(){
+        let x = this.startingX;
+        let y = this.startingY;
+        let width = this.width;
+        let height = this.height;
+        this.points = [];
+        switch(this.type){
+            case 'triangle':
+                break;
+            case 'rectangle':
+                //Basic points
+                this.points.push({x:x, y:y});
+                this.points.push({x:x + width,y:y});
+                this.points.push({x:x + width,y:y + height});
+                this.points.push({x:x, y: y + height});
+                break;
+        }
+    }
+
+    updatePosition(x,y, width, height, angle){
+        x = x || this.startingX;
+        y = y || this.startingY;
+        width = width || this.width;
+        height = height || this.height;
+        angle = angle || this.angle;
+        this.startingX = x;
+        this.startingY = y;
+        this.width = width;
+        this.height = height;
+        this.angle = angle;
+        this.pivotPoint = {x:this.startingX, y: this.startingY + (this.height / 2)}
+        this.createPoints();
+        this.rotate();
+    }
+
+    rotate(){
+        if(this.angle > 0){
+            this.points.forEach(function(point, k){
+                this.points[k] = this.rotatePoint(point.x, point.y, this.pivotPoint.x, this.pivotPoint.y, this.angle);
+            }, this);
+        }
+    }
+
+    rotatePoint(pointX, pointY, originX, originY, angle) {
+        angle = angle * Math.PI / 180.0;
+        return {
+            x: Math.cos(angle) * (pointX-originX) - Math.sin(angle) * (pointY-originY) + originX,
+            y: Math.sin(angle) * (pointX-originX) + Math.cos(angle) * (pointY-originY) + originY
+        };
+    }
+
+    //Flat out copied this from stack overflow
+    intersects(otherPolygon){
+        //this is always the hit box, otherPolygon is the hurt box
+
+        //If the box has no width or height, it can't hit anything
+        if(this.width === 0 || this.height === 0){
+            return false;
+        }
+
+        let a = this.points;
+        let b = otherPolygon.points;
+
+        var polygons = [a, b];
+        var minA, maxA, projected, i, i1, j, minB, maxB;
+
+        for (i = 0; i < polygons.length; i++) {
+
+            // for each polygon, look at each edge of the polygon, and determine if it separates
+            // the two shapes
+            var polygon = polygons[i];
+            for (i1 = 0; i1 < polygon.length; i1++) {
+
+                // grab 2 vertices to create an edge
+                var i2 = (i1 + 1) % polygon.length;
+                var p1 = polygon[i1];
+                var p2 = polygon[i2];
+
+                // find the line perpendicular to this edge
+                var normal = { x: p2.y - p1.y, y: p1.x - p2.x };
+
+                minA = maxA = undefined;
+                // for each vertex in the first shape, project it onto the line perpendicular to the edge
+                // and keep track of the min and max of these values
+                for (j = 0; j < a.length; j++) {
+                    projected = normal.x * a[j].x + normal.y * a[j].y;
+                    if (Gimmer_Core.isUndefined(minA) || projected < minA) {
+                        minA = projected;
+                    }
+                    if (Gimmer_Core.isUndefined(maxA) || projected > maxA) {
+                        maxA = projected;
+                    }
+                }
+
+                // for each vertex in the second shape, project it onto the line perpendicular to the edge
+                // and keep track of the min and max of these values
+                minB = maxB = undefined;
+                for (j = 0; j < b.length; j++) {
+                    projected = normal.x * b[j].x + normal.y * b[j].y;
+                    if (Gimmer_Core.isUndefined(minB) || projected < minB) {
+                        minB = projected;
+                    }
+                    if (Gimmer_Core.isUndefined(maxB) || projected > maxB) {
+                        maxB = projected;
+                    }
+                }
+
+                // if there is no overlap between the projects, the edge we are looking at separates the two
+                // polygons, and we know there is no overlap
+                if (maxA < minB || maxB < minA) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    //Helper function to render the polygon on the page. This is only used in debug mode
+    render(bitmap, color, thickness){
+        let context = bitmap._context;
+        context.save();
+        context.strokeStyle = color;
+        context.lineWidth = thickness;
+        context.beginPath();
+        context.moveTo(this.points[0].x, this.points[0].y);
+
+        for (var j = 1; j < this.points.length; j++) {
+            context.lineTo(this.points[j].x, this.points[j].y);
+        }
+
+        context.lineTo(this.points[0].x, this.points[0].y);
+        context.closePath();
+        context.stroke();
+        context.restore();
+        bitmap._setDirty();
+    }
 }
