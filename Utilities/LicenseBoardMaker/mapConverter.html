@@ -7,9 +7,25 @@
           integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" / -->
     <style type="text/css">
         .dragzone{
-            width: 100px;
-            height: 100px;
-            background-color: orange
+            width: 400px;
+            height: 400px;
+            background-color: #f8f8f8;
+            border: 5px dashed #ccc;
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+            position: relative;
+            box-shadow: inset 0 0 10px #ccc;
+        }
+        .dragzone span {
+            display: inline-block;
+            position: relative;
+            top: 45%;
+            font-family: 'Arial', sans-serif;
+            color: #444444;
+            border-bottom: 2px solid #222222;
+            font-size: 28px;
+            font-variant-caps: all-small-caps;
         }
     </style>
 
@@ -17,7 +33,7 @@
 </head>
 <body>
 
-<div class="dragzone">Drag Here</div>
+<div class="dragzone"><span>Drop JSON Here</span></div>
 
 <script
         src="https://code.jquery.com/jquery-3.5.1.min.js"
