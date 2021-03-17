@@ -66,6 +66,36 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
  * @type String
  * @desc hexcode of the background color eg #FF0000
  *
+ * @param Use Picture As Unit Of Meter
+ * @type file
+ * @dir img/pictures
+ * @desc What to use an image instead of a rectangle? Choose the picture here. The picture must been one solid single color
+ *
+ * @param Unit Picture Padding X
+ * @type Number
+ * @desc How many pixels between each unit picture horizontally?
+ * @min 0
+ * @max 50
+ * @default 5
+ * Default 5
+ *
+ * @param Unit Picture Padding Y
+ * @type Number
+ * @desc How many pixels between each unit picture vertically if on two or more lines?
+ * @min 0
+ * @max 50
+ * @default 5
+ * Default 5
+ *
+ * @param Value Per Picture Unit
+ * @type Number
+ * @desc How much of the thing the meter is measuring will fit into one picture? This will control how many pictures are rendered in the meter (with automatic wrapping)
+ *
+ * @param Outline Picture As Unit Of Meter
+ * @type file
+ * @dir img/pictures
+ * @desc If you are using a picture as meter, you can put this as an outline. The picture must be just an outline and otherwise transparent
+ *
  * @param Color Of Meter
  * @type text[]
  * @desc list of hexcodes you want for below 33 percent, below 66 percent, and above 66 percent. Put three hex codes in that exact order. Want them all the same? Just put it in three times
@@ -188,8 +218,6 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
 
 //TODO Later:
 //Show values on the meters?
-//Images instead of rectangles
-
 var vmParameters = PluginManager.parameters('Gimmer_VisualMeters');
 
 Gimmer_Core.VisualMeters.meters = JSON.parse(vmParameters['Meter List']);
@@ -235,6 +263,11 @@ Gimmer_Core.VisualMeters.meters.forEach(function(v,k){
     v['Event To Run at 0'] = Number(v['Event To Run at 0']);
     v['Common Event To Run at Max'] = Number(v['Common Event To Run at Max']);
     v['Repeat Common Events'] = (v['Repeat Common Events'] === "true");
+    v['Unit Picture'] = v['Use Picture As Unit Of Meter'];
+    v['Unit Outline Picture'] = v['Outline Picture As Unit Of Meter'];
+    v['Unit Picture Padding X'] = Number(v['Unit Picture Padding Y']);
+    v['Unit Picture Padding Y'] = Number(v['Unit Picture Padding Y']);
+    v['Value Per Picture Unit'] = Number(v['Value Per Picture Unit']);
 
     Gimmer_Core.VisualMeters.meters[k] = v;
 });
@@ -333,6 +366,28 @@ Window_VisualMeter.prototype.initialize = function(meter){
     this._eventActive = false;
     this._upSound = (meter['Sound When Value Goes Up'].length ? JSON.parse(meter['Sound When Value Goes Up']) : false );
     this._downSound = (meter['Sound When Value Goes Down'].length ? JSON.parse(meter['Sound When Value Goes Down']) : false);
+    this._picture = false;
+    this._pictureOutline = false;
+    this._picturePaddingX = 0;
+    this._picturePaddingY = 0;
+    this._unitsPerPicture = 0;
+    if(meter['Unit Picture'].length){
+        this._picture = ImageManager.reservePicture(meter['Unit Picture']);
+        let that = this;
+        this._picture.addLoadListener(function(){
+            that._dirty = true;
+        });
+        if(meter['Unit Outline Picture'].length){
+            this._pictureOutline = ImageManager.reservePicture(meter['Unit Outline Picture']);
+            let that = this;
+            this._pictureOutline.addLoadListener(function(){
+                that._dirty = true;
+            });
+        }
+        this._picturePaddingX = meter['Unit Picture Padding X'];
+        this._picturePaddingY = meter['Unit Picture Padding Y'];
+        this._unitsPerPicture = meter['Value Per Picture Unit'];
+    }
     Window_Fade.prototype.initialize.call(this, Number(eval(meter['Meter X'])), Number(eval(meter['Meter Y'])), Number(eval(meter['Meter Width'])), Number(eval(meter['Meter Height'])));
     this._fadeForPlayer = Gimmer_Core.VisualMeters.FadeUnderPlayer;
     this._desinationAlpha = Gimmer_Core.VisualMeters.FadePercentage;
@@ -409,7 +464,7 @@ Window_VisualMeter.prototype.drawMeterContents = function(){
         width = (this._lastParamCurrent / this._lastParamMax) * (this.width - this._textWidth);
         this._dirty = false;
     }
-    let widthPercent = Math.floor(width / (this.width - this._textWidth) * 100);
+    let widthPercent = Math.round(width / (this.width - this._textWidth) * 100);
     let color;
     if(widthPercent <= 33){
         color = this._rangeColors[0];
@@ -421,7 +476,53 @@ Window_VisualMeter.prototype.drawMeterContents = function(){
         color = this._rangeColors[2];
     }
 
-    this.contents.fillRect(this._textWidth,0,width, this.height, color);
+    let sx = 0;
+    let sy = 0;
+    let sw = this._picture.width;
+    let sh = this._picture.height;
+    let dx = this._textWidth;
+    let dy = 0;
+
+    if(this._picture){
+        let numberOfHearts = Math.round(this._lastParamMax / this._unitsPerPicture);
+        let numberOfFilledHearts = this._lastParamTemp / this._unitsPerPicture;
+        let picture = this.getPicture();
+        picture.fillImage(color,'horizontal',100);
+        for(let i = 0; i < numberOfHearts; i++){
+            sw = picture.width;
+            if(numberOfFilledHearts - i > 1){
+                //full heart
+            }
+            else if(numberOfFilledHearts - i > 0){
+                sw = sw * (numberOfFilledHearts - i);
+            }
+            else{
+                sw = 0;
+            }
+
+            if(sw > 0){
+                this.contents.blt(picture, sx, sy, sw, sh, dx, dy);
+            }
+
+            if(this._pictureOutline){
+                this._pictureOutline.fillImage("#FFFFFF");
+                this.contents.blt(this._pictureOutline,sx,sy,this._pictureOutline.width,sh,dx,dy);
+            }
+
+            dx += picture.width + this._picturePaddingX;
+            if(dx + picture.width + this._picturePaddingX > this.width){
+                dy += picture.height + this._picturePaddingY;
+                dx = this._textWidth;
+            }
+        }
+    }
+    else{
+        this.contents.fillRect(this._textWidth,0,width, this.height, color);
+    }
+}
+
+Window_VisualMeter.prototype.getPicture = function(){
+    return this._picture;
 }
 
 Window_VisualMeter.prototype.drawLabel = function(){

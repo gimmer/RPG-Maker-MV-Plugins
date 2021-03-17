@@ -613,3 +613,58 @@ class Polygon {
         bitmap._setDirty();
     }
 }
+
+Bitmap.prototype.fillImage = function (color, fillDirection, fillPercent){
+
+    let cutOffX;
+    let cutOffY;
+    if(!fillDirection){
+        fillDirection = "horizontal";
+    }
+
+    if(!fillPercent){
+        fillPercent = 100;
+    }
+    else{
+        fillPercent = Math.round(fillPercent);
+    }
+
+    fillPercent = fillPercent.clamp(0,100);
+
+    if(fillPercent < 100){
+        let percent = fillPercent / 100;
+        if(fillDirection === "horizontal"){
+            cutOffX = Math.floor(this.width * percent);
+        }
+        else{
+            cutOffY = Math.floor(this.height * percent);
+        }
+    }
+    this._fill = fillPercent;
+    let points = [];
+    let transparentPoints = [];
+    for(let x = 0; x < this.width; x++){
+        for(let y = 0; y < this.height; y++){
+            if(this.getAlphaPixel(x,y) > 0){
+                if(cutOffY && y > cutOffY){
+                    transparentPoints.push({x:x,y:y});
+                }
+                else if(cutOffX && x > cutOffX){
+                    transparentPoints.push({x:x,y:y});
+                }
+                else{
+                    points.push({x:x,y:y});
+                }
+
+            }
+        }
+    }
+
+    points.forEach(function(point){
+        this.fillRect(point.x,point.y,1,1, color);
+    },this);
+
+    transparentPoints.forEach(function(point){
+        this.clearRect(point.x,point.y,1,1);
+    },this);
+}
