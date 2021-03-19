@@ -21,11 +21,39 @@ Gimmer_Core['FightySmarts'] = {'loaded':true};
  * Add the following note tags to an event to make them aggro, so long as isEnemy is defined on the event as per the FightyFighty Plugin:
  * <canAggro>
  *
+ * Add the following note tag to assign an AI profile:
+ * <actionProfile:[aggressor|defender|chaotic|coward]> Which of the four provided templates do you want your enemy to be.
+ *
+ * ===Profiles===
+ * Aggressor:
+ *      Aggressors will follow the player for X chase distance when aggro'd.
+ *      They will attack (or ram into) on cool down
+ *      They will back off slowly when on cool down, but stay near the player
+ *
+ * Defender:
+ *      Defenders will follow the player to a make distance from their original position.
+ *      Defenders will stay aggro'd in their defensive position, facing the player, until the player goes far enough away
+ *      Defenders will back away slowly from the player during attack cool down
+ *      Defenders will move back to their patrol area, even when aggro'd if they are pulled too far from where they started
+ *
+ * Coward:
+ *      Cowards will run from the player if they can
+ *      Cowards will attack on cooldown if the player is in their range and they can
+ *      If cowards cannot attack, they'll just run away.
+ *
+ * Chaotic:
+ *      Chaotics will run towards the player, but with bouts of randomness based on settings
+ *      Chaotics will attack when in range and not on cool down
+ *      Chaotics will stay within a certain range of the player on cool down, but mostly run around randomly
+ *
+ *
+ *
  * The following tags can be set on the Event's, or the enemies that are associated with the event's "<isEnemy:x>" tag.
  * The plugin will load the tag from the event first, then the enemy, and then finally the default as set in the parameters.
  *
  * Optionally add these note tags to override the defaults on anything that has canAggro set:
  * <aggroDistance:x> where x is how far in squares from the player that aggro will start. Set this to 0 to prevent proximity based aggro.
+ * <aggroDistanceReturnMod:x> Where x is what percent to divide the aggro range by when returning. Defaults to 50. Assumes that monster returning to their home base are harder to aggro again
  * <chaseDistance:x> where x is how many steps the npc will chase the player before rubber banding back to their starting position
  * <aggroBalloonId:x> where x is the id of the balloon you want to go over their head. -1 to suppress if you want to not have balloons
  * <aggroMoveSpeed:x> Where x is the move speed you want when aggro. You don't really want this to be faster than your character can move, especially if an enemy has a self hit box.
@@ -35,6 +63,19 @@ Gimmer_Core['FightySmarts'] = {'loaded':true};
  * <attackCoolDownMin:x> Where x is the minimum number of frames the enemy will wait before attacking again.
  * <attackCoolDownMax:x> Where x is the maximum number of frames the enemy will wait before attacking again. Used with it's minimum to randomly refresh attacks.
  * <aggroSe:x> Where where x is the name of the file (e.g. Absorb1, Attack3, etc.) that you want when aggro occurs.
+ *
+ * You can also tweak the default ai parameters with the following note tags:
+ * <minPuttyDistance:x> Where x is the minimum distance a chaotic will try to stay away from the player (in tiles) while on cool down
+ * <maxPuttyDistance:x> Where x is the maximum distance a chaotic will try to stay away from the player (in tiles) while on cool down
+ * <chaosPercent:x> Where x is the percent of the time a chaotic will move randomly instead of towards a player during a chase
+ * <backOffDistance:x> Where x is how many tiles an aggressor will try to back off during cool down.
+ * <defenderDistance:x> Where x is how many tiles a defender will go away from their starting position.
+ * <defenderAggroDistanceMod:x> Where x is how many tiles a player has to be from the defender before the defender will disengage.
+ *
+ * ===Version History===
+ * Version 1.0:
+ *  - First Release
+ * ===
  *
  * @param ---Defaults---
  *
@@ -282,10 +323,6 @@ Game_Event.prototype.initialize = function(mapId, eventId){
             //AI Profile Parameters
             this._actionProfile = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'actionProfile', Gimmer_Core.FightySmarts.DefaultActionProfile);
 
-            //Chaotic Parameters
-            this._minimumPuttyDistance = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'minPuttyDistance', Gimmer_Core.FightySmarts.DefaultMinPuttyDistance);
-            this._maximumPuttyDistance = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'maxPuttyDistance', Gimmer_Core.FightySmarts.DefaultMaxPuttyDistance);
-
             //Aggressor Parameters
             this._backoffDistance = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'backOffDistance', Gimmer_Core.FightySmarts.DefaultBackoffDistance);
 
@@ -295,6 +332,8 @@ Game_Event.prototype.initialize = function(mapId, eventId){
 
             //Chaotic Parameters
             this._chaosPercent = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta], 'chaosPercent',Gimmer_Core.FightySmarts.DefaultChaosPercent);
+            this._minimumPuttyDistance = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'minPuttyDistance', Gimmer_Core.FightySmarts.DefaultMinPuttyDistance);
+            this._maximumPuttyDistance = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'maxPuttyDistance', Gimmer_Core.FightySmarts.DefaultMaxPuttyDistance);
         }
     }
 }

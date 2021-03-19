@@ -19,7 +19,222 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  * Gimmer_FightyFighty
  * ================
  *
+ * This plugin requires Gimmer_Core and Gimmer_AnimateAnywhere
+ *
+ * This plugin attempts to use as many in engine systems as possible to enable action combat on the map.
+ * This is done by tying hurtboxes to players and events (to represent what parts of them are hurt when touched)
+ * And hitboxes to weapon animations / enemies themselves (to represent the things that hurt the player or the enemies).
+ *
+ * This mod assumes one player only!
+ * This mod assumes 4 way atack only! (Other modes can be used to move around in 8 directions, but attacks only work four way for now)
+ *
+ * Setup:
+ * 1) Enable the mod (enable the debug flags to be able to see hitboxes and hurt boxes)
+ *
+ * 2) The hurt box for a player will default to one tile. Tweak the hurtbox of the player by adding the following tags:
+ * <modLeft:x>
+ * <modRight:x>
+ * <modTop:x>
+ * <modBottom:x>
+ * Where x is positive or negative modifiers.
+ * This lets you wrap the hurt box of the player to better fit his / her animation
+ *
+ * 3) Choose a weapon for the player
+ *
+ * 4) Add to that weapon the following tags:
+ * <animationRight:animationData,AttackType>
+ * <animation[Up|Down|Left]:animationData,AttackType>
+ * <pushback:x>
+ * <impactSe:seName>
+ *
+ * animation[Right|Left|Up|Down] controls what animation plays when an attack is done in that direction.
+ * Parameters:
+ * - AttackType:
+ * -- Can either be "Shoot", "Stab", or "Slash". This is used to control what player animation to play during the attack
+ * (more on that later)
+ *
+ * - animationData: There are a few formats you can put in:
+ * -- attackAnimationId
+ * -- attackAnimationId|finishedAnimationId
+ * -- attackAnimationId|projectileAnimationId|finishedAnimationId (only works if attack type is Shoot)
+ *
+ * In each case, an animationId is the numerical id from the database of the animation to play.
+ *
+ * attackAnimationId is the animation for the attack itself
+ * finishedAnimationId is the animation to play if there is an impact with an enemy
+ *
+ * projectileAnimationId is the animation that plays to represent a shooting projectile.
+ *
+ * - pushback
+ * -- number of squares for an attack to push back on successful damage.
+ *
+ * - impactSe
+ * -- optional impact sound to make if the weapon hits not an enemy. Just put the name of the se file without the extension
+ *
+ * ===
+ * Note: Projectiles
+ * ===
+ * Projectiles have three stages of animation so that the first can be used to animate the weapon firing
+ * The second is the animation of the projectile flying
+ * and the third is the impact (explosions, yay!)
+ * If you don't WANT to animate the weapon, just make the first animationId -1, the projectile will just fire.
+ *
+ * 5) Create Hit Boxes for the animation frames (also known as "The Hard Part")
+ * Included with the plugin is an example Hitboxes.json file.
+ * This is a database of the hitbox frames that play along side any animations
+ * The basic form looks like this:
+ *
+ *   [
+ *      {"121": [
+ *          {modX: 0, modY: 0, width:50, height:25, angle: 0},
+ *          {modX: 0, modY: 0, width:100, height:0, angle: 0}
+ *      ]}
+ *  ]
+ *
+ *  This shows for animationId 121, there are two hitboxes. One in frame 1, and one in frame 2.
+ *  If the animation is any number of frames more than 2, the most recently drawn hitbox will stay valid until the animation finishes
+ *  All hitboxes are rectangles going to the right of the player/event by default.
+ *  You use the variables to manipulate their height, width, angle, and position on screen
+ *  Parameters:
+ * - modX: a positive or negative number showing how much to move the rectangle left or right for that frame
+ * - modY: a positive or negative number showing how much to move the rectangle up or down/
+ * - width: how wide is the hitbox
+ * - height: how high is the hitbox
+ * - angle: how much to rotate the hitbox (0 through 359, going clockwise with 0 meaning "straight to the right")
+ *
+ * With the debug parameter on you can see each frame of the hitbox animated as the animation plays.
+ * You will need to test these a great deal to get them right with your animations.
+ *
+ * ===
+ * For Projectiles:
+ * ===
+ * Projectile hitboxes are different, because they move the animation along with them.
+ * See the example:
+ *
+ * [
+ *  {'126': [
+ *       {
+ *           modXright: -6.5, modYright: -12.5,
+ *           modXleft: -15, modYleft: -12.5,
+ *           modXup: -12, modYup: -16,
+ *           modXdown: -12, modYdown: -10,
+ *           width: 25, height: 25, angle: 0, moveSpeed: 6
+ *       },
+ *          {width: 25, height: 25, angle: 0, moveSpeed: 6}
+ *       ]}
+ *  ]
+ *
+ * Additional Parameters:
+ * - modX[right|left|up|down]: how much to tweak the x value of the hitbox when it was fired to the right|left|up|down.
+ * - modY[right|left|up|down]: how much to tweak the y value of the hitbox when it was fired to the right|left|up|down.
+ * - moveSpeed: needed for every frame of the animation: how many pixels to move per frame.
+ *   If you want it to move less consistently, you can omit this from some of the frames
+ *
+ * 7) (optional) Add action sprites to the character
+ *
+ * Action sprites are set by adding the following tags to the actor's note page:
+ * <actionSprite:characterName>
+ * <actionSprite[Swing|Shoot|Stab]:characterName>
+ * The sheets are stored in the img/characters folder and follow the same dimensions as the walking sprites:
+ * Down, left, right, up
+ * With three attack frames in each.
+ * These frames will be played left to right during an attack.
+ * If your attack animation has more than three frames, the third frame from the sprite will persist until the animation is over
+ * ===
+ * Note: You can use plugins that increase the number of walking frames for actionSprites instead.
+ *      Just make sure to remember they are read left to right
+ * ===
+ * if you define actionSprite on it's on, that will be the action sprite used for all attacks
+ * You can override this for individual attack types using actionSpriteShoot, actionSpriteStab, and actionSpriteSlash
+ * respectively.
+ *
+ * 8) Add something to fight
+ *
+ * Create an event with the following properties in the note tag:
+ *
+ * ===
+ * Note: Yes the note field is really small for events, but it still works
+ * ===
+ *
+ * <isEnemy:x>
+ * - This tag will make that event have a hurt box and have all the hp and attack power of enemy with enemyId x
+ *
+ * You can also modify the hurt box in the same way you could with the player:
+ * <modLeft:x>
+ * <modRight:x>
+ * <modTop:x>
+ * <modBottom:x>
+ *
+ * This enemy can now be attacked and killed.
+ *
+ * Optionally:
+ * Add the tag <deathSe:seName> to the event OR the enemy customize what this thing sounds like when it dies.
+ *
+ * 9) Make the enemy able to hurt you
+ *
+ * Add the tag:
+ * <selfHurtBox> to the event
+ *
+ * Add the tag:
+ * <pushback:x> to the enemy associated with the event to add pushback to the selfHurtBox attack
+ *
+ * This will make the enemy's hurt box become a hitbox as well, and if the enemy bumps into you, you'll get hurt
+ *
+ * 10) Make the enemy able to hurt you more
+ *
+ * Add the tag:
+ * <canAttack> to the event. This means the enemy will be able to process incoming attack requests and do them.
+ *
+ * Add the following tags to the enemy:
+ * <animation[Right|Up|Down|Left]:animationData,AttackType>
+ * These tags work the same way as the player.
+ *
+ * ===
+ * Note: The enemy can be made via the event page script command: this.character()._pendingAttack = true;
+ * This is not an ideal thing to do, unless you want via scripted enemies.
+ * See the optional AI plugin for help
+ * ===
+ *
+ * Cascading Parameters:
+ *
+ * Some parameters (deathSe, impactSe) can be set on both the event AND the enemy notes.
+ * In all cases, the order of priority is:
+ * 1) Event
+ * 2) Enemy
+ * 3) Custom Default from Parameters
+ * 4) System Default (if enabled)
+ *
+ * ====Version History====
+ * Version 1.0
+ *  - First release
+ * ====
+ *
  * @param ---Parameters---
+ *
+ * @param ---Debug Parameters---
+ * @parent ---Parameters---
+ *
+ * @param Debug Player Hitboxes
+ * @parent ---Debug Parameters---
+ * @desc Show Player attack hitboxes on the screen
+ * @type boolean
+ * Default false
+ * @default false
+ *
+ * @param Debug Hurtboxes
+ * @parent ---Debug Parameters---
+ * @desc Show hurtboxes around players and enemies
+ * @type boolean
+ * Default false
+ * @default false
+ *
+ *
+ * @param Debug Enemy Hitboxes
+ * @parent ---Debug Parameters---
+ * @desc Show enemy attack hitboxes on the screen
+ * @type boolean
+ * Default false
+ * @default false
  *
  * @param Use Ok For Attack
  * @parent ---Parameters---
@@ -32,6 +247,85 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  * @parent ---Parameters---
  * @desc If not using Ok for attack, choose the id of the button you want to use for an attack. See https://keycode.info/ to find button ids
  * @type Number
+ *
+ * @param Enable Permadeath
+ * @parent ---Parameters---
+ * @desc Should enemies die forever? Set to false and enemies will repawn when maps reload.
+ * @type boolean
+ * Default true
+ * @default true
+ *
+ * @param Player Invincibility Frames
+ * @parent ---Parameters---
+ * @desc How many frames should a player be invincible for after being hit? (assume 60 frames per second)
+ * @type Number
+ * Default 60
+ * @default 60
+ *
+ * @param Enemy Invincibility Frames
+ * @parent ---Parameters---
+ * @desc How many frames should an enemy be invincible for after being hit? (assume 60 frames per second)
+ * @type Number
+ * Default 60
+ * @default 60
+ *
+ * @param Flash Damage For Player
+ * @parent ---Parameters---
+ * @desc Should the "Perform map damage flash" occur when the player is hit?
+ * @type boolean
+ * Default true
+ * @default true
+ *
+ * @param Death Common Event
+ * @parent ---Parameters---
+ * @desc What common event should run on player death? The map will keep running, so this event will need to cover anything you want to happen
+ * @type common_event
+ *
+ * @param ---Sound Parameters---
+ * @parent ---Parameters---
+ *
+ * @param Use Default Player Damage Sound
+ * @parent ---Sound Parameters---
+ * @desc Play the sound associated with "Actor Damage" when the player is hit? Set this to false to have no sound play
+ * @type boolean
+ * Default true
+ * @default true
+ *
+ * @param Custom Player Damage Sound Effect
+ * @parent ---Sound Parameters---
+ * @desc Custom sound to play on player being damaged. Overwrites the default one, even if that's set to true
+ * @type struct<se>
+ *
+ * @param Use System Default Enemy Damage Sound
+ * @parent ---Sound Parameters---
+ * @desc Play the sound associated with "Enemy Damage" when enemies are hit? Will be overwritten by customer SEs set in the parameters, or the meta tags for an event or enemy
+ * @type boolean
+ * Default true
+ * @default true
+ *
+ * @param Custom Default Enemy Damage Sound Effect
+ * @parent ---Sound Parameters---
+ * @desc Custom sound to play on enemies being damaged. Can be overwritten on the event, and enemy note pages with the tag <damageSe:NAME_OF_SE>
+ * @type struct<se>
+ *
+ * @param Use System Default Enemy Death Sound
+ * @parent ---Sound Parameters---
+ * @desc Play the sound associated with "Enemy Collapse" when enemies die? Will be overwritten by custom SEs set in the parameters, or the meta tags for an event or enemy
+ * @type boolean
+ * Default true
+ * @default true
+ *
+ * @param Custom Default Enemy Death Sound Effect
+ * @parent ---Sound Parameters---
+ * @desc Custom sound to play on enemies dying. Can be overwritten on the event and enemy note pages with the tag <deathSe:NAME_OF_SE>
+ * @type struct<se>
+ *
+ * @param Use System Default Impact Sound Effect
+ * @parent ---Sound Parameters---
+ * @desc Play the sound associated with "Magic Reflection" when attacks hit walls? Set <impactSe:NAME_OF_SE> in the weapon note, or event / enemy note tag to control individual impact sounds
+ * @type boolean
+ * Default true
+ * @default true
  *
  */
 
@@ -72,12 +366,10 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 //todo: allow movement during attacks, just not directional change.
 
 //Other plugins
-//Todo: enemy health meters <-- separate plugin to interface with VisualMeters
 //Todo: Other skills to attack with? This will take some restructuring, but not necessarily? <-- separate plugin
 
 //Stupid crap I have to do eventually
 //todo: params
-//todo: reorganize the code so all extensions of classes are grouped together instead of being random
 
 //temp until json solution
 Gimmer_Core.Fighty.HitBoxAnimations = {
@@ -108,19 +400,19 @@ Gimmer_Core.Fighty.HitBoxAnimations = {
 var FightyParams = PluginManager.parameters('Gimmer_FightyFighty');
 
 //Debug
-Gimmer_Core.Fighty.DebugAllyHitboxes = true; //param
-Gimmer_Core.Fighty.DebugEnemyHitboxes = true; //param
-Gimmer_Core.Fighty.DebugHurtBoxes = true; //param
+Gimmer_Core.Fighty.DebugAllyHitboxes = (FightyParams['Debug Player Hitboxes'] === "true");
+Gimmer_Core.Fighty.DebugEnemyHitboxes = (FightyParams['Debug Enemy Hitboxes'] === "true");
+Gimmer_Core.Fighty.DebugHurtBoxes = (FightyParams['Debug Hurtboxes'] === "true");
 
 //Master Switch
 Gimmer_Core.Fighty.Enabled = true;
 
 //Params
-Gimmer_Core.Fighty.PermaDeath = true; //param
-Gimmer_Core.Fighty.InvincibilityFramesPlayer = 60; //param
-Gimmer_Core.Fighty.InvincibilityFramesEnemy = 60; //param
-Gimmer_Core.Fighty.FlashDamageForPlayer = true; //param
-Gimmer_Core.Fighty.DeathCommonEventId = 2; //param
+Gimmer_Core.Fighty.PermaDeath = (FightyParams['Enable Permadeath'] === "true");
+Gimmer_Core.Fighty.InvincibilityFramesPlayer = Number(FightyParams['Player Invincibility Frames'] || 60);
+Gimmer_Core.Fighty.InvincibilityFramesEnemy = Number(FightyParams['Enemy Invincibility Frames'] || 60);
+Gimmer_Core.Fighty.FlashDamageForPlayer = (FightyParams['Flash Damage For Player'] === "true");
+Gimmer_Core.Fighty.DeathCommonEventId = Number(FightyParams['Death Common Event'] || 0);
 Gimmer_Core.Fighty.UseOkForAttack = (FightyParams['Use Ok For Attack'] === "true");
 if(Gimmer_Core.Fighty.UseOkForAttack){
     Gimmer_Core.Fighty.AttackButton = 'ok';
@@ -132,12 +424,13 @@ else{
 
 
 //Sounds
-Gimmer_Core.Fighty.UseDefaultPlayerDamageSound = true;
-Gimmer_Core.Fighty.PlayerHitSoundEffect = false; //param of type se
-Gimmer_Core.Fighty.DefaultEnemyHitSoundEffect = false; //Param of type se
-Gimmer_Core.Fighty.UseSystemDefaultEnemyHitSoundEffect = true; //param
-Gimmer_Core.Fighty.DefaultEnemyDeathSound = false; //param
-Gimmer_Core.Fighty.UseDefaultImpactSoundEffect = false;
+Gimmer_Core.Fighty.UseDefaultPlayerDamageSound = (FightyParams['Use Default Player Damage Sound'] === "true");
+Gimmer_Core.Fighty.PlayerHitSoundEffect = (FightyParams['Custom Player Damage Sound Effect'].length ? JSON.parse(FightyParams['Custom Player Damage Sound Effect']) : false);
+Gimmer_Core.Fighty.UseSystemDefaultEnemyHitSoundEffect = (FightyParams['Use System Default Enemy Damage Sound'] === "true");
+Gimmer_Core.Fighty.DefaultEnemyHitSoundEffect = (FightyParams['Custom Default Enemy Damage Sound Effect'].length ? JSON.parse(FightyParams['Custom Default Enemy Damage Sound Effect']) : false);
+Gimmer_Core.Fighty.UseSystemDefaultEnemyDeathSoundEffect = (FightyParams['Use System Default Enemy Death Sound'] === "true");
+Gimmer_Core.Fighty.DefaultEnemyDeathSound = (FightyParams['Custom Default Enemy Death Sound Effect'].length ? JSON.parse(FightyParams['Custom Default Enemy Death Sound Effect']) : false);
+Gimmer_Core.Fighty.UseDefaultImpactSoundEffect = (FightyParams['Use System Default Impact Sound Effect'] === "true");
 
 //Constants
 Gimmer_Core.Fighty.hitboxTypes = {
@@ -167,20 +460,28 @@ Gimmer_Core.pluginCommands["ENABLEFIGHTY"] = function (){
     Gimmer_Core.Fighty.Enabled = true;
 }
 
-//todo: move data into json
-//DataManager._databaseFiles.push({name:'$dataHitboxes',src:'Hitboxes.json'});
-$dataHitboxes = Gimmer_Core.Fighty.HitBoxAnimations;
+DataManager._databaseFiles.push({name:'$dataHitboxes',src:'Hitboxes.json'});
+//$dataHitboxes = Gimmer_Core.Fighty.HitBoxAnimations;
 
 //Helper Functions
 Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect = function(){
-    return $dataSystem.sounds[14];
+    //playEnemyDamage
+    return $dataSystem.sounds[10];
 }
 
+Gimmer_Core.Fighty.getSystemDefaultEnemyDeathSoundEffect = function(){
+    //playEnemyDamage
+    return $dataSystem.sounds[11];
+}
+
+
 Gimmer_Core.Fighty.getDefaultPlayerHitSoundEffect = function(){
+    //playActorDamage
     return $dataSystem.sounds[14];
 }
 
 Gimmer_Core.Fighty.getDefaultImpactSoundEffect = function(){
+    //playReflection
     return $dataSystem.sounds[20];
 }
 
@@ -304,10 +605,15 @@ Sprite_Animation.prototype.getShootingStage = function(){
 Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function(){
     let isProjectile = (this.getShootingStage() === 2);
-    Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
-    if(isProjectile &&(this._startingX < 0 || this._startingY < 0)) {
-        this._startingX = this.x;
-        this._startingY = this.y;
+    if(isProjectile){
+        if(this._startingX < 0 || this._startingY < 0){
+            Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
+            this._startingX = this.x;
+            this._startingY = this.y;
+        }
+    }
+    else {
+        Gimmer_Core.Fighty._Sprite_Animation_prototype_updatePosition.call(this);
     }
 
     let widthToBe = this._hitbox.width;
@@ -446,7 +752,6 @@ Gimmer_Core.Fighty._Sprite_Animation_prototype_updateFrame = Sprite_Animation.pr
 Sprite_Animation.prototype.updateFrame = function(){
     var frameIndex = this.currentFrameIndex();
     if(this.visible && this._hitbox && this._hitboxFrames[frameIndex] && $gameMap.willHitboxHitWall(this._hitbox,this._hitboxFrames[frameIndex].width, this._hitboxFrames[frameIndex].height, this._hitboxFrames[frameIndex].angle)){
-        dd('impact');
         this.playImpactSound();
         this.visible = false; //hide the animation, no more hitboxes
         this._muteSounds = true;
@@ -481,13 +786,13 @@ Sprite_Animation.prototype.playImpactSound = function (){
         if(this._target._character._enemy){
             let meta = this._target._character.getObjectData().meta;
             let enemyMeta = this._target._character._enemy.getObjectData().meta;
-            seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'ImpactSe', seName);
+            seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'impactSe', seName);
         }
 
     }
     else{
         let meta = this._target._character.getActionHero().weapons()[0].meta;
-        seName = Gimmer_Core.Fighty.getMetaKey([meta],'ImpactSe',seName);
+        seName = Gimmer_Core.Fighty.getMetaKey([meta],'impactSe',seName);
     }
 
     if(seName){
@@ -505,7 +810,7 @@ Sprite_Animation.prototype.playImpactSound = function (){
 
 
 //GAME PLAYER AREA
-/*Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
+Gimmer_Core.Fighty._Game_Player_prototype_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(){
     if(this._isAttacking){
         return false;
@@ -513,7 +818,7 @@ Game_Player.prototype.canMove = function(){
     else{
         return Gimmer_Core.Fighty._Game_Player_prototype_canMove.call(this);
     }
-}*/
+}
 
 //Prevent moving during attacks even on forced movement routes
 Gimmer_Core.Fighty._Game_Character_prototype_updateRoutineMove = Game_Character.prototype.updateRoutineMove;
@@ -535,7 +840,9 @@ Game_Event.prototype.getActionHero = function(){
 Gimmer_Core.Fighty.Scene_Map_prototype_createAllWindows = Scene_Map.prototype.createAllWindows;
 Scene_Map.prototype.createAllWindows = function(){
     Gimmer_Core.Fighty.Scene_Map_prototype_createAllWindows.call(this);
-    this.addDebugHitBoxWindow();
+    if(Gimmer_Core.Fighty.DebugAllyHitboxes || Gimmer_Core.Fighty.DebugEnemyHitboxes || Gimmer_Core.Fighty.DebugHurtBoxes){
+        this.addDebugHitBoxWindow();
+    }
 }
 
 Scene_Map.prototype.addDebugHitBoxWindow = function(){
@@ -675,13 +982,20 @@ Game_Event.prototype.update = function(){
 
         //Sound handling
         let se = false;
-        let seTemplate = Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect();
-
+        let seTemplate = Gimmer_Core.Fighty.getSystemDefaultEnemyDeathSoundEffect();
         let meta = this.getObjectData().meta;
         let enemyMeta = this._enemy.getObjectData().meta;
-        let seName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'DeathSe', Gimmer_Core.Fighty.DefaultEnemyDeathSound);
-        if(seName){
-            seTemplate.name = seName;
+        let customSeName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'deathSe', false);
+        if(customSeName){
+            seTemplate.name = customSeName;
+            se = seTemplate;
+        }
+
+        if(!se && Gimmer_Core.Fighty.DefaultEnemyDeathSound){
+            se = Gimmer_Core.Fighty.DefaultEnemyDeathSound;
+        }
+
+        if(!se && Gimmer_Core.Fighty.UseSystemDefaultEnemyDeathSoundEffect){
             se = seTemplate;
         }
 
@@ -865,7 +1179,7 @@ Game_Event.prototype.resolveHitBox = function(hitbox){
         let enemyMeta = this._enemy.getObjectData().meta;
         let seTemplate = Gimmer_Core.Fighty.getDefaultEnemyHitSoundEffect();
         let customSe = false;
-        let customSeName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'DamageSe',false);
+        let customSeName = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'damageSe',false);
 
         if(customSeName){
             seTemplate.name = customSeName;
