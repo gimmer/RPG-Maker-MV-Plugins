@@ -18,6 +18,14 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * This plugin replaces the xp system with a License Point (LP) system, with stats, equip skills, and magic being bought with points earned in battles
  * Note: This assumes you will only us the LP system, and not exp. Settings an enemies XP value controls the LP they hand out now instead, so you will have to balance encounters around that.
  *
+ * NOTE: Currently you cannot change classes, but each class can have it's own board.
+ *
+ * Class Note Tags:
+ *
+ * <StartingLicensePosition:x,y> Where a class starts on the board
+ * <BoardName:name> What board to use for a given class
+ * <StartingLicenses:x,y|x2,y2|x3,y3,etc> The positions of license that a given class should start with
+ *
  *
  * @param License Board Name
  * @parent ---Parameters---
@@ -125,9 +133,9 @@ Gimmer_Core.LicenseBoard.MDF = 5;
 Gimmer_Core.LicenseBoard.AGI = 6;
 Gimmer_Core.LicenseBoard.LUK = 7;
 
-var $dataLicenseBoard = [];
+var $dataLicenseBoard = {};
 var $dataLicenseMap = {};
-var $dataLicenseEasyCoords = [];
+var $dataLicenseEasyCoords = {};
 
 //Load Skill Board Data
 DataManager._databaseFiles.push({name:'$dataLicenseBoard',src:'Licenses.json'});
@@ -138,23 +146,31 @@ DataManager.onLoad = function(object){
     Gimmer_Core.LicenseBoard.DataManager_onLoad.call(this,object);
 
     if(object === $dataLicenseBoard){
-        $dataLicenseBoard.forEach(function(license, index){
-            if(license.x > Gimmer_Core.LicenseBoard.maxX){
-                Gimmer_Core.LicenseBoard.maxX = license.x;
-            }
-            if(license.y > Gimmer_Core.LicenseBoard.maxY){
-                Gimmer_Core.LicenseBoard.maxY = license.y;
-            }
+        $dataLicenseBoard.forEach(function(board, boardKey){
+            let boardData = board.data;
+            let boardIndex = board.name;
+            $dataLicenseMap[boardIndex] = {}
+            $dataLicenseEasyCoords[boardIndex] = [];
+            $dataLicenseBoard[boardIndex] = [];
+            boardData.forEach(function(license, index){
+                if(license.x > Gimmer_Core.LicenseBoard.maxX){
+                    Gimmer_Core.LicenseBoard.maxX = license.x;
+                }
+                if(license.y > Gimmer_Core.LicenseBoard.maxY){
+                    Gimmer_Core.LicenseBoard.maxY = license.y;
+                }
 
-            if(license.type !== 'nope'){
-                Gimmer_Core.LicenseBoard.LicenseCount++;
-            }
+                if(license.type !== 'nope'){
+                    Gimmer_Core.LicenseBoard.LicenseCount++;
+                }
 
-            let coordString = Gimmer_Core.LicenseBoard.getLicenseCoordinateString(license);
-            $dataLicenseMap[coordString] = index;
-            $dataLicenseEasyCoords.push(coordString);
-            $dataLicenseBoard[index] = new BoardLicense(license);
+                let coordString = Gimmer_Core.LicenseBoard.getLicenseCoordinateString(license);
+                $dataLicenseMap[boardIndex][coordString] = index;
+                $dataLicenseEasyCoords[boardIndex].push(coordString);
+                $dataLicenseBoard[boardIndex][index] = new BoardLicense(license);
+            });
         });
+
     }
 }
 
@@ -164,8 +180,8 @@ Gimmer_Core.LicenseBoard.getLicenseCoordinateString = function(license){
 }
 
 //Get the coordinates of a given license's index Id
-Gimmer_Core.LicenseBoard.getCoordsById = function(licenseId){
-    return this.getLicenseCoordinateString($dataLicenseBoard[licenseId]);
+Gimmer_Core.LicenseBoard.getCoordsById = function(boardname, licenseId){
+    return this.getLicenseCoordinateString($dataLicenseBoard[boardname][licenseId]);
 }
 
 Gimmer_Core.LicenseBoard.isTriggered = function(){
@@ -309,7 +325,7 @@ Game_Actor.prototype.initMembers = function(){
 
 //Record the lastLicenseId on the board so you reopen where you were each time
 Game_Actor.prototype.getLastLicenseId = function(){
-    let id = $dataLicenseMap[this.currentClass().meta.StartingLicensePosition];
+    let id = $dataLicenseMap[this.currentClass().meta.BoardName][this.currentClass().meta.StartingLicensePosition];
     if(this._lastLicenseId >= 0){
         id = this._lastLicenseId;
     }
@@ -327,9 +343,10 @@ Game_Actor.prototype.setup = function(actorId){
 Game_Actor.prototype.initLicenses = function(){
     if('StartingLicenses' in this.currentClass().meta){
         let startingLicenses = this.currentClass().meta.StartingLicenses.split("|");
+        let board = this.currentClass().meta.BoardName;
         startingLicenses.forEach(function(coords){
-            let index = $dataLicenseMap[coords];
-            let license = $dataLicenseBoard[index];
+            let index = $dataLicenseMap[board][coords];
+            let license = $dataLicenseBoard[board][index];
             this.gainExp(license.cost);
             this.claimLicense(index,license);
         }, this);
@@ -377,13 +394,14 @@ Game_Actor.prototype.hasAllLicenses = function(){
 //Does the actor own a license adjacent to the license provided
 Game_Actor.prototype.hasAdjacentLicense = function(license){
     let coordArray = [];
+    let board = this.getBoardName();
     coordArray.push((license.x+1)+","+license.y);
     coordArray.push((license.x-1)+","+license.y);
     coordArray.push(license.x+","+(license.y+1));
     coordArray.push(license.x+","+(license.y-1));
     let hasAdjacentLicense = false;
     coordArray.every(function(coord){
-        if(coord in $dataLicenseMap && this._licenses.indexOf($dataLicenseMap[coord]) > -1){
+        if(coord in $dataLicenseMap[board] && this._licenses.indexOf($dataLicenseMap[board][coord]) > -1){
             hasAdjacentLicense = true;
             return false;
         }
@@ -406,9 +424,8 @@ Game_Actor.prototype.deductExp = function(amount){
 Gimmer_Core.LicenseBoard._Game_Actor_prototype_paramPlus = Game_Actor.prototype.paramPlus;
 Game_Actor.prototype.paramPlus = function(paramId) {
     var value = Gimmer_Core.LicenseBoard._Game_Actor_prototype_paramPlus.call(this, paramId);
-
     for(var i = 0; i < this._licenses.length; i++){
-        var license = $dataLicenseBoard[this._licenses[i]];
+        var license = $dataLicenseBoard[this.getBoardName()][this._licenses[i]];
         if(license.type === 'attribute' && license.target === paramId){
             value += license.value;
         }
@@ -416,6 +433,10 @@ Game_Actor.prototype.paramPlus = function(paramId) {
 
     return value;
 };
+
+Game_Actor.prototype.getBoardName = function(){
+    return this.currentClass().meta.BoardName;
+}
 
 //Helper function to find if an actor has a specific license
 Game_Actor.prototype.hasLicense = function(licenseId){
@@ -437,7 +458,7 @@ Game_Actor.prototype.canEquipWeapon = function(item){
     let check = Game_BattlerBase.prototype.canEquipWeapon.call(this, item);
     if(!check){
         this._licenses.every(function(licenseIndex){
-            if($dataLicenseBoard[licenseIndex].type === 'equip' && $dataLicenseBoard[licenseIndex].target === 'weapon' && item.wtypeId === $dataLicenseBoard[licenseIndex].value){
+            if($dataLicenseBoard[this.getBoardName()][licenseIndex].type === 'equip' && $dataLicenseBoard[this.getBoardName()][licenseIndex].target === 'weapon' && item.wtypeId === $dataLicenseBoard[this.getBoardName()][licenseIndex].value){
                 check = true;
                 return false;
             }
@@ -452,7 +473,7 @@ Game_Actor.prototype.canEquipArmor = function(item){
     let check = Game_BattlerBase.prototype.canEquipArmor.call(this, item);
     if(!check){
         this._licenses.every(function(licenseIndex){
-            if($dataLicenseBoard[licenseIndex].type === 'equip' && $dataLicenseBoard[licenseIndex].target === 'armor' && item.atypeId === $dataLicenseBoard[licenseIndex].value){
+            if($dataLicenseBoard[this.getBoardName()][licenseIndex].type === 'equip' && $dataLicenseBoard[this.getBoardName()][licenseIndex].target === 'armor' && item.atypeId === $dataLicenseBoard[this.getBoardName()][licenseIndex].value){
                 check = true;
                 return false;
             }
@@ -477,6 +498,7 @@ Window_LicenseBoard.prototype.initialize = function(x, y, width, height, actor) 
     this._actor = actor;
     this.leftArrowVisible = false;
     this.rightArrowVisible = false;
+    this.boardName = this._actor.getBoardName();
     this.createContents();
     this.drawAllItems();
     this.select(this._actor.getLastLicenseId(), true);
@@ -489,7 +511,7 @@ Window_LicenseBoard.prototype.isCurrentItemEnabled = function(){
 
 //What's the max items of the license board
 Window_LicenseBoard.prototype.maxItems = function() {
-    return $dataLicenseBoard.length;
+    return $dataLicenseBoard[this.boardName].length;
 };
 
 //What row are you in?
@@ -500,14 +522,14 @@ Window_LicenseBoard.prototype.row = function() {
 
 //Draw all the licenses on the board
 Window_LicenseBoard.prototype.drawAllItems = function() {
-    for(var i = 0; i < $dataLicenseBoard.length; i++){
+    for(var i = 0; i < $dataLicenseBoard[this.boardName].length; i++){
         this.drawLicense(i);
     }
 };
 
 //get the current item
 Window_LicenseBoard.prototype.item = function(){
-    let license = $dataLicenseBoard[this.index()];
+    let license = $dataLicenseBoard[this.boardName][this.index()];
     if(!this.canSeeLicense(license, this.index())){
         license = false;
     }
@@ -526,7 +548,7 @@ Window_LicenseBoard.prototype.spacing = function(){
 
 //Draw individual licenses and their border
 Window_LicenseBoard.prototype.drawLicense = function(index) {
-    var item = $dataLicenseBoard[index];
+    var item = $dataLicenseBoard[this.boardName][index];
     if (item) {
         let hasClaimed = (this._actor._licenses.indexOf(index) > -1);
         var rect = this.itemRect(index);
@@ -596,18 +618,18 @@ Window_LicenseBoard.prototype.getAdjacentLicenses = function(license){
     let above =  license.x+","+(license.y-1);
 
     if(toLeft in $dataLicenseMap){
-        licenseList['toLeft'] = $dataLicenseBoard[$dataLicenseMap[toLeft]];
+        licenseList['toLeft'] = $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][toLeft]];
     }
 
     if(toRight in $dataLicenseMap){
-        licenseList['toRight'] = $dataLicenseBoard[$dataLicenseMap[toRight]];
+        licenseList['toRight'] = $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][toRight]];
     }
 
     if(below in $dataLicenseMap){
-        licenseList['below'] = $dataLicenseBoard[$dataLicenseMap[below]];
+        licenseList['below'] = $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][below]];
     }
     if(above in $dataLicenseMap){
-        licenseList['above'] = $dataLicenseBoard[$dataLicenseMap[above]];
+        licenseList['above'] = $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][above]];
     }
 
     return licenseList;
@@ -625,7 +647,7 @@ Window_LicenseBoard.prototype.canSeeLicense = function(license, index){
             canSee = true;
         }
 
-        if(!canSee && this._actor.currentClass().meta.StartingLicensePosition === $dataLicenseEasyCoords[index]){
+        if(!canSee && this._actor.currentClass().meta.StartingLicensePosition === $dataLicenseEasyCoords[this.boardName][index]){
             canSee = true;
         }
     }
@@ -644,7 +666,7 @@ Window_LicenseBoard.prototype.itemWidth = function(){
 
 //Get the item rectangle for a license item
 Window_LicenseBoard.prototype.itemRect = function(index) {
-    let item = $dataLicenseBoard[index];
+    let item = $dataLicenseBoard[this.boardName][index];
     let rect = new Rectangle();
     rect.width = this.itemWidth() + this.spacing();
     rect.height = this.itemHeight() + this.spacing();
@@ -712,6 +734,7 @@ if(Gimmer_Core.LicenseBoard.UseCustomCursor){
 Window_LicenseBoard.prototype.setActor = function(actor) {
     if (this._actor !== actor) {
         this._actor = actor;
+        this.boardName = this._actor.getBoardName();
         this.refresh();
         this.select(this._actor.getLastLicenseId(), true);
     }
@@ -737,7 +760,7 @@ Window_LicenseBoard.prototype.getCurrentCoords = function(){
     let coords = {x:-1,y:-1};
     let index = this.index();
     if(index > -1){
-        coords = $dataLicenseEasyCoords[index].split(',');
+        coords = $dataLicenseEasyCoords[this.boardName][index].split(',');
         let x = Number(coords[0]);
         let y = Number(coords[1]);
         coords = {x:x,y:y,xReal:x * (this.itemWidth() + this.spacing()),yReal: y * (this.itemHeight() + this.spacing())};
@@ -750,8 +773,8 @@ Window_LicenseBoard.prototype.getCurrentCoords = function(){
 Window_LicenseBoard.prototype.cursorDown = function(wrap) {
     let coords = this.getCurrentCoords();
     coords.y++;
-    if(coords.x+","+coords.y in $dataLicenseMap && $dataLicenseBoard[$dataLicenseMap[coords.x+","+coords.y]].type !== "nope"){
-        this.select($dataLicenseMap[coords.x+","+coords.y]);
+    if(coords.x+","+coords.y in $dataLicenseMap[this.boardName] && $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][coords.x+","+coords.y]].type !== "nope"){
+        this.select($dataLicenseMap[this.boardName][coords.x+","+coords.y]);
     }
 };
 
@@ -759,8 +782,8 @@ Window_LicenseBoard.prototype.cursorDown = function(wrap) {
 Window_LicenseBoard.prototype.cursorUp = function(wrap) {
     let coords = this.getCurrentCoords();
     coords.y--;
-    if(coords.x+","+coords.y in $dataLicenseMap && $dataLicenseBoard[$dataLicenseMap[coords.x+","+coords.y]].type !== "nope"){
-        this.select($dataLicenseMap[coords.x+","+coords.y]);
+    if(coords.x+","+coords.y in $dataLicenseMap[this.boardName] && $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][coords.x+","+coords.y]].type !== "nope"){
+        this.select($dataLicenseMap[this.boardName][coords.x+","+coords.y]);
     }
 
 };
@@ -769,8 +792,8 @@ Window_LicenseBoard.prototype.cursorUp = function(wrap) {
 Window_LicenseBoard.prototype.cursorRight = function(wrap) {
     let coords = this.getCurrentCoords();
     coords.x++;
-    if(coords.x+","+coords.y in $dataLicenseMap && $dataLicenseBoard[$dataLicenseMap[coords.x+","+coords.y]].type !== "nope"){
-        this.select($dataLicenseMap[coords.x+","+coords.y]);
+    if(coords.x+","+coords.y in $dataLicenseMap[this.boardName] && $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][coords.x+","+coords.y]].type !== "nope"){
+        this.select($dataLicenseMap[this.boardName][coords.x+","+coords.y]);
     }
 };
 
@@ -778,14 +801,14 @@ Window_LicenseBoard.prototype.cursorRight = function(wrap) {
 Window_LicenseBoard.prototype.cursorLeft = function(wrap) {
     let coords = this.getCurrentCoords();
     coords.x--;
-    if(coords.x+","+coords.y in $dataLicenseMap && $dataLicenseBoard[$dataLicenseMap[coords.x+","+coords.y]].type !== "nope"){
-        this.select($dataLicenseMap[coords.x+","+coords.y]);
+    if(coords.x+","+coords.y in $dataLicenseMap[this.boardName] && $dataLicenseBoard[this.boardName][$dataLicenseMap[this.boardName][coords.x+","+coords.y]].type !== "nope"){
+        this.select($dataLicenseMap[this.boardName][coords.x+","+coords.y]);
     }
 };
 
 //Select a license;
 Window_LicenseBoard.prototype.select = function(index, jump){
-    if($dataLicenseBoard[index] && $dataLicenseBoard[index].type !== 'nope'){
+    if($dataLicenseBoard[this.boardName] && $dataLicenseBoard[this.boardName][index] && $dataLicenseBoard[this.boardName][index].type !== 'nope'){
         this._index = index;
         this._stayCount = 0;
         this.ensureCursorVisible(jump);

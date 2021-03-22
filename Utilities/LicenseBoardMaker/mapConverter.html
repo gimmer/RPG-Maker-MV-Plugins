@@ -33,6 +33,10 @@
 </head>
 <body>
 
+<h4>License Maker Tool</h4>
+<p>Drag and drop a map made using the instructions provided with this tool</p>
+<p>The final file will be a single license board.</p>
+
 <div class="dragzone"><span>Drop JSON Here</span></div>
 
 <script
@@ -40,8 +44,8 @@
         integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
         crossorigin="anonymous"></script>
 <script type="text/javascript">
+    let licenseBoardName = "";
     let dragZone = $('.dragzone');
-    let mapData = {};
     dragZone.on('dragover', handleDragOver);
     dragZone.on('drop', handleJSONDrop);
     function handleDragOver(evt) {
@@ -67,6 +71,7 @@
             // Closure to capture the file information.
             reader.onload = (function(theFile) {
                 return function(e) {
+                    licenseBoardName = theFile.name.replace(".json","");
                     translateMapDataToLicenses(JSON.parse(e.target.result));
                 };
             })(f);
@@ -74,6 +79,7 @@
             reader.readAsText(f);
         }
     }
+
 
     licenses = [];
     licenseMap = {
@@ -118,7 +124,7 @@
         }
 
         var a = document.createElement("a");
-        var file = new Blob([JSON.stringify(licenses)], {type: 'text/json'});
+        var file = new Blob([JSON.stringify({name:licenseBoardName,data:licenses})], {type: 'text/json'});
         a.href = URL.createObjectURL(file);
         a.download = 'Licenses.json';
         a.click();
