@@ -1,15 +1,16 @@
-var Imported = Imported || {};
-
 if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
+
+var Imported = Imported || {};
+Imported['Gimmer_LicenseBoard'] = '1.2';
 
 Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
  * @plugindesc License Board to replace the exp leveling sytem with stats bought with licenses
- * @author Gimmer
+ * @author Gimmer_
  * @help
  * ===========
  * Gimmer_LicenseBoard
@@ -26,6 +27,22 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * <BoardName:name> What board to use for a given class
  * <StartingLicenses:x,y|x2,y2|x3,y3,etc> The positions of license that a given class should start with
  *
+ * ========
+ * Version History
+ * =======
+ * Version 1.0:
+ * - Initial Release
+ * Version 1.1:
+ * - Added Toggling with with a switch
+ * Version 1.2
+ * - Added multiple license boards. You will need to upgrade your Licenses.json file to be the form:
+ * [ {"name":"board1", "data": LICENSE DATA HERE}, {"name":"board2", "data": LICENSE DATA HERE},etc  ]
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param License Board Name
  * @parent ---Parameters---
@@ -88,12 +105,6 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * @type Switch
  * @desc What switch needs to be true for the license board to be accessible?
  *
- *
- * Terms of Use:
- * =======================================================================
- * Free for both commercial and non-commercial use, with credit.
- * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
- * =======================================================================
  */
 
 
