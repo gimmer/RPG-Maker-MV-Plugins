@@ -19,8 +19,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  * Gimmer_FightyFighty
  * ================
  *
- * This plugin requires Gimmer_Core and Gimmer_AnimateAnywhere
- *
  * This plugin attempts to use as many in engine systems as possible to enable action combat on the map.
  * This is done by tying hurtboxes to players and events (to represent what parts of them are hurt when touched)
  * And hitboxes to weapon animations / enemies themselves (to represent the things that hurt the player or the enemies).
@@ -204,126 +202,124 @@ Gimmer_Core['Fighty'] = {'loaded':true};
  * 3) Custom Default from Parameters
  * 4) System Default (if enabled)
  *
- * ====Version History====
- * Version 1.0
- *  - First release
- * ====
  *
  * @param ---Parameters---
+ * @default
  *
  * @param ---Debug Parameters---
  * @parent ---Parameters---
  *
  * @param Debug Player Hitboxes
  * @parent ---Debug Parameters---
+ * @type Boolean
  * @desc Show Player attack hitboxes on the screen
- * @type boolean
- * Default false
+ * Default False
  * @default false
  *
  * @param Debug Hurtboxes
  * @parent ---Debug Parameters---
+ * @type Boolean
  * @desc Show hurtboxes around players and enemies
- * @type boolean
- * Default false
+ * Default False
  * @default false
  *
  *
  * @param Debug Enemy Hitboxes
  * @parent ---Debug Parameters---
+ * @type Boolean
  * @desc Show enemy attack hitboxes on the screen
- * @type boolean
- * Default false
+ * Default False
  * @default false
  *
  * @param Use Ok For Attack
  * @parent ---Parameters---
- * @desc Use the same button for ok as for attack? If false, you need to bind a specific keyboard button to attack
  * @type boolean
+ * @desc Use the same button for ok as for attack? If false, you need to bind a specific keyboard button to attack
  * Default true
  * @default true
  *
  * @param Button Id for Attack
  * @parent ---Parameters---
- * @desc If not using Ok for attack, choose the id of the button you want to use for an attack. See https://keycode.info/ to find button ids
  * @type Number
+ * @desc If not using Ok for attack, choose the id of the button you want to use for an attack. See https://keycode.info/ to find button ids
+ *
  *
  * @param Enable Permadeath
  * @parent ---Parameters---
- * @desc Should enemies die forever? Set to false and enemies will repawn when maps reload.
  * @type boolean
+ * @desc Should enemies die forever? Set to false and enemies will repawn when maps reload.
  * Default true
  * @default true
  *
  * @param Player Invincibility Frames
  * @parent ---Parameters---
- * @desc How many frames should a player be invincible for after being hit? (assume 60 frames per second)
  * @type Number
+ * @desc How many frames should a player be invincible for after being hit? (assume 60 frames per second)
  * Default 60
  * @default 60
  *
  * @param Enemy Invincibility Frames
  * @parent ---Parameters---
- * @desc How many frames should an enemy be invincible for after being hit? (assume 60 frames per second)
  * @type Number
+ * @desc How many frames should an enemy be invincible for after being hit? (assume 60 frames per second)
  * Default 60
  * @default 60
  *
  * @param Flash Damage For Player
  * @parent ---Parameters---
- * @desc Should the "Perform map damage flash" occur when the player is hit?
  * @type boolean
+ * @desc Should the "Perform map damage flash" occur when the player is hit?
  * Default true
  * @default true
  *
  * @param Death Common Event
  * @parent ---Parameters---
- * @desc What common event should run on player death? The map will keep running, so this event will need to cover anything you want to happen
  * @type common_event
+ * @desc What common event should run on player death? The map will keep running, so this event will need to cover anything you want to happen
  *
  * @param ---Sound Parameters---
  * @parent ---Parameters---
  *
  * @param Use Default Player Damage Sound
  * @parent ---Sound Parameters---
- * @desc Play the sound associated with "Actor Damage" when the player is hit? Set this to false to have no sound play
  * @type boolean
+ * @desc Play the sound associated with "Actor Damage" when the player is hit? Set this to false to have no sound play
  * Default true
  * @default true
  *
  * @param Custom Player Damage Sound Effect
  * @parent ---Sound Parameters---
- * @desc Custom sound to play on player being damaged. Overwrites the default one, even if that's set to true
  * @type struct<se>
+ * @desc Custom sound to play on player being damaged. Overwrites the default one, even if that's set to true
  *
  * @param Use System Default Enemy Damage Sound
  * @parent ---Sound Parameters---
- * @desc Play the sound associated with "Enemy Damage" when enemies are hit? Will be overwritten by customer SEs set in the parameters, or the meta tags for an event or enemy
  * @type boolean
+ * @desc Play the sound associated with "Enemy Damage" when enemies are hit? Will be overwritten by customer SEs set in the parameters, or the meta tags for an event or enemy
  * Default true
  * @default true
  *
  * @param Custom Default Enemy Damage Sound Effect
  * @parent ---Sound Parameters---
- * @desc Custom sound to play on enemies being damaged. Can be overwritten on the event, and enemy note pages with the tag <damageSe:NAME_OF_SE>
  * @type struct<se>
+ * @desc Custom sound to play on enemies being damaged. Can be overwritten on the event, and enemy note pages with the tag <damageSe:NAME_OF_SE>
  *
  * @param Use System Default Enemy Death Sound
  * @parent ---Sound Parameters---
- * @desc Play the sound associated with "Enemy Collapse" when enemies die? Will be overwritten by custom SEs set in the parameters, or the meta tags for an event or enemy
  * @type boolean
+ * @desc Play the sound associated with "Enemy Collapse" when enemies die? Will be overwritten by custom SEs set in the parameters, or the meta tags for an event or enemy
  * Default true
  * @default true
  *
  * @param Custom Default Enemy Death Sound Effect
  * @parent ---Sound Parameters---
- * @desc Custom sound to play on enemies dying. Can be overwritten on the event and enemy note pages with the tag <deathSe:NAME_OF_SE>
  * @type struct<se>
+ * @desc Custom sound to play on enemies dying. Can be overwritten on the event and enemy note pages with the tag <deathSe:NAME_OF_SE>
  *
  * @param Use System Default Impact Sound Effect
  * @parent ---Sound Parameters---
- * @desc Play the sound associated with "Magic Reflection" when attacks hit walls? Set <impactSe:NAME_OF_SE> in the weapon note, or event / enemy note tag to control individual impact sounds
  * @type boolean
+ * @desc Play the sound associated with "Magic Reflection" when attacks hit walls? Set <impactSe:NAME_OF_SE> in the weapon note, or event / enemy note tag to control individual impact sounds
  * Default true
  * @default true
  *
@@ -931,7 +927,7 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
     if(this._invincibilityCount === 0 && !hitbox.engaged){
         hitbox.engaged = this;
         let actor = $gameActors._data[$gameParty._actors[this.characterIndex()]];
-        let damage = hitbox.applyDamage(actor);
+        let damage = 1; //hitbox.applyDamage(actor);
         if (damage > 0) {
             if(Gimmer_Core.Fighty.FlashDamageForPlayer){
                 actor.performMapDamage();

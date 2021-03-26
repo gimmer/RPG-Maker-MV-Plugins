@@ -288,6 +288,10 @@ Window_Popup.prototype._createAllParts = function() {
     this.addChild(this._windowPauseSignSprite);
 };
 
+Window_Popup.prototype.standardPadding = function(){
+    return 0;
+}
+
 //Fading window
 function Window_Fade() {
     this.initialize.apply(this, arguments);
@@ -322,13 +326,16 @@ Window_Fade.prototype.reserveUnFade = function(){
     this._fadeLevel = 1;
 }
 
-Window_Fade.prototype.fade = function(){
+Window_Fade.prototype.fade = function(destinationAlpha){
+    if(destinationAlpha === undefined){
+        destinationAlpha = this._desinationAlpha;
+    }
     let numChanged = 0;
     for(var i = 0; i < this.children.length; i++){
-        if(this.children[i].alpha > this._desinationAlpha){
+        if(this.children[i].alpha > destinationAlpha){
             this.children[i].alpha -= 0.1;
-            if(this.children[i].alpha < this._desinationAlpha){
-                this.children[i].alpha = this._desinationAlpha;
+            if(this.children[i].alpha < destinationAlpha){
+                this.children[i].alpha = destinationAlpha;
             }
             numChanged++;
         }
@@ -353,12 +360,19 @@ Window_Fade.prototype.fadeIn = function(){
     }
 }
 
-Window_Fade.prototype.update = function(){
-    Window_Plain.prototype.update.call(this);
-    this.updateFade();
+Window_Fade.prototype.fullOpacity = function(){
+    for(var i = 0; i < this.children.length; i++){
+        this.children[i].alpha = this._originalAlpha[i];
+    }
+    this._isFading = false;
 }
 
-Window_Fade.prototype.updateFade = function(){
+Window_Fade.prototype.update = function(){
+    Window_Plain.prototype.update.call(this);
+    this.updateFadeForPlayer();
+}
+
+Window_Fade.prototype.updateFadeForPlayer = function(){
     if(this._fadeForPlayer){
         let windowPolygon = new Polygon('rectangle',this.x, this.y, this.width, this.height, 0);
         let playerStartingY = (ImageManager.isBigCharacter($gamePlayer._characterName) ? $gamePlayer.y * $gameMap.tileHeight() - ($gameMap.tileHeight() / 2) : $gamePlayer.y * $gameMap.tileHeight());
@@ -498,9 +512,17 @@ class Polygon {
     updatePosition(x,y, width, height, angle){
         x = x || this.startingX;
         y = y || this.startingY;
-        width = width || this.width;
-        height = height || this.height;
-        angle = angle || this.angle;
+        if(width !== 0){
+            width = width || this.width;
+        }
+        if(height !== 0){
+            height = height || this.height;
+        }
+
+        if(angle !== 0){
+            angle = angle || this.angle;
+        }
+
         this.startingX = x;
         this.startingY = y;
         this.width = width;

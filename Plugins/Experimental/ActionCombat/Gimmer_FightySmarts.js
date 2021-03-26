@@ -71,11 +71,7 @@ Gimmer_Core['FightySmarts'] = {'loaded':true};
  * <backOffDistance:x> Where x is how many tiles an aggressor will try to back off during cool down.
  * <defenderDistance:x> Where x is how many tiles a defender will go away from their starting position.
  * <defenderAggroDistanceMod:x> Where x is how many tiles a player has to be from the defender before the defender will disengage.
- *
- * ===Version History===
- * Version 1.0:
- *  - First Release
- * ===
+
  *
  * @param ---Defaults---
  *

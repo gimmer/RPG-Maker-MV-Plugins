@@ -9,10 +9,6 @@ if(Gimmer_Core.Fighty === undefined){
     throw "Gimmer_FightyFighty is needed for this plugin.";
 }
 
-if(Gimmer_Core.VisualMeters === undefined){
-    throw "Gimmer_VisualMeters is needed for this plugin.";
-}
-
 Gimmer_Core['FightyMeters'] = {'loaded':true};
 
 //=============================================================================
@@ -272,7 +268,7 @@ Window_VisualMeter.prototype.refresh = function(){
 
     Gimmer_Core.FightyMeters._Window_VisualMeter_prototype_refresh.call(this);
     if(this._position !== 'static' && this._eventId > 0){
-       this.updatePosition();
+        this.updatePosition();
     }
 }
 
