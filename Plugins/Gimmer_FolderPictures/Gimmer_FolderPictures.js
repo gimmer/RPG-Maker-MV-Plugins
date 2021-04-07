@@ -6,8 +6,8 @@ Gimmer_Core['FolderPictures'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc A plugin to support loading Pictures from sub folders
- * @author Gimmer
+ * @plugindesc v1.0.1 - A plugin to support loading Pictures from sub folders
+ * @author Gimmer_
  * @help
  * ======================
  * Gimmer_FolderPictures

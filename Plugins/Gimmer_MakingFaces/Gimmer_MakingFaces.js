@@ -7,8 +7,8 @@ Gimmer_Core.MakingFaces.faceOverrides = {};
 
 //=============================================================================
 /*:
- * @plugindesc Change faces during chat messages
- * @author Gimmer
+ * @plugindesc v1.0 - Change faces during chat messages
+ * @author Gimmer_
  * @help
  * ==================
  * Gimmer_MakingFaces

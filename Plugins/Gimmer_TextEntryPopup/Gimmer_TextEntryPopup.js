@@ -8,12 +8,18 @@ Gimmer_Core['TextEntryPopup'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Show a text popup that gets in the way but doesn't stop the map
- * @author Gimmer
+ * @plugindesc v1.0 - Show a text popup that gets in the way but doesn't stop the map
+ * @author Gimmer_
  * @help
- * ================
+ * ====================
  * Gimmer_TextEntryPopup
- * ================
+ * ====================
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Window Parameters---
  *

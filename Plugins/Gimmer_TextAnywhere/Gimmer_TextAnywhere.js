@@ -4,14 +4,24 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc Display text anywhere on the screen
- * @author Gimmer
+ * @plugindesc v1.0 - Display text anywhere on the screen
+ * @author Gimmer_
  * @help You can use this plugin to show text on the screen
+ *
+ * ================
+ * Gimmer_TextAnywhere
+ * ================
  *
  * Plugin Commands:
  *
  * HideTextLayer: Hides the layer all text is on
  * ShowTextLayer: Shows the layer all text is on
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Parameters---
  * @default

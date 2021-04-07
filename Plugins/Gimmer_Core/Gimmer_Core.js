@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc General plugin framework for my other plugins
+ * @plugindesc v1.0 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -13,7 +13,14 @@ Gimmer_Core.isPlayerStopped = false;
  * ===========
  *
  * Currently this plugin doesn't do very much beyond letting you toggle on some debug console output, and some frameworking for plugin commands.
-
+ * However, this plugin is required in order to use any other Gimmer_ plugin available.
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
+ *
  * @param debug
  * @parent ---Parameters---
  * @type Boolean
@@ -28,11 +35,6 @@ Gimmer_Core.isPlayerStopped = false;
  * Default: False
  * @default false
  *
- * Terms of Use:
- * =======================================================================
- * Free for both commercial and non-commercial use, with credit.
- * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
- * =======================================================================
  */
 
 var gParameters = PluginManager.parameters('Gimmer_Core');

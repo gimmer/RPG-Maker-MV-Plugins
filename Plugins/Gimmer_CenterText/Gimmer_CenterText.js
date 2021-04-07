@@ -8,13 +8,23 @@ Gimmer_Core['CenterText'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Use a simple command to center your text in a window
+ * @plugindesc v1.0 - Use a simple command to center your text in a window
  * @author Gimmer_
  * @help This plugin lets you center text in the Text window easily
+ *
+ * ================
+ * Gimmer_CenterText
+ * ================
  *
  * Simply put \sc at the start of a message to "simply center" the text!
  *
  * If you want multiple lines, make the message multi-lined in the Show Text box, or use YEP_MessageCore's wordwrap function.
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Parameters---
  * @default

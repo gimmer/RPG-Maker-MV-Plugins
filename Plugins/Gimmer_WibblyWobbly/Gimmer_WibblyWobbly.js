@@ -6,9 +6,13 @@ Gimmer_Core['WibblyWobbly'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Apply a filter to the map layer to make the player seem wasted.
- * @author Gimmer
+ * @plugindesc v1.0.4 - Apply a filter to the map layer to make the player seem wasted.
+ * @author Gimmer_
  * @help Use the following plugin commands to drunken up your characters on the Map Screen
+ *
+ * ===================
+ * Gimmer_WibblyWobbly
+ * ===================
  *
  * GetDrunk:
  * Arg1: How long to stay drunk for (can be a number, or "forever")
@@ -16,6 +20,12 @@ Gimmer_Core['WibblyWobbly'] = {'loaded':true};
  *
  * SoberUp: Become sober again.
  * Arg1: Optionally include a number for how long to wait before sobering up
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Parameters---
  * @default

@@ -6,14 +6,24 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Display a visual meter of a given numeric measure
- * @author Gimmer
+ * @plugindesc v1.1 - Display a visual meter of a given numeric measure
+ * @author Gimmer_
  * @help You can use this plugin to make visual meters of various UI elements. The plugin supports as many meters are you like, following a particular structure.
+ *
+ * ==================
+ * Gimmer_VisualMeters
+ * ==================
  *
  * Plugin Commands:
  *
  * HideUILayer: Hides the layer all the meters are on
  * ShowUILayer: Shows the layer all the meters are on
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Parameters---
  * @default
@@ -214,6 +224,14 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
 * Default 0
 * @desc Where to pan left or right?
 *
+ * ========
+ * Changelog
+ * =======
+ * Version 1.0:
+ * - Initial Release
+ * Version 1.1:
+ * - Added functionality to coincide with Gimmer_FightyFighty
+ *
 */
 
 //TODO Later:

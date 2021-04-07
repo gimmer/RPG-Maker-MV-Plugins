@@ -9,9 +9,13 @@ Imported['Gimmer_SelfSwitcheroo'] = true;
 
 //=============================================================================
 /*:
- * @plugindesc Change self switches for another event from a different event
- * @author Gimmer
+ * @plugindesc v1.0 - Change self switches for another event from a different event
+ * @author Gimmer_
  * @help You can use this plugin to change self switches for another event, anywhere in the game.
+ *
+ * =====================
+ * Gimmer_SelfSwitcheroo
+ * =====================
  *
  * Plugin Command:
  *
@@ -21,6 +25,12 @@ Imported['Gimmer_SelfSwitcheroo'] = true;
  * Where event can be the number of the event or the name of the event (note: names require unique names per map)
  * switch letter (A through Z, although obvious the editor only goes up to D)
  * value: true or 1 for on, 0 or false for off
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
   */
 

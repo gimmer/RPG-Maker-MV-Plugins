@@ -6,8 +6,21 @@ Gimmer_Core['ActorSpeed'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Control the actor speed more finely in the game;
- * @author Gimmer
+ * @plugindesc v1.0 - Control the actor speed more finely in the game.
+ * @author Gimmer_
+ * @help This plugin gives you more control over the actor speed.
+ *
+ * ================
+ * Gimmer_ActorSpeed
+ * ================
+ *
+ * Control the actor speed more finely by using a decimal.
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================*
  *
  * @param ---Parameters---
  * @default

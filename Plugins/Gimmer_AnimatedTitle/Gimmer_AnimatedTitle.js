@@ -6,9 +6,13 @@ Gimmer_Core['AnimatedTitle'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.02 Choose a video to use as the animated background for the Title Screen of your game
+ * @plugindesc v1.0.2 - Choose a video to use as the animated background for the Title Screen of your game
  * @author Gimmer_
  * @help This plugin lets you choose a video in your movies folder to be the animated background for your title screen.
+ *
+ * ===================
+ * Gimmer_AnimatedTitle
+ * ===================
  *
  * The video will loop and play sound, so choose something that loops well. If you don't want sound and prefer in game music,
  * simply choose a video without sound
@@ -16,6 +20,12 @@ Gimmer_Core['AnimatedTitle'] = {'loaded':true};
  * For compatibility purposes, you must have a webm and mp4 of the video you want to play, the plugin will load the correct one for the environment
  *
  * To be able to see the video, your title screen sprite must be transparent
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param Movie Path
  * @parent ---Parameters---
@@ -42,17 +52,18 @@ Gimmer_Core['AnimatedTitle'] = {'loaded':true};
  * @type text[]
  * @desc A list of video files that you want, in the format of "movies/NameOfFile". Whatever the value of the variable chosen above is the position in this list (starting at 1) that will be played.
  *
- *  * ==============
+ * ==============
  * Changelog
  * ==============
- * 12-17-20 v1.02:
+ * 12-17-20 v1.0.2:
  * - Bug fix for flashing screen after the video had finished, but better this time
  *
- * 12-16-20 v1.01:
+ * 12-16-20 v1.0.1:
  * - Bug fix for flashing screen after the video had finished.
  *
- * 12-01-20 v1.00:
+ * 12-01-20 v1.0:
  * - Plugin Complete.
+ *
  */
 
 //Parameter handling

@@ -6,8 +6,8 @@ Gimmer_Core['MatchingFaces'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc A plugin to use actor notes and a common naming convention to automatically match actors to variations of the same face
- * @author Gimmer
+ * @plugindesc v1.0 - A plugin to use actor notes and a common naming convention to automatically match actors to variations of the same face
+ * @author Gimmer_
  * @help
  * ====================
  * Gimmer_MatchingFaces

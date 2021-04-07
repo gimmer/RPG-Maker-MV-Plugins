@@ -6,11 +6,24 @@ Gimmer_Core['SystemMenu'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Support spliting out some menu options to a different menu
- * @author Gimmer
+ * @plugindesc v1.0 - Support spliting out some menu options to a different menu
+ * @author Gimmer_
+ *
+ * ================
+ * Gimmer_SystemMenu
+ * ================
+ *
+ * Split the menu so that you have a game menu & system menu (for settings, quitting the game etc.)
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param ---Parameters---
  * @default
+ *
  *
  * @param Move Options To System Menu
  * @parent ---Parameters---

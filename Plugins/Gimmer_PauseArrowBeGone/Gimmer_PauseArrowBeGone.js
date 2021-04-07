@@ -9,13 +9,22 @@ Gimmer_Core['PauseArrowBeGone'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Hide the pause arrow using a plugin command
- * @author Gimmer
+ * @plugindesc v1.0 - Hide the pause arrow using a plugin command
+ * @author Gimmer_
  * @help
+ *
+ * * =====================
+ * Gimmer_PauseArrowBeGone
+ * =======================
  *
  * Run the plugin command "HidePauseArrow" to hide the pause arrow in a Message window
  * Run the plugin command "ShowPauseArrow" to show the pause arrow in a message window
  *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  */
 
 Gimmer_Core.PauseArrowBeGone.hidding = false;

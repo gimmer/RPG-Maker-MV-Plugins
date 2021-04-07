@@ -8,10 +8,19 @@ Gimmer_Core['ControllerType'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Add a plugin command to return controller type
+ * @plugindesc v1.0 - Add a plugin command to return controller type
  * @author Gimmer_
  * @help Use the plugin command GimmerControllerType to get if the controller is Xbox, Playstation, or Other layouts
  *
+ * ===========
+ * Gimmer_ControllerType
+ * ===========
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param Keyboard Ok
  * @parent ---Parameters---

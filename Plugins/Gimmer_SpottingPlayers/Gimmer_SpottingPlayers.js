@@ -6,8 +6,8 @@ Gimmer_Core['SpottingPlayers'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc A plugin to allow NPC events to "spot the player" and send execute a common event
- * @author Gimmer
+ * @plugindesc v1.0 - A plugin to allow NPC events to "spot the player" and send execute a common event
+ * @author Gimmer_
  *
  * @param ---Parameters---
  * @default

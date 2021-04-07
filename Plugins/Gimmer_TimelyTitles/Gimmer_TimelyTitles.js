@@ -8,15 +8,26 @@ Imported['Gimmer_TimelyTitles'] = true;
 
 //=============================================================================
 /*:
- * @plugindesc Change the title screen based on what time it is
+ * @plugindesc v1.0 - Change the title screen based on what time it is
  * @author Gimmer_
  * @help Put in as many titles in the list as you want, with starting and ending times using a 24 hour clock.
+ *
+ * ==================
+ * Gimmer_TimelyTitles
+ * ==================
+ *
  * If you overlap the end of the day (IE, 22 hours to 2 hours) it should still work, but I can't stay up that late to check
  *
  * If none of the time conditions fit your custom ones, the default title page you set in System will be used
  *
  * @param ---Parameters---
  * @default
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  *
  * @param Title Screen List
  * @parent --Parameters--
