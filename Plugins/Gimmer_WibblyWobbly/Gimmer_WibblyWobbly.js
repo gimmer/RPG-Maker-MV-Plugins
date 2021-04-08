@@ -6,7 +6,7 @@ Gimmer_Core['WibblyWobbly'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0.4 - Apply a filter to the map layer to make the player seem wasted.
+ * @plugindesc v1.0.5 - Apply a filter to the map layer to make the player seem wasted.
  * @author Gimmer_
  * @help Use the following plugin commands to drunken up your characters on the Map Screen
  *

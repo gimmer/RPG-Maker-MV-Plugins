@@ -8,7 +8,7 @@ Gimmer_Core['ControllerType'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Add a plugin command to return controller type
+ * @plugindesc v1.0.1 - Add a plugin command to return controller type
  * @author Gimmer_
  * @help Use the plugin command GimmerControllerType to get if the controller is Xbox, Playstation, or Other layouts
  *

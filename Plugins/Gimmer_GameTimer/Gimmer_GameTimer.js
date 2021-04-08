@@ -6,7 +6,7 @@ Gimmer_Core['GameTimer'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Support for a real time game timer
+ * @plugindesc v1.1.1 - Support for a real time game timer
  * @author Gimmer_
  * @help
  * ================

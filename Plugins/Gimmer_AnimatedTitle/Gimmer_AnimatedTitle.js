@@ -6,7 +6,7 @@ Gimmer_Core['AnimatedTitle'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0.2 - Choose a video to use as the animated background for the Title Screen of your game
+ * @plugindesc v1.0.3 - Choose a video to use as the animated background for the Title Screen of your game
  * @author Gimmer_
  * @help This plugin lets you choose a video in your movies folder to be the animated background for your title screen.
  *

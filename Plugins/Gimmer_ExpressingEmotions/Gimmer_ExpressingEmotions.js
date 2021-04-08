@@ -8,7 +8,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - A plugin to support animated text matching different emotional states
+ * @plugindesc v1.0.1 - A plugin to support animated text matching different emotional states
  * @author Gimmer_
  * @help
  * ======================

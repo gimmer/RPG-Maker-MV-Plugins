@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.0 - General plugin framework for my other plugins
+ * @plugindesc v1.1 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========

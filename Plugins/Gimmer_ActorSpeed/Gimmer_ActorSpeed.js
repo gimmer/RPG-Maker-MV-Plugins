@@ -6,7 +6,7 @@ Gimmer_Core['ActorSpeed'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Control the actor speed more finely in the game.
+ * @plugindesc v1.0.1 - Control the actor speed more finely in the game.
  * @author Gimmer_
  * @help This plugin gives you more control over the actor speed.
  *

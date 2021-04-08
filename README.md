@@ -4,29 +4,29 @@ All plugins created by Gimmer_
 | Project                                            | Description                                                 | Latest release                           |
 | -------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------- |
 |                                                    | **Gimmer Core**                                             |                                          |
-| [Gimmer_Core][Gimmer_Core]                         | Core plugin required for all other plugins.                 | [1.0][Gimmer_Core_release]               |
+| [Gimmer_Core][Gimmer_Core]                         | Core plugin required for all other plugins.                 | [1.1][Gimmer_Core_release]               |
 |                                                    | **Compatible with MV and MZ**                              |                                          |
-| [Gimmer_FolderPictures][Gimmer_FolderPictures]     | Save your pictures into folders, and use them.              | [1.0.1][Gimmer_FolderPictures_release]     |
+| [Gimmer_FolderPictures][Gimmer_FolderPictures]     | Save your pictures into folders, and use them.              | [1.1][Gimmer_FolderPictures_release]     |
 |                                                    | **Compatible with MV only**                                |                                          |
-| [Gimmer_ActorSpeed][Gimmer_ActorSpeed]             | Set your actor speed to a decimal value.                    | [1.0][Gimmer_ActorSpeed_release]         |
-| [Gimmer_AnimatedTitle][Gimmer_AnimatedTitle]       | Animate your Title Scene by using a video background.       | [1.0.2][Gimmer_AnimatedTitle_release]      |
+| [Gimmer_ActorSpeed][Gimmer_ActorSpeed]             | Set your actor speed to a decimal value.                    | [1.0.1][Gimmer_ActorSpeed_release]         |
+| [Gimmer_AnimatedTitle][Gimmer_AnimatedTitle]       | Animate your Title Scene by using a video background.       | [1.0.3][Gimmer_AnimatedTitle_release]      |
 | [Gimmer_CenterText][Gimmer_CenterText]             | Allows you to use a command to center text in a window.     | [1.0][Gimmer_CenterText_release]         |
-| [Gimmer_ControllerType][Gimmer_ControllerType]     | Display buttons matching the controller the player's using. | [1.0][Gimmer_ControllerType_release]     |
-| [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions] | Allows you to animate text to match emotions.           | [1.0][Gimmer_ExpressingEmotions_release] |
-| [Gimmer_GameTimer][Gimmer_GameTimer]               | Use the system clock to time how long a player takes to do something. | [1.0][Gimmer_GameTimer_release] |
-| [Gimmer_LicenseBoard][Gimmer_LicenseBoard]         | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill. | [1.2][Gimmer_LicenseBoard_release] |
-| [Gimmer_MakingFaces][Gimmer_MakingFaces]           | Use the command \TF[faceIndex] to change the face index of an actor during chat messages. | [1.0][Gimmer_MakingFaces_release] |
-| [Gimmer_MatchingFaces][Gimmer_MatchingFaces]       | Set a meta parameter on any Actor in the database "<faceName: String>". | [1.0][Gimmer_MatchingFaces_release] |
+| [Gimmer_ControllerType][Gimmer_ControllerType]     | Display buttons matching the controller the player's using. | [1.0.1][Gimmer_ControllerType_release]     |
+| [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions] | Allows you to animate text to match emotions.           | [1.0.1][Gimmer_ExpressingEmotions_release] |
+| [Gimmer_GameTimer][Gimmer_GameTimer]               | Use the system clock to time how long a player takes to do something. | [1.1.1][Gimmer_GameTimer_release] |
+| [Gimmer_LicenseBoard][Gimmer_LicenseBoard]         | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill. | [1.2.1][Gimmer_LicenseBoard_release] |
+| [Gimmer_MakingFaces][Gimmer_MakingFaces]           | Use the command \TF[faceIndex] to change the face index of an actor during chat messages. | [1.0.1][Gimmer_MakingFaces_release] |
+| [Gimmer_MatchingFaces][Gimmer_MatchingFaces]       | Set a meta parameter on any Actor in the database "<faceName: String>". | [1.0.1][Gimmer_MatchingFaces_release] |
 | [Gimmer_PauseArrowBeGone][Gimmer_PauseArrowBeGone] | Hide and show the arrow at the bottom of show text dialogue boxes. | [1.0][Gimmer_PauseArrowBeGone_release] |
-| [Gimmer_QuitToDesktop][Gimmer_QuitToDesktop]       | Extends the quit screen to offer a quit to desktop option. | [1.0][Gimmer_QuitToDesktop_release] |
+| [Gimmer_QuitToDesktop][Gimmer_QuitToDesktop]       | Extends the quit screen to offer a quit to desktop option. | [1.0.1][Gimmer_QuitToDesktop_release] |
 | [Gimmer_SelfSwitcheroo][Gimmer_SelfSwitcheroo]     | Adds a plugin command that allows you to change any events' self switch. | [1.0][Gimmer_SelfSwitcheroo_release] |
-| [Gimmer_SpottingPlayers][Gimmer_SpottingPlayers]   | Allows events to be given cones of vision, and to run a common event when the player enters their line of sight. | [1.0][Gimmer_SpottingPlayers_release] |
-| [Gimmer_SystemMenu][Gimmer_SystemMenu]             | Allows you to move Options, Save, and Game End to a different smaller menu. | [1.0][Gimmer_SystemMenu_release] |
+| [Gimmer_SpottingPlayers][Gimmer_SpottingPlayers]   | Allows events to be given cones of vision, and to run a common event when the player enters their line of sight. | [1.0.1][Gimmer_SpottingPlayers_release] |
+| [Gimmer_SystemMenu][Gimmer_SystemMenu]             | Allows you to move Options, Save, and Game End to a different smaller menu. | [1.0.1][Gimmer_SystemMenu_release] |
 | [Gimmer_TextAnywhere][Gimmer_TextAnywhere]         | Fill in an array of text variables, and that text will show anywhere on the screen. | [1.0][Gimmer_TextAnywhere_release] |
 | [Gimmer_TextEntryPopup][Gimmer_TextEntryPopup]     | Remove mapWindows and make your own text entry popup system. | [1.0][Gimmer_TextEntryPopup_release] |
 | [Gimmer_TimelyTitles][Gimmer_TimelyTitles]         | Change title screen depending on the time of day (using the local player's timezone) | [1.0][Gimmer_TimelyTitles_release] |
 | [Gimmer_VisualMeters][Gimmer_VisualMeters]         | Create visual meters of various UI elements.                | [1.1][Gimmer_VisualMeters_release] |
-| [Gimmer_WibblyWobbly][Gimmer_WibblyWobbly]         | Use the following plugin commands to drunken up your characters on the Map Screen. | [1.0.4][Gimmer_WibblyWobbly_release] |
+| [Gimmer_WibblyWobbly][Gimmer_WibblyWobbly]         | Use the following plugin commands to drunken up your characters on the Map Screen. | [1.0.5][Gimmer_WibblyWobbly_release] |
 
   [Gimmer_Core]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_Core/
   [Gimmer_Core_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_Core/Gimmer_Core.js
