@@ -2,12 +2,16 @@
 
 Replaces EXP with LP, and lets your characters advance by buying licenses to gain skill ups, new equipment types, skills, and spells.
 
+### Video Tutorial [The Basics]:
+
+View here: https://www.youtube.com/watch?v=7jTHd0iQoQw
+
 ### Text Tutorial:
 
 You will require the following items:
 * js/plugins: Gimmer_Core for the scaffolding needed to run this.
 * img/system: LicenseIconSet: a 64x64 icon set needed to draw the board. You can customize this with your own iconset so long as the 64x64 is maintained, and the icon indexes match the one provided
-* img/system: LargeLicenseIconSet: If you want to have a success window, you also need a single row of large 170x170 icons for the various gain types. You can customize this as well, but one is provided 
+* img/system: LargeLicenseIconSet: If you want to have a success window, you also need a single row of large 170x170 icons for the various gain types. You can customize this as well, but one is provided
 * data/Licenses.json: a json list of all the licenses. An example file is provided.
 
 ##### Setup Required
@@ -17,8 +21,8 @@ To change this, add in \<StartingLicensePosition:x,y> in a character's classes n
 
 A character will also start with no licenses.
 
-To change this, add in \<StartingLicenses:x,y|x2,y2|x3,y3> to the classes note section. 
-**Note: a character can see every node around the ones they own, so if you start them with random nodes around the board it may be a bit disjointed** 
+To change this, add in \<StartingLicenses:x,y|x2,y2|x3,y3> to the classes note section.
+**Note: a character can see every node around the ones they own, so if you start them with random nodes around the board it may be a bit disjointed**
 
 Classes level 1 stats and skill lists are still used as the base stats of a character, as are any existing "Can equip" settings for a class.
 However, if a class starts with "can equip" parameters set, there is nothing in the code keeping them from claiming a license to learn this again, effectively doing nothing for them, so better to start them with those licenses, or omit them from your board.
@@ -55,13 +59,13 @@ This is used in the optional success window
 This is a json encoded array of license objects.
 
 A license object has the following parameters:
-* type: (string) attribute, equip, skill, or nope. Controls what kind of license it is. 
+* type: (string) attribute, equip, skill, or nope. Controls what kind of license it is.
 * description: text to show at the top of the screen in the help window. For skill licenses that hand out more than one skill, this is what shows in the success window as well
-* target: 
+* target:
     * For attributes: (int) 0-7 (HP, MP, ATK, DEF, MAT, MDF, AGI, LUK)
     * For skills: does nothing
-    * For Equip: (string) "weapon" or "armor" 
-* value: 
+    * For Equip: (string) "weapon" or "armor"
+* value:
     * For attributes: (int) the amount you will gain
     * For skills: (string) the skillId you will gain. If you want multiple, put them in a comma seperated list: "1,2,3"
 * cost: (int) How many points to cost?
