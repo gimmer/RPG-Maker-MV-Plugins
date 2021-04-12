@@ -364,9 +364,6 @@ Gimmer_Core['Fighty'] = {'loaded':true};
 //Other plugins
 //Todo: Other skills to attack with? This will take some restructuring, but not necessarily? <-- separate plugin
 
-//Stupid crap I have to do eventually
-//todo: params
-
 //temp until json solution
 Gimmer_Core.Fighty.HitBoxAnimations = {
     '121': [{width:50, height:25, angle: 0},{width:100, height: 25, angle: 0}],
@@ -825,7 +822,7 @@ Game_Character.prototype.updateRoutineMove = function() {
 };
 
 Game_Player.prototype.getActionHero = function(){
-    return $gameActors._data[$gameParty._actors[$gamePlayer._characterIndex]];
+    return $gameParty.leader();
 }
 
 Game_Event.prototype.getActionHero = function(){
@@ -1206,7 +1203,14 @@ Game_Event.prototype.resolveHitBox = function(hitbox){
 
 //Helper function to get the data for the character object that contains meta information
 Game_Player.prototype.getObjectData = function(){
-    return $dataActors[$gameParty._actors[this.characterIndex()]];
+    let leader = $gameParty.leader();
+    if(leader){
+        return $dataActors[leader._actorId]
+    }
+    else{
+        return {};
+    }
+
 }
 
 //Helper function to get the data for the event object that contains meta information
