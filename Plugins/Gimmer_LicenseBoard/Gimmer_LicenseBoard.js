@@ -37,6 +37,8 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Version 1.2
  * - Added multiple license boards. You will need to upgrade your Licenses.json file to be the form:
  * [ {"name":"board1", "data": LICENSE DATA HERE}, {"name":"board2", "data": LICENSE DATA HERE},etc  ]
+ * Version 1.3
+ * - Adding a toggle to see all licenses, added some text params for the popup
  *
  * Terms of Use:
  * =======================================================================
@@ -100,10 +102,54 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Default: 10
  * @default 10
  *
+ * @param Attribute Gained Word
+ * @parent Show Success Window
+ * @type String
+ * @desc What word do you want in the success window when you gain an attribute? "Soandso ___ +10 AGI!"
+ * Default: gained
+ * @default gained
+ *
+ *
+ * @param Skill Gained Word
+ * @parent Show Success Window
+ * @type String
+ * @desc What word do you want in the success window when you learn a skill? "Soandso ___ double strike!"
+ * Default: gained
+ * @default gained
+ *
+ * @param Equip Learned Word
+ * @parent Show Success Window
+ * @type String
+ * @desc What word do you want in the success window when you learn to use a piece of equipment? "Soandso ___ to wear/wield [equipmentType]!"
+ * Default: learned
+ * @default learned
+ *
+ * @param Weapon Using Phrase
+ * @parent Show Success Window
+ * @type String
+ * @desc What second part do you want in the success window when you learn to use a group of weapons? "Soandso learned ___ Swords!"
+ * Default: to wield
+ * @default to wield
+ *
+ * @param Armor Using Phrase
+ * @parent Show Success Window
+ * @type String
+ * @desc What second part do you want in the success window when you learn to use a group of equipment? "Soandso learned ___ Plate Armor!"
+ * Default: to wear
+ * @default to wear
+ *
+ *
  * @param Trigger Switch
  * @parent ---Parameters---
  * @type Switch
  * @desc What switch needs to be true for the license board to be accessible?
+ *
+ * @param Can See Licenses By Default
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc Do you want all licenses on the board to show by default?
+ * Default: false
+ * @default false
  *
  */
 
@@ -119,6 +165,12 @@ Gimmer_Core.LicenseBoard.SuccessStayOpenFor = Number(lbParams['Success Frame Cou
 Gimmer_Core.LicenseBoard.SuccessOpenSpeed = Number(lbParams['Success Open Percent']) / 100;
 Gimmer_Core.LicenseBoard.SuccessCloseSpeed = Number(lbParams['Success Close Percent']) / 100;
 Gimmer_Core.LicenseBoard.TriggerSwitch = Number(lbParams['Trigger Switch']);
+Gimmer_Core.LicenseBoard.DefaultCanSeeLicense = (lbParams['Can See Licenses By Default'] === "true");
+Gimmer_Core.LicenseBoard.AttributeGainedWord = lbParams["Attribute Gained Word"];
+Gimmer_Core.LicenseBoard.SkillGainedWord =  lbParams["Skill Gained Word"];
+Gimmer_Core.LicenseBoard.EquipLearnedWord = lbParams["Equip Learned Word"];
+Gimmer_Core.LicenseBoard.WeaponUsingPhase = lbParams["Weapon Using Phrase"];
+Gimmer_Core.LicenseBoard.ArmorUsingPhase = lbParams["Armor Using Phrase"];
 
 //Tracking Variables
 Gimmer_Core.LicenseBoard.maxX = 0;
@@ -648,7 +700,7 @@ Window_LicenseBoard.prototype.getAdjacentLicenses = function(license){
 
 //Can you see the license on the board
 Window_LicenseBoard.prototype.canSeeLicense = function(license, index){
-    let canSee = false;
+    let canSee = Gimmer_Core.LicenseBoard.DefaultCanSeeLicense;
     if(this._actor){
         if(this._actor.hasLicense(index)){
             canSee = true;
@@ -1178,7 +1230,7 @@ class BoardLicense {
         let text = "#ACTOR# ";
         switch(this.type){
             case 'attribute':
-                text += "gained";
+                text += Gimmer_Core.LicenseBoard.AttributeGainedWord;//"gained";
                 textArray.push(text);
                 switch(this.target){
                     case Gimmer_Core.LicenseBoard.MHP = 0:
@@ -1210,7 +1262,7 @@ class BoardLicense {
                 textArray.push(text);
                 break;
             case 'skill':
-                text += "gained";
+                text += Gimmer_Core.LicenseBoard.SkillGainedWord;// "gained";
                 textArray.push(text);
                 if(this.value.toString().contains(",")){
                     text = this.description;
@@ -1222,7 +1274,7 @@ class BoardLicense {
                 textArray.push(text);
                 break;
             case 'equip':
-                text += "learned";
+                text += Gimmer_Core.LicenseBoard.EquipLearnedWord;//"learned";
                 textArray.push(text);
                 let key = false;
                 if(this.value.toString().contains(",")){
@@ -1231,11 +1283,11 @@ class BoardLicense {
                 else{
                     switch(this.target){
                         case 'weapon':
-                            text = " to wield ";
+                            text = " "+Gimmer_Core.LicenseBoard.WeaponUsingPhase+" ";//" to wield ";
                             key = "weaponTypes";
                             break;
                         case 'armor':
-                            text = " to wear ";
+                            text = " "+Gimmer_Core.LicenseBoard.ArmorUsingPhase+" ";//" to wear ";
                             key = "armorTypes";
                             break;
                     }
