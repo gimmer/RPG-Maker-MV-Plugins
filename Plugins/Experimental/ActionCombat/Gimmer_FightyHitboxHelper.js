@@ -182,7 +182,7 @@ Gimmer_Core.FightyHitboxHelper.Scene_Map_prototype_createAllWindows = Scene_Map.
 Scene_Map.prototype.createAllWindows = function(){
     Gimmer_Core.FightyHitboxHelper.Scene_Map_prototype_createAllWindows.call(this);
     if(!('_debugHitBoxWindow' in this)){
-       this.addDebugHitBoxWindow();
+        this.addDebugHitBoxWindow();
     }
     this.addSavePopup();
     this.addSnapshotPopup();
@@ -370,7 +370,7 @@ Sprite_Animation.prototype.updateDrawing = function(){
             //Take a snapshot for the current animation frame
             if(!$dataHitboxes[this._animation.id.toString()]){
                 $dataHitboxes[this._animation.id.toString()] = [];
-                for(let i = 0; i < this._animation._frames.length; i++){
+                for(let i = 0; i < this._animation.frames.length; i++){
                     $dataHitboxes[this._animation.id.toString()].push({modX: 0, modY: 0, width:0, height:0, angle: 0});
                 }
                 Gimmer_Core.FightyHitboxHelper.DirtyHitboxes = true;
