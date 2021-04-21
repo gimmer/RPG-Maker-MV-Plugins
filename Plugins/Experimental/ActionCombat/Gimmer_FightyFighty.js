@@ -923,8 +923,8 @@ Game_Event.prototype.resolveHitBoxes = function(){
 Game_Player.prototype.resolveHitBox = function(hitbox){
     if(this._invincibilityCount === 0 && !hitbox.engaged){
         hitbox.engaged = this;
-        let actor = $gameActors._data[$gameParty._actors[this.characterIndex()]];
-        let damage = 1; //hitbox.applyDamage(actor);
+        let actor = this.getActionHero();
+        let damage = hitbox.applyDamage(actor);
         if (damage > 0) {
             if(Gimmer_Core.Fighty.FlashDamageForPlayer){
                 actor.performMapDamage();
