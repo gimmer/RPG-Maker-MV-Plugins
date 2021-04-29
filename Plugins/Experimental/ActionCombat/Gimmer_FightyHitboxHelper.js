@@ -440,7 +440,7 @@ Sprite_Animation.prototype.updateDrawing = function(){
 }
 
 Sprite_Animation.prototype.updateAnimations = function(){
-    if($dataAnimations[parseInt(this._animation.id)].frames[this.currentFrameIndex()].length === 1){
+    if(this.currentFrameIndex() >= 0 && $dataAnimations[parseInt(this._animation.id)].frames[this.currentFrameIndex()].length === 1){
         if(Input.isTriggered('drawPlaceHolderBox')){
             $dataAnimations[parseInt(this._animation.id)].frames[this.currentFrameIndex()][0][1] += Gimmer_Core.FightyHitboxHelper.AnimationChange.x;
             $dataAnimations[parseInt(this._animation.id)].frames[this.currentFrameIndex()][0][2] += Gimmer_Core.FightyHitboxHelper.AnimationChange.y;
