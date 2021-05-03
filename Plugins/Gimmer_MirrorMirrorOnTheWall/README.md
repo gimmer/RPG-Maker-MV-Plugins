@@ -15,6 +15,8 @@ Tiles in front of the mirror will be reflected
 ###Version History:
 Version 1.0:
 - Initial Release
+Version 1.1:
+- Removed several features if Galv_PixelMove is installed, as it breaks them all
 
 ## Terms of Use:
 
