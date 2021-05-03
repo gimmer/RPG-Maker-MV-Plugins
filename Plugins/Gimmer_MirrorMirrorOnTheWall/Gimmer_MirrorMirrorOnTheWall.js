@@ -50,16 +50,17 @@ Sprite_Character_Mirror.prototype.initialize = function(character) {
 };
 
 Sprite_Character_Mirror.prototype.updateVisibility = function() {
-    if(this._character.isMoving()){
+    if(this._character.isMoving() && !Imported.Galv_PixelMove){
         this.visible = (this.isLeavingMirroredSpace() || this.isEnteringMirroredSpace());
     }
     else if(SceneManager._scene._spriteset){
         let tilemap =  SceneManager._scene._spriteset._mirrorTileMap || false;
         if(tilemap){
-            let x = this._character._x;
-            let y = this._character._y;
-
+            let x = Math.round(this._character._x);
+            let y = Math.round(this._character._y);
+            dd(x + "," + y);
             this.visible = !!tilemap._mirrorSpacesToEvent[x + "," + y];
+            dd(this.visible);
         }
         else{
             this.visible = false;
@@ -85,10 +86,10 @@ Sprite_Character_Mirror.prototype.updatePosition = function() {
     let th = $gameMap.tileHeight();
     if(mirror){
         let d = this._character.direction();
-        if(this._frame.width !== this.patternWidth() && this._character.isMoving() && (d === 6 || d === 4)){
+        if(!Imported.Galv_PixelMove && this._frame.width !== this.patternWidth() && this._character.isMoving() && (d === 6 || d === 4)){
             let widthMod = this.getWidthMod(mirror);
             if(widthMod > 0){
-                widthMod = this.patternWidth() * (1 - this.getWidthMod(mirror));
+                widthMod = this.patternWidth() * (1 - widthMod);
                 widthMod /= 2;
                 if(d === 6){
                     widthMod *= -1;
@@ -104,29 +105,55 @@ Sprite_Character_Mirror.prototype.updatePosition = function() {
     }
     else{
 
-       this.x = this._character.screenX();
-       this.y = this._character.screenY();
+        this.x = this._character.screenX();
+        this.y = this._character.screenY();
     }
     this.z = this._character.screenZ();
 };
 
 Sprite_Character_Mirror.prototype.setFrame = function (x, y, width, height){
-    let mirror = this.findNearestMirror(this._character);
-    let d = this._character.direction();
+    if(!Imported.Galv_PixelMove){
+        let mirror = this.findNearestMirror(this._character);
+        let d = this._character.direction();
 
-    let isEnteringMirroredSpace = false;
-    let isLeavingMirroredSpace = false;
-    if(this._character.isMoving() &&  (d === 4 || d === 6)){
-        isEnteringMirroredSpace = this.isEnteringMirroredSpace();
-        isLeavingMirroredSpace = this.isLeavingMirroredSpace();
-    }
+        let isEnteringMirroredSpace = false;
+        let isLeavingMirroredSpace = false;
+        if(this._character.isMoving() &&  (d === 4 || d === 6)){
+            isEnteringMirroredSpace = this.isEnteringMirroredSpace();
+            isLeavingMirroredSpace = this.isLeavingMirroredSpace();
+        }
+        if(this._character.isMoving() && this._character === $gamePlayer){
+            dd('entering:');
+            dd(isEnteringMirroredSpace);
+            dd('leaving:');
+            dd(isLeavingMirroredSpace);
+        }
 
-    if(mirror){
-        if(isEnteringMirroredSpace){
-            if(!isLeavingMirroredSpace){
-                if(isEnteringMirroredSpace.x !== this._character._realX){
-                    if(isEnteringMirroredSpace.x < this._character._realX){
-                        let mod = this.getWidthMod(isEnteringMirroredSpace);
+
+        if(mirror){
+            if(isEnteringMirroredSpace){
+                if(!isLeavingMirroredSpace){
+                    if(isEnteringMirroredSpace.x !== this._character._realX){
+                        if(isEnteringMirroredSpace.x < this._character._realX){
+                            let mod = this.getWidthMod(isEnteringMirroredSpace);
+                            let tempWidth = width * mod;
+                            let diff = width - tempWidth;
+                            width *= mod;
+                            x += diff;
+
+                        }
+                        else{
+                            let mod = this.getWidthMod(isEnteringMirroredSpace);
+                            width *= mod;
+                        }
+                    }
+                }
+
+            }
+            else{
+                if(mirror.x !== this._character._realX){
+                    if(mirror.x > this._character._realX){
+                        let mod = this.getWidthMod(mirror);
                         let tempWidth = width * mod;
                         let diff = width - tempWidth;
                         width *= mod;
@@ -134,42 +161,39 @@ Sprite_Character_Mirror.prototype.setFrame = function (x, y, width, height){
 
                     }
                     else{
-                        let mod = this.getWidthMod(isEnteringMirroredSpace);
+                        let mod = this.getWidthMod(mirror);
                         width *= mod;
                     }
                 }
             }
 
         }
-        else{
-            if(mirror.x !== this._character._realX){
-                if(mirror.x > this._character._realX){
-                    let mod = this.getWidthMod(mirror);
-                    let tempWidth = width * mod;
-                    let diff = width - tempWidth;
-                    width *= mod;
-                    x += diff;
-
-                }
-                else{
-                    let mod = this.getWidthMod(mirror);
-                    width *= mod;
-                }
-            }
-        }
-
     }
-
     Sprite_Character.prototype.setFrame.call(this, x, y, width, height);
 }
 
 Sprite_Character_Mirror.prototype.isEnteringMirroredSpace = function(){
     let tilemap = (SceneManager._scene._spriteset && SceneManager._scene._spriteset._mirrorTileMap ? SceneManager._scene._spriteset._mirrorTileMap : false);
     if(tilemap && this._character.isMoving()){
-        let x = this._character._x;
-        let y = this._character._y;
+        let x = this._character._realX;
+        let y = this._character._realY;
+        let d = this._character.direction();
+        switch(d){
+            case 4:
+                x = Math.floor(x);
+                break;
+            case 6:
+                x = Math.ceil(x);
+                break;
+            case 8:
+                y = Math.floor(y)
+                break;
+            case 2:
+                y = Math.ceil(y);
+                break;
+        }
         if(tilemap._mirrorSpacesToEvent[x+","+y]){
-           return tilemap._mirrorSpacesToEvent[x+","+y];
+            return tilemap._mirrorSpacesToEvent[x+","+y];
         }
     }
     return false;
@@ -208,7 +232,7 @@ Sprite_Character_Mirror.prototype.getWidthMod = function(mirror){
 }
 
 Sprite_Character_Mirror.prototype.findNearestMirror = function(object){
-   return Gimmer_Core.Mirror.findNearestMirror(object);
+    return Gimmer_Core.Mirror.findNearestMirror(object);
 }
 
 Gimmer_Core.Mirror.mirrorEventAtXY = function(x, y, mirrorEvents){
@@ -243,8 +267,8 @@ Gimmer_Core.Mirror.findNearestMirror = function(object, d){
     let minDist = Infinity;
     $gameMap.events().forEach(function (event){
         if($dataMap.events[event._eventId].meta['mirror']){
-            if(event.y < object.y && ((event.x + 1) > (object._realX + mod) && (event.x - 1) < (object._realX + mod))){
-                let dist = $gameMap.distance(event.x, event.y, object.x + mod, object.y);
+            if(event.y < Math.floor(object.y) && ((event.x + 1) > (object._realX + mod) && (event.x - 1) < (object._realX + mod))){
+                let dist = $gameMap.distance(event.x, event.y, Math.floor(object.x) + mod, Math.floor(object.y));
                 if(!mirror || (minDist > dist)){
                     minDist = dist;
                     mirror = event;
@@ -263,7 +287,7 @@ Sprite_Character_Mirror.prototype.updateOther = function() {
 //Mirrors maybe no animations too?
 Sprite_Character_Mirror.prototype.setupAnimation = function() {};
 
-//Mirors can't have balloons
+//Mirrors can't have balloons
 Sprite_Character_Mirror.prototype.setupBalloon = function() {};
 Sprite_Character_Mirror.prototype.startBalloon = function() {};
 Sprite_Character_Mirror.prototype.updateBalloon = function() {};
@@ -359,10 +383,10 @@ Spriteset_Map.prototype.updateTilemap = function (){
 
 Gimmer_Core.Mirror.Tilemap_prototype_readMapData = Tilemap.prototype._readMapData;
 Tilemap.prototype._readMapData = function (x,y,z){
-  if(this._isMirror){
+    if(this._isMirror){
         if(this._mirroredDataMap[x+","+y]){
-           x = this._mirroredDataMap[x+","+y].x;
-           y = this._mirroredDataMap[x+","+y].y;
+            x = this._mirroredDataMap[x+","+y].x;
+            y = this._mirroredDataMap[x+","+y].y;
         }
     }
     return Gimmer_Core.Mirror.Tilemap_prototype_readMapData.call(this, x,y,z);
@@ -380,7 +404,7 @@ Tilemap.prototype.initialize = function(){
 
 Tilemap.prototype.enumerateMirrors = function (){
     this._mirrorEvents.forEach(function(event){
-       this._mirrorCoordinates.push(event.x+","+event.y);
+        this._mirrorCoordinates.push(event.x+","+event.y);
     }, this);
 
     this._mirrorEvents.forEach(function(event){
@@ -402,8 +426,6 @@ Tilemap.prototype.enumerateMirrors = function (){
             this._mirroredDataMap[event.x+","+event.y] = {x:event.x, y:y};
             this._mirrorSpacesToEvent[event.x+","+y] = event;
         }
-
-
     }, this);
 }
 
