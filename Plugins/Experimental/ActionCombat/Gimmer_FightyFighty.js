@@ -894,7 +894,7 @@ Game_Character.prototype.updateInvincibility = function(){
 
 Game_Player.prototype.updateAttacks = function(){
     let buttonIsDoingSomething = (!$gameMap.isEventRunning() && Gimmer_Core.Fighty.UseOkForAttack);
-    if(!$gameMap.isEventRunning() && Input.isTriggered(Gimmer_Core.Fighty.AttackButton)  && !this._isAttacking){
+    if(!$gameMap.isEventRunning() && Input.isTriggered(Gimmer_Core.Fighty.AttackButton) && $gameMap.hasEnemies() && !this._isAttacking){
         let weapon = this.getActionHero().weapons()[0];
         if(weapon){
             this.resolveAttackAnimation(weapon);
@@ -1509,6 +1509,16 @@ Scene_Base.prototype.checkGameover = function() {
 
 
 // GAME MAP AREA
+
+Game_Map.prototype.hasEnemies = function (){
+    let enemyCount = 0;
+    $dataMap.events.forEach(function(event){
+        if(event && event.meta && event.meta.isEnemy && !$gameMap._events[event.id]._erased){
+            enemyCount++;
+        }
+    });
+    return (enemyCount > 0);
+}
 
 Game_Map.prototype.willHitboxHitWall = function(hitbox, width, height, angle){
     if(width === 0 || height === 0){
