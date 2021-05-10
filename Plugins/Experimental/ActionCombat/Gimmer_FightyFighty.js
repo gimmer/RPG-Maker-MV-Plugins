@@ -925,30 +925,35 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
         hitbox.engaged = this;
         let actor = this.getActionHero();
         let damage = hitbox.applyDamage(actor);
-        if (damage > 0) {
-            // Shake the screen when you get hit
-            Shaker.shake(2.6, 1, 30);
-            if(Gimmer_Core.Fighty.FlashDamageForPlayer){
-                actor.performMapDamage();
-            }
-            if(Gimmer_Core.Fighty.PlayerHitSoundEffect){
-                AudioManager.playSe(Gimmer_Core.Fighty.PlayerHitSoundEffect)
-            }
-            else if(Gimmer_Core.Fighty.UseDefaultPlayerDamageSound){
-                SoundManager.playActorDamage();
-            }
+        if($gameParty.isAllDead()){
+            Gimmer_Core.Fighty.Enabled = false;
+        }
+        else{
+            if (damage > 0) {
+                // Shake the screen when you get hit
+                Shaker.shake(2.6, 1, 30);
+                if(Gimmer_Core.Fighty.FlashDamageForPlayer){
+                    actor.performMapDamage();
+                }
+                if(Gimmer_Core.Fighty.PlayerHitSoundEffect){
+                    AudioManager.playSe(Gimmer_Core.Fighty.PlayerHitSoundEffect)
+                }
+                else if(Gimmer_Core.Fighty.UseDefaultPlayerDamageSound){
+                    SoundManager.playActorDamage();
+                }
 
-        }
-        if(hitbox.pushback > 0){
-            for(let i = 0; i < hitbox.pushback; i++){
-                this.resolvePushback(hitbox);
             }
+            if(hitbox.pushback > 0){
+                for(let i = 0; i < hitbox.pushback; i++){
+                    this.resolvePushback(hitbox);
+                }
+            }
+            if(hitbox.direction === 'self' && Gimmer_Core.FightySmarts === undefined){
+                hitbox.engaged = false;
+            }
+            this._invincibilityCount = Gimmer_Core.Fighty.InvincibilityFramesPlayer;
+            this._originalOpacity = this.opacity();
         }
-        if(hitbox.direction === 'self' && Gimmer_Core.FightySmarts === undefined){
-            hitbox.engaged = false;
-        }
-        this._invincibilityCount = Gimmer_Core.Fighty.InvincibilityFramesPlayer;
-        this._originalOpacity = this.opacity();
     }
 }
 
