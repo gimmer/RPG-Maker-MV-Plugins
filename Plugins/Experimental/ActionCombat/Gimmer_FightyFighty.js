@@ -641,8 +641,8 @@ Sprite_Animation.prototype.updatePosition = function(){
             }
 
             //Check where on the map the projectile is.
-            let newMapX = Math.floor(hitboxX / $gameMap.tileWidth());
-            let newMapY = Math.floor(hitboxY / $gameMap.tileHeight());
+            let newMapX = Math.floor($gameMap.canvasToMapX(hitboxX));
+            let newMapY = Math.floor($gameMap.canvasToMapY(hitboxY));
 
             //Hit walls
             if($gameMap.isPassable(newMapX, newMapY, Gimmer_Core.wordsToDirections(direction))){
@@ -926,6 +926,8 @@ Game_Player.prototype.resolveHitBox = function(hitbox){
         let actor = this.getActionHero();
         let damage = hitbox.applyDamage(actor);
         if (damage > 0) {
+            // Shake the screen when you get hit
+            Shaker.shake(2.6, 1, 30);
             if(Gimmer_Core.Fighty.FlashDamageForPlayer){
                 actor.performMapDamage();
             }
@@ -1537,8 +1539,6 @@ Game_Map.prototype.willHitboxHitWall = function(hitbox, width, height, angle){
         if(!maxX || x > maxX){
             maxX = x;
         }
-
-
     }, this);
 
     pretendShape.points = [];
@@ -1554,9 +1554,8 @@ Game_Map.prototype.willHitboxHitWall = function(hitbox, width, height, angle){
     let impacts = [];
     //let potentialImpacts = [];
     pretendShape.points.forEach(function(pointObj){
-        let x = Math.floor(pointObj.x / this.tileWidth());
-        let y = Math.floor(pointObj.y / this.tileHeight());
-        //potentialImpacts.push(x+","+y);
+        let x = Math.floor($gameMap.canvasToMapX(pointObj.x));
+        let y = Math.floor($gameMap.canvasToMapY(pointObj.y));
         if(!$gameMap.isPassable(x, y, Gimmer_Core.wordsToDirections(hitbox.direction)) && width > 0 && height > 0){
             impacts.push(x+","+y);
         }
