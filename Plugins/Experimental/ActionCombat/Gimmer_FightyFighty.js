@@ -1124,36 +1124,35 @@ Game_Character.prototype.resolvePushback = function(hitbox){
     let origMoveSpeed = this.moveSpeed();
     let pushMoveSpeed = 6;
     let list = [];
-    switch(hitboxDirection){
-        case 'left':
-        case 'right':
-            if(this.canPass(this._x, this._y, d)){
-                let move = (hitboxDirection === "left" ? Game_Character.ROUTE_MOVE_LEFT : Game_Character.ROUTE_MOVE_RIGHT);
-                list = [
-                    {code:35},
-                    {code: 29, parameters:[pushMoveSpeed]},
-                    {code:move,indent:null},
-                    {code:29,parameters: [origMoveSpeed]},
-                    {code:36},
-                    {code:0}
-                ];
-            }
 
-            break;
-        case 'up':
-        case 'down':
-            if(this.canPass(this._x, this._y, d)){
-                let move = (hitboxDirection === "up" ? Game_Character.ROUTE_MOVE_UP : Game_Character.ROUTE_MOVE_DOWN);
-                list = [
-                    {code:35},
-                    {code: 29, parameters:[pushMoveSpeed]},
-                    {code:move,indent:null},
-                    {code:29,parameters: [origMoveSpeed]},
-                    {code:36},
-                    {code:0}
-                ];
-            }
-            break;
+    for(let i=0; i < hitbox.pushback; i++){
+        switch(hitboxDirection){
+            case 'left':
+            case 'right':
+                if(this.canPass(this._x, this._y, d)){
+                    let move = (hitboxDirection === "left" ? Game_Character.ROUTE_MOVE_LEFT : Game_Character.ROUTE_MOVE_RIGHT);
+                    list.push({code:35});
+                    list.push({code:29, parameters:[pushMoveSpeed]});
+                    list.push({code:move,indent:null});
+                    list.push({code:29,parameters: [origMoveSpeed]});
+                    list.push({code:36});
+                    list.push({code:0});
+                }
+
+                break;
+            case 'up':
+            case 'down':
+                if(this.canPass(this._x, this._y, d)){
+                    let move = (hitboxDirection === "up" ? Game_Character.ROUTE_MOVE_UP : Game_Character.ROUTE_MOVE_DOWN);
+                    list.push({code:35});
+                    list.push({code:29, parameters:[pushMoveSpeed]});
+                    list.push({code:move,indent:null});
+                    list.push({code:29,parameters: [origMoveSpeed]});
+                    list.push({code:36});
+                    list.push({code:0});
+                }
+                break;
+        }
     }
 
     if(list.length){
