@@ -111,14 +111,14 @@ Scene_Map.prototype.updateTextOverlay = function(){
     }, this)
 }
 
-Gimmer_Core.pluginCommands["HideTextLayer"] = function(){
+Gimmer_Core.pluginCommands["HIDETEXTLAYER"] = function(){
     if('_textOverLay' in SceneManager._scene){
         SceneManager._scene._textOverLay.visible = false;
     }
 }
 
-Gimmer_Core.pluginCommands["ShowTextLayer"] = function(){
+Gimmer_Core.pluginCommands["SHOWTEXTLAYER"] = function(){
     if('_textOverLay' in SceneManager._scene){
-        SceneManager._scene._textOverLay.visible = show;
+        SceneManager._scene._textOverLay.visible = true;
     }
 }
