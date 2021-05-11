@@ -1007,12 +1007,26 @@ Game_Event.prototype.update = function(){
         if(this._permaDeathKey){
             $gameSelfSwitches.setValue(this._permaDeathKey, true);
         }
-        $gameMap.eraseEvent(this._eventId);
-        $gamePlayer.getActionHero().gainExp(this._enemy.exp());
-        this._enemy = false;
+
+        //Is there a death common event? Play it and then do the death stuff. Otherwise do the death stuff now
+        let deathCommonEvent = Gimmer_Core.Fighty.getMetaKey([meta,enemyMeta],'deathCommonEvent', false);
         this._canAttack = false;
+        this._locked = true;
         if(Gimmer_Core.FightySmarts){
             this._canAggro = false;
+        }
+        if(deathCommonEvent > 0){
+            let that = this;
+            Gimmer_Core.reserveCommonEventWithCallback(deathCommonEvent, function(){
+                $gameMap.eraseEvent(that._eventId);
+                $gamePlayer.getActionHero().gainExp(that._enemy.exp());
+                that._enemy = false;
+            });
+        }
+        else{
+            $gameMap.eraseEvent(this._eventId);
+            $gamePlayer.getActionHero().gainExp(this._enemy.exp());
+            this._enemy = false;
         }
     }
     Gimmer_Core.Fighty._Game_Event_prototype_update.call(this);
