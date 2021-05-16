@@ -557,7 +557,7 @@ Window_VisualMeter.prototype.drawLabel = function(){
 
 Window_VisualMeter.prototype.update = function(){
     if(this._fadeForPlayer){
-        this.updateFade();
+        this.updateFadeForPlayer();
     }
     this.refresh();
 }
