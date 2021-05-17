@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Display text anywhere on the screen
+ * @plugindesc v2.0 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -12,10 +12,139 @@ if(Gimmer_Core === undefined){
  * Gimmer_TextAnywhere
  * ================
  *
- * Plugin Commands:
+ * This plugin lets you put text on the screen.
+ * In it's simplest form, you set a text's x, y, fontsize, opacity, bold, color, and text body.
+ * You also give this text an id (any unique string you want).
+ * It will show on the screen forever.
  *
- * HideTextLayer: Hides the layer all text is on
- * ShowTextLayer: Shows the layer all text is on
+ * You can use various plugin commands to add text, hide text, show text, and create temporary text
+ *
+ *
+ * Global Plugin Commands:
+ *
+ * ===Command===
+ * HideTextLayer
+ * ===Params===
+ * N/A
+ * ===Description===
+ * Hides the layer all text is on
+ *
+ * ===Command===
+ * ShowTextLayer
+ * ===Params===
+ * N/A
+ * ===Description===
+ * Shows the layer all text is on
+ *
+ * Text Specific Plugin Commands:
+ *
+ * ===Command===
+ * ShowText
+ * ===Params===
+ * id: the unique id of the text
+ * ===Description===
+ * Shows this specific text if it isn't visible
+ *
+ * ===Command===
+ * HideText
+ * ===Params===
+ * id: the unique id of the text
+ * ===Description===
+ * Hides this specific text if it is visible
+ *
+ * ===Command===
+ * FadeOutText
+ * ===Params===
+ * id: the unique id of the text
+ * fadeFrames: the number of frames to take to fade out
+ * ===Description===
+ * Fades out the text over this amount of time
+ *
+ * ===Command===
+ * FadeInText
+ * ===Params===
+ * id: the unique id of the text
+ * fadeFrames: the number of frames to take to fade on
+ * ===Description===
+ * Fades in text not currently visible over the text over this amount of time
+ *
+ * ===Command===
+ * TypeInText
+ * ===Params===
+ * id: the unique id of the text
+ * typingFrames: the number of frames to spend typing
+ * ===Description===
+ * Types text from left to right over the number of frames provided
+ *
+ * Quick Add Plugin Commands:
+ *
+ * ===Command===
+ * TaSetQuickParams
+ * ===Params===
+ * id: the unique id of the text
+ * typingFrames: the number of frames to spend typing
+ * ===Description===
+ * Replaces the defaults for the plugin that were provided in the editors.
+ * These changes will persist for all quick add commands, and remain the default in the game
+ * These changes persist in game saves, so events that change these are effectively permanently changing them
+ *
+ * ===Command===
+ * QuickAddText
+ * ===Params===
+ * id: the unique id of the text
+ * x: Where on the x to put the text. Can be a number or an eval'd string (e.g. Graphics.boxWidth/2)
+ * y: Where on the y to put the text. Can be a number or an eval'd string (e.g. Graphics.boxHeight/2)
+ * text: the text you want to show
+ * ===Description===
+ * Adds text with the default color, bold, fontsize and opacity to the texts array.
+ *
+ * ===Command===
+ * AddTempText
+ * ===Params===
+ * x: Where on the x to put the text. Can be a number or an eval'd string (e.g. Graphics.boxWidth/2)
+ * y: Where on the y to put the text. Can be a number or an eval'd string (e.g. Graphics.boxHeight/2)
+ * text: the text you want to show
+ * duration: Number of frames to leave the text for
+ * durationHandler: either "fade", or "hide"
+ * fadeFrames: if you chose fade, how many frames to fade over
+ * ===Description===
+ * Creates temporary text that displays, and remains for a duration, and the disappears instantly or fades out
+ *
+ * ===Command===
+ * TypeTempText
+ * ===Params===
+ * x: Where on the x to put the text. Can be a number or an eval'd string (e.g. Graphics.boxWidth/2)
+ * y: Where on the y to put the text. Can be a number or an eval'd string (e.g. Graphics.boxHeight/2)
+ * text: the text you want to show
+ * duration: Number of frames to leave the text for
+ * durationHandler: either "fade", or "hide"
+ * fadeFrames: if you chose fade, how many frames to fade over
+ * typingFrames: how many frames to take to type the text
+ * ===Description===
+ * Creates temporary text that types out over a duration, then remains for a duration, and the disappears instantly or fades out over another duration
+ *
+ * Big Mama Pajama Plugin Commands:
+ *
+ * ===Command===
+ * AdvancedAddText
+ * ===Params===
+ * id: the unique id of the text
+ * x: Where on the x to put the text. Can be a number or an eval'd string (e.g. Graphics.boxWidth/2)
+ * y: Where on the y to put the text. Can be a number or an eval'd string (e.g. Graphics.boxHeight/2)
+ * color: hexcode of the color you want
+ * bold: true or false if you want bold
+ * fontsize: fontsize you want
+ * opacity: (1-255) opacity you want
+ * text: the text you want to show
+ * ===Description===
+ * Adds fully customizable text to the texts array.
+ *
+ *
+ * ==============
+ * Version History
+ * ==============
+ * - Version 1.0: Initial Release
+ * - Version 2.0: Adding more plugin commands
  *
  * Terms of Use:
  * =======================================================================
@@ -26,13 +155,50 @@ if(Gimmer_Core === undefined){
  * @param ---Parameters---
  * @default
  *
- * @param Text List
+ * @param Default Text List
  * @parent --Parameters--
  * @type struct<Text>[]
- * @desc Make a list of all the text you want to show
+ * @desc Make a list of all the default text you want to show. You can add to this list dynamically via events
+ *
+ * @param ---Defaults---
+ * @default
+ *
+ * @param Default Color
+ * @parent ---Defaults---
+ * @type String
+ * @desc Hexcode for the default color to use for quick add commands
+ * @default #FFFFFF
+ * Default #FFFFFF
+ *
+ * @param Default Font Size
+ * @parent ---Defaults---
+ * @type Number
+ * @desc What is the default the font size for quick add commands
+ * @default 28
+ * Default 28
+ *
+ * @param Default Bold
+ * @parent ---Defaults---
+ * @type Boolean
+ * @desc Show text be bold for quick add commands
+ * @default false
+ * Default false
+ *
+ * @param Default Opacity
+ * @parent ---Defaults---
+ * @type Number
+ * @desc What opacity for quick add commands?
+ * @min 1
+ * @max 255
+ * @default 255
+ * Default 255
  *
  */
 /*~struct~Text:
+ * @param id
+ * @type String
+ * @desc Unique Stub or id you want to use to refer to this text in plugin commands
+ *
  * @param x
  * @type String
  * @desc Where on the x to put the text?
@@ -55,6 +221,14 @@ if(Gimmer_Core === undefined){
  * Default false
  * @default false
  *
+ * @param defaultOpacity
+ * @type Number
+ * @desc What is the default opacity of this text (1-255)
+ * @min 1
+ * @max 255
+ * Default 255
+ * @default 255
+ *
  * @param y
  * @type String
  * @desc Where on the y to put the texT?
@@ -67,18 +241,34 @@ if(Gimmer_Core === undefined){
 */
 
 Imported = Imported || {};
+Imported.Gimmer_TextAnywhere = '2.0'
 
 Gimmer_Core['TextAnywhere'] = {'loaded':true};
 
-let texts = JSON.parse(PluginManager.parameters('Gimmer_TextAnywhere')['Text List']);
-texts.forEach(function(text, key){
-    text = JSON.parse(text);
-    text.fontsize = Number(text.fontsize);
-    text.bold = (text.bold === "true");
-    texts[key] = text;
-})
+//todo params
+let TAParams = PluginManager.parameters('Gimmer_TextAnywhere');
+Gimmer_Core.TextAnywhere.DefaultColor = TAParams["Default Color"];
+Gimmer_Core.TextAnywhere.DefaultFontSize = Number(TAParams["Default Font Size"]);
+Gimmer_Core.TextAnywhere.DefaultBold = (TAParams["Default Bold"] === "true");
+Gimmer_Core.TextAnywhere.DefaultOpacity = Number(TAParams['Default Opacity']);
 
-Gimmer_Core.TextAnywhere.Texts = texts;
+Gimmer_Core.TextAnywhere.SeedForId = new Date().getTime();
+Gimmer_Core.TextAnywhere.generateTextId = function (){
+    this.SeedForId++;
+    return 't'+this.SeedForId;
+}
+
+Gimmer_Core.TextAnywhere.InitializeTexts = function(){
+    let GlobalTextObj = {};
+    let texts = JSON.parse(PluginManager.parameters('Gimmer_TextAnywhere')['Default Text List']);
+    texts.forEach(function(text){
+        text = JSON.parse(text);
+        let textObj = new TAObject(text.id, text.x, text.y, text.color, text.fontsize, text.bold, text.defaultOpacity, text.text);
+        GlobalTextObj[textObj.id] = textObj;
+    });
+
+    Gimmer_Core.TextAnywhere.Texts = GlobalTextObj;
+}
 
 Gimmer_Core.TextAnywhere.Scene_Map_prototype_createAllWindows = Scene_Map.prototype.createAllWindows;
 Scene_Map.prototype.createAllWindows = function(){
@@ -100,15 +290,165 @@ Scene_Map.prototype.update = function(){
 
 Scene_Map.prototype.updateTextOverlay = function(){
     this._textOverLay.contents.clear();
-    Gimmer_Core.TextAnywhere.Texts.forEach(function(text){
-        let tempText = this._textOverLay.convertEscapeCharacters(text.text);
-        let maxWidth = this._textOverLay.contents.measureTextWidth(text)
-        this._textOverLay.contents.fontBold = text.bold;
-        this._textOverLay.contents.fontSize = text.fontsize;
-        this._textOverLay.contents.textColor = text.color;
-        this._textOverLay.contents.drawText(tempText, eval(text.x), eval(text.y), maxWidth, this._textOverLay.lineHeight());
-        this._textOverLay.resetFontSettings();
+    Object.values(Gimmer_Core.TextAnywhere.Texts).forEach(function(text){
+        if(text.needsDelete){
+            delete Gimmer_Core.TextAnywhere.Texts[text.id];
+            return;
+        }
+
+        this.updateTextVisibility(text);
+        if(text.visible){
+            this.updateTextDuration(text);
+            this.updateTextFadeOut(text);
+            this.updateTextFadeIn(text);
+            let tempText = this._textOverLay.convertEscapeCharacters(text.text);
+            tempText = this.updateTypingIn(text, tempText);
+            this.displayTextAnywhere(text,tempText);
+        }
     }, this)
+}
+
+Scene_Map.prototype.updateTextDuration = function(text){
+    if(text.duration > 0 && !text.isTypingIn && !text.isFadingIn && !text.isFadingOut){
+        text.duration--;
+    }
+
+    if(text.duration === 0){
+        text.handleDurationZero();
+    }
+}
+
+Scene_Map.prototype.updateTypingIn = function(text, tempText){
+    if(text.isTypingIn){
+        let charsPerFrame = tempText.length / text.typingFrames;
+        text.typingIndex += charsPerFrame;
+        if(text.typingIndex > tempText.length){
+            text.isTypingIn = false;
+            text.typingIndex = 0;
+        }
+        else{
+            tempText = tempText.substr(0, Math.round(text.typingIndex));
+        }
+    }
+    return tempText;
+}
+
+Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
+    let maxWidth = this._textOverLay.contents.measureTextWidth(tempText);
+    this._textOverLay.contents.fontBold = text.bold;
+    this._textOverLay.contents.fontSize = text.fontsize;
+    this._textOverLay.contents.textColor = text.color;
+    this._textOverLay.contents.drawTextAlpha(tempText, Number(eval(text.x)), Number(eval(text.y)), maxWidth, this._textOverLay.lineHeight(), 'left', text.currentOpacity);
+    this._textOverLay.resetFontSettings();
+}
+
+Scene_Map.prototype.updateTextVisibility = function(text){
+    if(!text.visible && (text.isFadingIn || text.isTypingIn)){
+        text.visible = true;
+        if(text.isTypingIn){
+            text.currentOpacity = text.getDefaultOpacity();
+        }
+    }
+    if(!text.visible && text.deletesOnceInvisible){
+        text.needsDelete = true;
+    }
+}
+
+Scene_Map.prototype.updateTextFadeOut = function(text){
+    if(text.isFadingOut){
+        if(text.currentOpacity > 0){
+            text.currentOpacity -= text.getDefaultOpacity() / text.fadeFrames;
+            if(text.currentOpacity < 0){
+                text.currentOpacity = 0;
+            }
+        }
+        else{
+            text.isFadingOut = false;
+            text.visible = false;
+        }
+    }
+}
+
+Scene_Map.prototype.updateTextFadeIn = function(text){
+    if(text.isFadingIn){
+        if(text.currentOpacity < text.getDefaultOpacity()){
+            text.currentOpacity += text.getDefaultOpacity() / text.fadeFrames;
+            if(text.currentOpacity > text.getDefaultOpacity()){
+                text.currentOpacity = text.getDefaultOpacity();
+            }
+        }
+        else{
+            text.isFadingIn = false;
+        }
+    }
+}
+
+Gimmer_Core.TextAnywhere.quickAddText = function(id,x,y,text){
+    let color = this.DefaultColor;
+    let fontsize = this.DefaultFontSize;
+    let bold = this.DefaultBold;
+    let opacity = this.DefaultOpacity;
+    Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text);
+    return Gimmer_Core.TextAnywhere.Texts[id];
+}
+
+Gimmer_Core.TextAnywhere.advancedAddText = function(id,x,y,color,bold,fontsize,opacity, text){
+    Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text);
+    return Gimmer_Core.TextAnywhere.Texts[id];
+}
+
+Gimmer_Core.pluginCommands["TASETQUICKPARAMS"] = function(params){
+    Gimmer_Core.TextAnywhere.DefaultColor = params[0];
+    Gimmer_Core.TextAnywhere.DefaultFontSize = Number(params[1]);
+    Gimmer_Core.TextAnywhere.DefaultBold = params[2];
+    Gimmer_Core.TextAnywhere.DefaultOpacity = Number(params[3]);
+}
+
+Gimmer_Core.pluginCommands["ADDTEMPTEXT"] = function(params){
+    let id = Gimmer_Core.TextAnywhere.generateTextId();
+    let x = params[0];
+    let y = params[1];
+    let text = params[2];
+    let duration = Number(params[3]);
+    let durationType = params[4];
+    let durationTypeParam = params[5];
+    Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text).setDuration(duration, durationType, durationTypeParam).deletesOnceInvisible = true;
+}
+
+Gimmer_Core.pluginCommands["TYPETEMPTEXT"] = function(params){
+    let id = Gimmer_Core.TextAnywhere.generateTextId();
+    let x = params[0];
+    let y = params[1];
+    let text = params[2];
+    let duration = Number(params[3]);
+    let durationType = params[4];
+    let durationTypeParam = params[5];
+    let typingFrames = Number(params[6]);
+    let textObj = Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text);
+    textObj.isTypingIn = true;
+    textObj.deletesOnceInvisible = true;
+    textObj.typingFrames = typingFrames;
+    textObj.setDuration(duration, durationType, durationTypeParam);
+}
+
+Gimmer_Core.pluginCommands["QUICKADDTEXT"] = function (params){
+    let id = params[0].toString();
+    let x = params[1];
+    let y = params[2];
+    let text = params[3];
+    Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text);
+}
+
+Gimmer_Core.pluginCommands["ADVANCEDADDTEXT"] = function (params){
+    let id = params[0].toString();
+    let x = params[1];
+    let y = params[2];
+    let color = params[3];
+    let bold = params[4];
+    let fontsize = params[5];
+    let opacity = params[6];
+    let text = params[7];
+    Gimmer_Core.TextAnywhere.advancedAddText(id,x,y,color, bold,fontsize,opacity,text);
 }
 
 Gimmer_Core.pluginCommands["HIDETEXTLAYER"] = function(){
@@ -122,3 +462,154 @@ Gimmer_Core.pluginCommands["SHOWTEXTLAYER"] = function(){
         SceneManager._scene._textOverLay.visible = true;
     }
 }
+
+Gimmer_Core.pluginCommands["SHOWTEXT"] = function(params){
+    let id = params[0].toString();
+    Gimmer_Core.TextAnywhere.Texts[id].visible = true;
+}
+
+
+Gimmer_Core.pluginCommands["HIDETEXT"] = function(params){
+    let id = params[0].toString();
+    Gimmer_Core.TextAnywhere.Texts[id].visible = false;
+}
+
+Gimmer_Core.pluginCommands["FADEOUTTEXT"] = function(params){
+    let id = params[0].toString();
+    Gimmer_Core.TextAnywhere.Texts[id].isFadingOut = true;
+    Gimmer_Core.TextAnywhere.Texts[id].isFadingIn = false;
+    Gimmer_Core.TextAnywhere.Texts[id].fadeFrames = Number(params[1] || 60);
+}
+
+Gimmer_Core.pluginCommands["FADEINTEXT"] = function(params){
+    let id = params[0].toString();
+    Gimmer_Core.TextAnywhere.Texts[id].isFadingOut = false;
+    Gimmer_Core.TextAnywhere.Texts[id].isFadingIn = true;
+    Gimmer_Core.TextAnywhere.Texts[id].fadeFrames = Number(params[1] || 60);
+}
+
+Gimmer_Core.pluginCommands["TYPEINTEXT"] = function (params){
+    let id = params[0].toString();
+    if(!Gimmer_Core.TextAnywhere.Texts[id].visible){
+        Gimmer_Core.TextAnywhere.Texts[id].isTypingIn = true;
+        Gimmer_Core.TextAnywhere.Texts[id].typingFrames = Number(params[1] || 60);
+    }
+}
+
+//Extend Saving
+Gimmer_Core.TextAnywhere.DataManager_makeSaveContents = DataManager.makeSaveContents;
+DataManager.makeSaveContents = function() {
+    let contents = Gimmer_Core.TextAnywhere.DataManager_makeSaveContents.call(this);
+    contents.textAnywhereTexts = Gimmer_Core.TextAnywhere.Texts;
+    contents.textAnywhereDefaults = [Gimmer_Core.TextAnywhere.DefaultColor,Gimmer_Core.TextAnywhere.DefaultFontSize, Gimmer_Core.TextAnywhere.DefaultBold, Gimmer_Core.TextAnywhere.DefaultOpacity];
+    return contents;
+};
+
+Gimmer_Core.TextAnywhere.DataManager_extractSaveContents = DataManager.extractSaveContents;
+DataManager.extractSaveContents = function(contents) {
+    Gimmer_Core.TextAnywhere.DataManager_extractSaveContents.call(this, contents);
+    if('textAnywhereTexts' in contents){
+        Gimmer_Core.TextAnywhere.Texts = contents.textAnywhereTexts;
+        Gimmer_Core.TextAnywhere.DefaultColor = contents.textAnywhereDefaults[0];
+        Gimmer_Core.TextAnywhere.DefaultFontSize = contents.textAnywhereDefaults[1];
+        Gimmer_Core.TextAnywhere.DefaultBold = contents.textAnywhereDefaults[2];
+        Gimmer_Core.TextAnywhere.DefaultOpacity = contents.textAnywhereDefaults[3];
+    }
+};
+
+
+//Bitmap Functions
+/**
+ * Draws the outline text to the bitmap.
+ *
+ * @method drawText
+ * @param {String} text The text that will be drawn
+ * @param {Number} x The x coordinate for the left of the text
+ * @param {Number} y The y coordinate for the top of the text
+ * @param {Number} maxWidth The maximum allowed width of the text
+ * @param {Number} lineHeight The height of the text line
+ * @param {String} align The alignment of the text
+ */
+Bitmap.prototype.drawTextAlpha = function(text, x, y, maxWidth, lineHeight, align, alpha) {
+    // Note: Firefox has a bug with textBaseline: Bug 737852
+    //       So we use 'alphabetic' here.
+    if (text !== undefined) {
+        var tx = x;
+        var ty = y + lineHeight - (lineHeight - this.fontSize * 0.7) / 2;
+        var context = this._context;
+        maxWidth = maxWidth || 0xffffffff;
+        if (align === 'center') {
+            tx += maxWidth / 2;
+        }
+        if (align === 'right') {
+            tx += maxWidth;
+        }
+        context.save();
+        context.font = this._makeFontNameText();
+        context.textAlign = align;
+        context.textBaseline = 'alphabetic';
+        context.globalAlpha = alpha;
+        this._drawTextOutline(text, tx, ty, maxWidth);
+        this._drawTextBody(text, tx, ty, maxWidth);
+        context.restore();
+        this._setDirty();
+    }
+};
+
+
+class TAObject{
+    constructor(id, x, y, color, fontsize, bold, opacity, text) {
+        this.id = id.toString();
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.fontsize = Number(fontsize);
+        this.bold = (bold === "true");
+        this.defaultOpacity = Number(opacity) / 255;
+        this.text = text;
+        this.currentOpacity = Number(opacity) / 255;
+        this.visible = true;
+        this.isFadingOut = false;
+        this.isFadingIn = false;
+        this.fadeFrames = 0;
+        this.isTypingIn = false;
+        this.typingIndex = 0;
+        this.typingFrames = 0;
+        this.duration = -1;
+        this.durationHandler = "fade";
+        this.durationParam = 0;
+        this.needsDelete = false;
+        this.deletesOnceInvisible = false;
+    }
+
+    getDefaultOpacity = function(){
+        return this.defaultOpacity;
+    }
+
+    setDuration = function(duration, handler, handlerParam){
+        this.duration = Number(duration);
+        if(['fade','delete','hide'].indexOf(handler) > -1){
+            this.durationHandler = handler;
+            this.durationParam = handlerParam;
+        }
+        return this;
+    }
+
+    handleDurationZero = function(){
+        switch(this.durationHandler){
+            case 'fade':
+                this.isFadingOut = true;
+                this.fadeFrames = this.durationParam;
+                break;
+            case 'delete':
+                this.needsDelete = true;
+                break;
+            case 'hide':
+                this.visible = false;
+                break;
+        }
+        this.duration = -1;
+    }
+}
+
+Gimmer_Core.TextAnywhere.InitializeTexts();
