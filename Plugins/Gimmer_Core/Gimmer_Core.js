@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.1 - General plugin framework for my other plugins
+ * @plugindesc v1.2 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -13,14 +13,7 @@ Gimmer_Core.isPlayerStopped = false;
  * ===========
  *
  * Currently this plugin doesn't do very much beyond letting you toggle on some debug console output, and some frameworking for plugin commands.
- * However, this plugin is required in order to use any other Gimmer_ plugin available.
- *
- * Terms of Use:
- * =======================================================================
- * Free for both commercial and non-commercial use, with credit.
- * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
- * =======================================================================
- *
+
  * @param debug
  * @parent ---Parameters---
  * @type Boolean
@@ -35,6 +28,18 @@ Gimmer_Core.isPlayerStopped = false;
  * Default: False
  * @default false
  *
+ * ===============
+ * Version History:
+ * ===============
+ * - Version 1.0: Initial release
+ * - Version 1.1: I don't remember
+ * - Version 1.2: better fading windows
+ *
+ * Terms of Use:
+ * =======================================================================
+ * Free for both commercial and non-commercial use, with credit.
+ * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
+ * =======================================================================
  */
 
 var gParameters = PluginManager.parameters('Gimmer_Core');
@@ -377,9 +382,10 @@ Window_Fade.prototype.update = function(){
 Window_Fade.prototype.updateFadeForPlayer = function(){
     if(this._fadeForPlayer){
         let windowPolygon = new Polygon('rectangle',this.x, this.y, this.width, this.height, 0);
-        let playerStartingY = (ImageManager.isBigCharacter($gamePlayer._characterName) ? $gamePlayer.y * $gameMap.tileHeight() - ($gameMap.tileHeight() / 2) : $gamePlayer.y * $gameMap.tileHeight());
         let playerHeight = (ImageManager.isBigCharacter($gamePlayer._characterName) ? $gameMap.tileHeight() * 1.5 : $gameMap.tileHeight());
-        let playerPolygon = new Polygon('rectangle',$gamePlayer.x * $gameMap.tileWidth(), playerStartingY, $gameMap.tileWidth(), playerHeight, 0);
+        let playerStartingY = $gamePlayer.screenY() - playerHeight / 2;
+        let playerPolygon = new Polygon('rectangle',$gamePlayer.screenX() - ($gameMap.tileWidth() / 2), playerStartingY, $gameMap.tileWidth(), playerHeight, 0);
+
         if(playerPolygon.intersects(windowPolygon)){
             if(this._fadeLevel === 1){
                 this.reserveFade();
