@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.0 - Display text anywhere on the screen
+ * @plugindesc v2.2 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -18,6 +18,9 @@ if(Gimmer_Core === undefined){
  * It will show on the screen forever.
  *
  * You can use various plugin commands to add text, hide text, show text, and create temporary text
+ *
+ * Must be loaded BEFORE YEP_MessageCore if you are using it, otherwise it will break word wrapping
+ * Must be loaded AFTER YEP_CoreEngine as it has to amend drawTextEx to support opacity changes in text
  *
  *
  * Global Plugin Commands:
@@ -145,6 +148,8 @@ if(Gimmer_Core === undefined){
  * ==============
  * - Version 1.0: Initial Release
  * - Version 2.0: Adding more plugin commands
+ * - Version 2.1: Moved to used drawTextEx to make text codes available
+ * - Version 2.2: Fixed font color, size, bold, and opacity to keep working with drawTextEx
  *
  * Terms of Use:
  * =======================================================================
@@ -334,13 +339,74 @@ Scene_Map.prototype.updateTypingIn = function(text, tempText){
 }
 
 Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
-    let maxWidth = this._textOverLay.contents.measureTextWidth(tempText);
-    this._textOverLay.contents.fontBold = text.bold;
-    this._textOverLay.contents.fontSize = text.fontsize;
-    this._textOverLay.contents.textColor = text.color;
-    this._textOverLay.contents.drawTextAlpha(tempText, Number(eval(text.x)), Number(eval(text.y)), maxWidth, this._textOverLay.lineHeight(), 'left', text.currentOpacity);
+    tempText = "\x1bCCCC["+text.color+"]" +  tempText;
+    tempText = "\x1bSSSS["+text.fontsize+"]" + tempText;
+    if(text.bold){
+        tempText = "\x1bBBBB" + tempText;
+    }
+    else{
+        tempText = "\x1bNBNB" + tempText;
+    }
+
+    this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), text.currentOpacity);
     this._textOverLay.resetFontSettings();
 }
+
+//Copied from YEP_Core
+Window_Base.prototype.drawTextEx = function(text, x, y, alpha) {
+    if (text) {
+        if(!alpha){
+            alpha = 255;
+        }
+        this.resetFontSettings();
+        var textState = { index: 0, x: x, y: y, left: x, alpha: alpha };
+        textState.text = this.convertEscapeCharacters(text);
+        textState.height = this.calcTextHeight(textState, false);
+        while (textState.index < textState.text.length) {
+            this.processCharacter(textState);
+        }
+        return textState.x - x;
+    } else {
+        return 0;
+    }
+};
+
+Window_Base.prototype.processNormalCharacter = function(textState) {
+    var c = textState.text[textState.index++];
+    var w = this.textWidth(c);
+    this.contents.drawTextAlpha(c, textState.x, textState.y, w * 2, textState.height, textState.align, textState.alpha );
+    textState.x += w;
+};
+
+Gimmer_Core.TextAnywhere.Window_Base_prototype_processEscapeCharacter = Window_Base.prototype.processEscapeCharacter;
+Window_Base.prototype.processEscapeCharacter = function(code, textState){
+    switch(code){
+        case "CCCC":
+            this.changeTextColor(this.obtainColorParam(textState));
+            break;
+        case "SSSS":
+            this.contents.fontSize = this.obtainEscapeParam(textState);
+            break;
+        case "BBBB":
+            this.contents.fontBold = true;
+            break;
+        case "NBNB":
+            this.contents.fontBold = false;
+            break;
+        default:
+            Gimmer_Core.TextAnywhere.Window_Base_prototype_processEscapeCharacter.call(this,code,textState);
+    }
+}
+
+Window_Base.prototype.obtainColorParam = function(textState) {
+    var arr = /^\[#[A-Za-z0-9]+\]/.exec(textState.text.slice(textState.index));
+    if (arr) {
+        textState.index += arr[0].length;
+        return arr[0].slice(1).replace("]","");
+    } else {
+        return '';
+    }
+};
 
 Scene_Map.prototype.updateTextVisibility = function(text){
     if(!text.visible && (text.isFadingIn || text.isTypingIn)){
