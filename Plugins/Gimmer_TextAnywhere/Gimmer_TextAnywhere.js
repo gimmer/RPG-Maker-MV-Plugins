@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.0 - Display text anywhere on the screen
+ * @plugindesc v2.1 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -18,6 +18,8 @@ if(Gimmer_Core === undefined){
  * It will show on the screen forever.
  *
  * You can use various plugin commands to add text, hide text, show text, and create temporary text
+ *
+ * Must be loaded BEFORE YEP_MessageCore if you are using it, otherwise it will break word wrapping
  *
  *
  * Global Plugin Commands:
@@ -338,9 +340,16 @@ Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
     this._textOverLay.contents.fontBold = text.bold;
     this._textOverLay.contents.fontSize = text.fontsize;
     this._textOverLay.contents.textColor = text.color;
-    this._textOverLay.contents.drawTextAlpha(tempText, Number(eval(text.x)), Number(eval(text.y)), maxWidth, this._textOverLay.lineHeight(), 'left', text.currentOpacity);
+    this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), maxWidth, this._textOverLay.lineHeight(), 'left', text.currentOpacity)
     this._textOverLay.resetFontSettings();
 }
+
+Window_Base.prototype.processNormalCharacter = function(textState) {
+    var c = textState.text[textState.index++];
+    var w = this.textWidth(c);
+    this.contents.drawTextAlpha(c, textState.x, textState.y, w * 2, textState.height, textState.align, textState.alpha );
+    textState.x += w;
+};
 
 Scene_Map.prototype.updateTextVisibility = function(text){
     if(!text.visible && (text.isFadingIn || text.isTypingIn)){
