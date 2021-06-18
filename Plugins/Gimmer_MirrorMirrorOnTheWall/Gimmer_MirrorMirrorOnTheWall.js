@@ -9,7 +9,7 @@ Gimmer_Core['Mirror'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Choose tiles that are mirrors? Regions that are Mirrors? Who knows
+ * @plugindesc v1.0 - Choose tiles that are mirrors? Regions that are Mirrors? Who knows
  * @author Gimmer_
  * @help This plugin lets you define events as mirrors
  *

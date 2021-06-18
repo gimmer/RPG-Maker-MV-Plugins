@@ -6,7 +6,7 @@ Gimmer_Core['QuitToDesktop'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0.1 - A plugin that adds quit to desktop to the Game_End window
+ * @plugindesc v1.1 - A plugin that adds quit to desktop to the Game_End window
  * @author Gimmer_
  * @help
  * ====================

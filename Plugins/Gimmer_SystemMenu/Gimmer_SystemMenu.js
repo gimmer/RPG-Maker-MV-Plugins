@@ -6,7 +6,7 @@ Gimmer_Core['SystemMenu'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0.1 - Support spliting out some menu options to a different menu
+ * @plugindesc v1.1 - Support spliting out some menu options to a different menu
  * @author Gimmer_
  *
  * ================
