@@ -363,9 +363,9 @@ Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
     else{
         tempText = "\x1bNBNB" + tempText;
     }
-    dd(text);
+
     if(text.outline === false){
-        tempText = "\x1bOLOFF" +tempText + "\x1bOLONN";
+        tempText = "\x1bOLOFF" +tempText + "\x1bOLON";
     }
 
     this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), text.currentOpacity);
