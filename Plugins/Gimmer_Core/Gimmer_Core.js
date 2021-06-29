@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.2 - General plugin framework for my other plugins
+ * @plugindesc v1.3 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -13,7 +13,17 @@ Gimmer_Core.isPlayerStopped = false;
  * ===========
  *
  * Currently this plugin doesn't do very much beyond letting you toggle on some debug console output, and some frameworking for plugin commands.
-
+ *
+ * But you can run the script call:
+ * Gimmer_Core.areEventsStopped = true; -> stop events from moving
+ * Gimmer_Core.isPlayerStopped = true; -> stop play from moving
+ * Gimmer_Core.areEventsStopped = false; -> let events move
+ * Gimmer_Core.isPlayerStopped = false; -> let player move
+ *
+ * And you can disable F5 from reloading the game
+ *
+ * @param ---Parameters---
+ *
  * @param debug
  * @parent ---Parameters---
  * @type Boolean
@@ -28,12 +38,22 @@ Gimmer_Core.isPlayerStopped = false;
  * Default: False
  * @default false
  *
+ * @param ---Helpers---
+ *
+ * @param Block F5 Reload
+ * @parent ---Helpers---
+ * @type Boolean
+ * @desc Prevent F5 from reloading the game, good for production builds
+ * Default: False
+ * @default false
+ *
  * ===============
  * Version History:
  * ===============
  * - Version 1.0: Initial release
  * - Version 1.1: I don't remember
  * - Version 1.2: better fading windows
+ * - Version 1.3: Adding block to reload helper
  *
  * Terms of Use:
  * =======================================================================
@@ -45,6 +65,20 @@ Gimmer_Core.isPlayerStopped = false;
 var gParameters = PluginManager.parameters('Gimmer_Core');
 Gimmer_Core.debug = (gParameters['debug'] === "true");
 Gimmer_Core.advancedDebug = (Gimmer_Core.debug && gParameters['Advanced Debug'] === "true");
+Gimmer_Core.blockF5 = (gParameters['Block F5 Reload'] === "true");
+
+
+
+
+Gimmer_Core.SceneManager_onKeyDown = SceneManager.onKeyDown;
+SceneManager.onKeyDown = function(event) {
+    if (Gimmer_Core.blockF5 && !event.ctrlKey && !event.altKey && event.keyCode === 116) {
+        return false;
+    }
+    Gimmer_Core.SceneManager_onKeyDown.call(this, event);
+};
+
+
 
 //Function for debugging. Uses the DD name because my muscle memory types that when I want to figure out what's broken
 function dd(something){
