@@ -99,3 +99,5 @@ All plugins created by Gimmer_
   [Gimmer_BeKindRewind]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_BeKindRewind/
   [Gimmer_BeKindRewind_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_BeKindRewind/Gimmer_BeKindRewind.js
   
+[Gimmer_CleverColors]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CleverColors/
+[Gimmer_CleverColors_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CleverColors/Gimmer_CleverColors.js
