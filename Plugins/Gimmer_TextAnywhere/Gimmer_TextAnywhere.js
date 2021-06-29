@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.2 - Display text anywhere on the screen
+ * @plugindesc v2.3 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -150,6 +150,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.0: Adding more plugin commands
  * - Version 2.1: Moved to used drawTextEx to make text codes available
  * - Version 2.2: Fixed font color, size, bold, and opacity to keep working with drawTextEx
+ * - Version 2.3: Support for stopping outlines around words
  *
  * Terms of Use:
  * =======================================================================
@@ -188,6 +189,13 @@ if(Gimmer_Core === undefined){
  * @desc Show text be bold for quick add commands
  * @default false
  * Default false
+ *
+ * @param Default Include Outline
+ * @parent ---Defaults---
+ * @type Boolean
+ * @desc Show text should include outline by default
+ * @default true
+ * Default true
  *
  * @param Default Opacity
  * @parent ---Defaults---
@@ -240,6 +248,12 @@ if(Gimmer_Core === undefined){
  * @default 0
  * Default 0
  *
+ * @param includeOutline
+ * @type Boolean
+ * @desc Should you include the outline around text that the engine includes by default?
+ * @default true
+ * Default True
+ *
  * @param text
  * @type String
  * @string What's the text you want (us \V[1] for variables);
@@ -255,8 +269,10 @@ let TAParams = PluginManager.parameters('Gimmer_TextAnywhere');
 Gimmer_Core.TextAnywhere.DefaultColor = TAParams["Default Color"];
 Gimmer_Core.TextAnywhere.DefaultFontSize = Number(TAParams["Default Font Size"]);
 Gimmer_Core.TextAnywhere.DefaultBold = (TAParams["Default Bold"] === "true");
+Gimmer_Core.TextAnywhere.DefaultOutline = (TAParams["Default Include Outline"] === "true");
 Gimmer_Core.TextAnywhere.DefaultOpacity = Number(TAParams['Default Opacity']);
 
+Gimmer_Core.TextAnywhere.SkipOutline = false;
 Gimmer_Core.TextAnywhere.SeedForId = new Date().getTime();
 Gimmer_Core.TextAnywhere.generateTextId = function (){
     this.SeedForId++;
@@ -268,7 +284,7 @@ Gimmer_Core.TextAnywhere.InitializeTexts = function(){
     let texts = JSON.parse(PluginManager.parameters('Gimmer_TextAnywhere')['Default Text List']);
     texts.forEach(function(text){
         text = JSON.parse(text);
-        let textObj = new TAObject(text.id, text.x, text.y, text.color, text.fontsize, text.bold, text.defaultOpacity, text.text);
+        let textObj = new TAObject(text.id, text.x, text.y, text.color, text.fontsize, text.bold, text.defaultOpacity, text.text, (text.includeOutline === "true"));
         GlobalTextObj[textObj.id] = textObj;
     });
 
@@ -347,6 +363,10 @@ Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
     else{
         tempText = "\x1bNBNB" + tempText;
     }
+    dd(text);
+    if(text.outline === false){
+        tempText = "\x1bOLOFF" +tempText + "\x1bOLONN";
+    }
 
     this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), text.currentOpacity);
     this._textOverLay.resetFontSettings();
@@ -392,6 +412,12 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState){
             break;
         case "NBNB":
             this.contents.fontBold = false;
+            break;
+        case "OLOFF":
+            Gimmer_Core.TextAnywhere.SkipOutline = true;
+            break;
+        case "OLON":
+            Gimmer_Core.TextAnywhere.SkipOutline = false;
             break;
         default:
             Gimmer_Core.TextAnywhere.Window_Base_prototype_processEscapeCharacter.call(this,code,textState);
@@ -454,12 +480,13 @@ Gimmer_Core.TextAnywhere.quickAddText = function(id,x,y,text){
     let fontsize = this.DefaultFontSize;
     let bold = this.DefaultBold;
     let opacity = this.DefaultOpacity;
-    Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text);
+    let outline = this.DefaultOutline;
+    Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text, outline);
     return Gimmer_Core.TextAnywhere.Texts[id];
 }
 
-Gimmer_Core.TextAnywhere.advancedAddText = function(id,x,y,color,bold,fontsize,opacity, text){
-    Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text);
+Gimmer_Core.TextAnywhere.advancedAddText = function(id,x,y,color,bold,fontsize,opacity, text, outline){
+    Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text, outline);
     return Gimmer_Core.TextAnywhere.Texts[id];
 }
 
@@ -468,6 +495,7 @@ Gimmer_Core.pluginCommands["TASETQUICKPARAMS"] = function(params){
     Gimmer_Core.TextAnywhere.DefaultFontSize = Number(params[1]);
     Gimmer_Core.TextAnywhere.DefaultBold = params[2];
     Gimmer_Core.TextAnywhere.DefaultOpacity = Number(params[3]);
+    Gimmer_Core.TextAnywhere.DefaultOutline = (params[4] === "true");
 }
 
 Gimmer_Core.pluginCommands["ADDTEMPTEXT"] = function(params){
@@ -514,7 +542,8 @@ Gimmer_Core.pluginCommands["ADVANCEDADDTEXT"] = function (params){
     let fontsize = params[5];
     let opacity = params[6];
     let text = params[7];
-    Gimmer_Core.TextAnywhere.advancedAddText(id,x,y,color, bold,fontsize,opacity,text);
+    let outline = (params[8] === "true");
+    Gimmer_Core.TextAnywhere.advancedAddText(id,x,y,color, bold,fontsize,opacity,text, outline);
 }
 
 Gimmer_Core.pluginCommands["HIDETEXTLAYER"] = function(){
@@ -615,7 +644,10 @@ Bitmap.prototype.drawTextAlpha = function(text, x, y, maxWidth, lineHeight, alig
         context.textAlign = align;
         context.textBaseline = 'alphabetic';
         context.globalAlpha = alpha;
-        this._drawTextOutline(text, tx, ty, maxWidth);
+        if(!Gimmer_Core.TextAnywhere.SkipOutline){
+            this._drawTextOutline(text, tx, ty, maxWidth);
+        }
+
         this._drawTextBody(text, tx, ty, maxWidth);
         context.restore();
         this._setDirty();
@@ -624,7 +656,7 @@ Bitmap.prototype.drawTextAlpha = function(text, x, y, maxWidth, lineHeight, alig
 
 
 class TAObject{
-    constructor(id, x, y, color, fontsize, bold, opacity, text) {
+    constructor(id, x, y, color, fontsize, bold, opacity, text, outline) {
         this.id = id.toString();
         this.x = x;
         this.y = y;
@@ -646,6 +678,7 @@ class TAObject{
         this.durationParam = 0;
         this.needsDelete = false;
         this.deletesOnceInvisible = false;
+        this.outline = outline;
     }
 
     getDefaultOpacity = function(){
