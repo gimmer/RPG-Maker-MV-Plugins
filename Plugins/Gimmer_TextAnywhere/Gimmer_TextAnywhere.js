@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.4 - Display text anywhere on the screen
+ * @plugindesc v2.5 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -21,8 +21,6 @@ if(Gimmer_Core === undefined){
  *
  * Must be loaded BEFORE YEP_MessageCore if you are using it, otherwise it will break word wrapping
  * Must be loaded AFTER YEP_CoreEngine as it has to amend drawTextEx to support opacity changes in text
- *
- * NOTE: if using text in a plugin command that is more than one word, place the phrase in quotes ""
  *
  *
  * Global Plugin Commands:
@@ -154,6 +152,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.2: Fixed font color, size, bold, and opacity to keep working with drawTextEx
  * - Version 2.3: Support for stopping outlines around words
  * - Version 2.4: Bug fix so it doesn't break when you don't HAVE text
+ * - Version 2.5: Bug fix so faded out text doesn't flash back on the screen for a second
  *
  * Terms of Use:
  * =======================================================================
@@ -458,8 +457,10 @@ Scene_Map.prototype.updateTextFadeOut = function(text){
     if(text.isFadingOut){
         if(text.currentOpacity > 0){
             text.currentOpacity -= text.getDefaultOpacity() / text.fadeFrames;
-            if(text.currentOpacity < 0){
+            if(text.currentOpacity <= 0){
                 text.currentOpacity = 0;
+                text.isFadingOut = false;
+                text.visible = false;
             }
         }
         else{
