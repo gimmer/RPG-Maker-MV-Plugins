@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.3 - Display text anywhere on the screen
+ * @plugindesc v2.4 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -21,6 +21,8 @@ if(Gimmer_Core === undefined){
  *
  * Must be loaded BEFORE YEP_MessageCore if you are using it, otherwise it will break word wrapping
  * Must be loaded AFTER YEP_CoreEngine as it has to amend drawTextEx to support opacity changes in text
+ *
+ * NOTE: if using text in a plugin command that is more than one word, place the phrase in quotes ""
  *
  *
  * Global Plugin Commands:
@@ -151,6 +153,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.1: Moved to used drawTextEx to make text codes available
  * - Version 2.2: Fixed font color, size, bold, and opacity to keep working with drawTextEx
  * - Version 2.3: Support for stopping outlines around words
+ * - Version 2.4: Bug fix so it doesn't break when you don't HAVE text
  *
  * Terms of Use:
  * =======================================================================
@@ -281,7 +284,12 @@ Gimmer_Core.TextAnywhere.generateTextId = function (){
 
 Gimmer_Core.TextAnywhere.InitializeTexts = function(){
     let GlobalTextObj = {};
-    let texts = JSON.parse(PluginManager.parameters('Gimmer_TextAnywhere')['Default Text List']);
+    let textList = PluginManager.parameters('Gimmer_TextAnywhere')['Default Text List'];
+    let texts = [];
+    if(textList !== ""){
+        texts = JSON.parse(textList);
+    }
+
     texts.forEach(function(text){
         text = JSON.parse(text);
         let textObj = new TAObject(text.id, text.x, text.y, text.color, text.fontsize, text.bold, text.defaultOpacity, text.text, (text.includeOutline === "true"));

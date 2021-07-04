@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.3 - General plugin framework for my other plugins
+ * @plugindesc v1.4 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -54,6 +54,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.1: I don't remember
  * - Version 1.2: better fading windows
  * - Version 1.3: Adding block to reload helper
+ * - Verison 1.4: parse plugin parameters in double quotes ("") as a single entry
  *
  * Terms of Use:
  * =======================================================================
@@ -99,10 +100,38 @@ var Gimmer_Core_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCom
 Game_Interpreter.prototype.pluginCommand = function(command, args) {
     Gimmer_Core_Interpreter_pluginCommand.call(this, command, args)
     command = command.toUpperCase();
+    args = Gimmer_Core.compressArgs(args);
     if(command in Gimmer_Core.pluginCommands){
-        Gimmer_Core.pluginCommands[command](args);
+        return Gimmer_Core.pluginCommands[command](args);
     }
 };
+
+Gimmer_Core.compressArgs = function(args){
+    if(!args){
+        args = [];
+    }
+
+    let returnArgs = [];
+
+    let textArg = [];
+    for(let i=0;i<args.length;i++){
+        if(args[i][0] === '"'){
+            textArg.push(args[i].replace('"',""));
+        }
+        else if(args[i][args[i].length -1] === '"'){
+            textArg.push(args[i].replace('"',""));
+            returnArgs.push(textArg.join(" "));
+            textArg = [];
+        }
+        else if(textArg.length > 0){
+            textArg.push(args[i]);
+        }
+        else{
+            returnArgs.push(args[i]);
+        }
+    }
+    return returnArgs;
+}
 
 Gimmer_Core.pluginCommands['FADEINBGM'] = function(args){
     let bgm = {
