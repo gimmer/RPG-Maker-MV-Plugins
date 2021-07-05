@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.5 - Display text anywhere on the screen
+ * @plugindesc v2.6 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -143,6 +143,27 @@ if(Gimmer_Core === undefined){
  * Adds fully customizable text to the texts array.
  *
  *
+ * ===Command===
+ * AdvancedTypeTempText
+ * ===Params===
+ * id: the unique id of the text
+ * x: Where on the x to put the text. Can be a number or an eval'd string (e.g. Graphics.boxWidth/2)
+ * y: Where on the y to put the text. Can be a number or an eval'd string (e.g. Graphics.boxHeight/2)
+ * Text: Put in double quotes "" the text you want to include
+ * Duration: number of frames to remain on the screen
+ * Duration Handler: either "fade" or "hide"
+ * Fade Frames: if you chose "fade", how many frames to take to fade"
+ * typingFrames: how many frames to take to type the text
+ * Font: the font name you want the text to be
+ * fontsize: fontsize you want
+ * color: hexcode of the color you want
+ * bold: true or false if you want bold
+ * opacity: (1-255) opacity you want
+ * outline: true or false if you want the outline
+ * ===Description===
+ * Adds fully customizable text that types in and disappears afterwards.
+ *
+ *
  * ==============
  * Version History
  * ==============
@@ -153,6 +174,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.3: Support for stopping outlines around words
  * - Version 2.4: Bug fix so it doesn't break when you don't HAVE text
  * - Version 2.5: Bug fix so faded out text doesn't flash back on the screen for a second
+ * - Version 2.6: Added in AdvancedTypeTempText to support typing with fonts
  *
  * Terms of Use:
  * =======================================================================
@@ -364,15 +386,22 @@ Scene_Map.prototype.updateTypingIn = function(text, tempText){
 Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
     tempText = "\x1bCCCC["+text.color+"]" +  tempText;
     tempText = "\x1bSSSS["+text.fontsize+"]" + tempText;
-    if(text.bold){
-        tempText = "\x1bBBBB" + tempText;
+    if(Imported.YEP_MessageCore){
+        if(text.bold){
+            tempText = "\x1bBBBB" + tempText;
+        }
+        else{
+            tempText = "\x1bNBNB" + tempText;
+        }
     }
-    else{
-        tempText = "\x1bNBNB" + tempText;
-    }
+
 
     if(text.outline === false){
         tempText = "\x1bOLOFF" +tempText + "\x1bOLON";
+    }
+
+    if(text.font){
+        tempText = "\x1bFURN["+text.font+"]"+tempText;
     }
 
     this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), text.currentOpacity);
@@ -426,6 +455,9 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState){
         case "OLON":
             Gimmer_Core.TextAnywhere.SkipOutline = false;
             break;
+        case "FURN":
+            this.contents.fontFace = this.obtainFontParam(textState);
+            break;
         default:
             Gimmer_Core.TextAnywhere.Window_Base_prototype_processEscapeCharacter.call(this,code,textState);
     }
@@ -433,6 +465,16 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState){
 
 Window_Base.prototype.obtainColorParam = function(textState) {
     var arr = /^\[#[A-Za-z0-9]+\]/.exec(textState.text.slice(textState.index));
+    if (arr) {
+        textState.index += arr[0].length;
+        return arr[0].slice(1).replace("]","");
+    } else {
+        return '';
+    }
+};
+
+Window_Base.prototype.obtainFontParam = function(textState) {
+    var arr = /^\[[A-Za-z0-9\-]+\]/.exec(textState.text.slice(textState.index));
     if (arr) {
         textState.index += arr[0].length;
         return arr[0].slice(1).replace("]","");
@@ -532,6 +574,29 @@ Gimmer_Core.pluginCommands["TYPETEMPTEXT"] = function(params){
     textObj.deletesOnceInvisible = true;
     textObj.typingFrames = typingFrames;
     textObj.setDuration(duration, durationType, durationTypeParam);
+}
+Gimmer_Core.pluginCommands["ADVANCEDTYPETEMPTEXT"] = function(params){
+    let id = params[0];
+    let x = params[1];
+    let y = params[2];
+    let text = params[3];
+    let duration = Number(params[4]);
+    let durationType = params[5];
+    let durationTypeParam = params[6];
+    let typingFrames = Number(params[7]);
+    let font = params[8];
+    let fontsize = Number(params[9]);
+    let color = params[10];
+    let bold = params[11];
+    let opacity = params[12];
+    let outline = (params[13] === "true")
+    let textObj = new TAObject(id,x,y,color,fontsize,bold,opacity,text,outline);
+    textObj.setFont(font);
+    textObj.isTypingIn = true;
+    textObj.deletesOnceInvisible = true;
+    textObj.typingFrames = typingFrames;
+    textObj.setDuration(duration, durationType, durationTypeParam);
+    Gimmer_Core.TextAnywhere.Texts[id] = textObj;
 }
 
 Gimmer_Core.pluginCommands["QUICKADDTEXT"] = function (params){
@@ -692,6 +757,10 @@ class TAObject{
 
     getDefaultOpacity = function(){
         return this.defaultOpacity;
+    }
+
+    setFont = function(font){
+        this.font = font;
     }
 
     setDuration = function(duration, handler, handlerParam){
