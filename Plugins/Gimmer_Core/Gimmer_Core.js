@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.4 - General plugin framework for my other plugins
+ * @plugindesc v1.4.1 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -54,7 +54,8 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.1: I don't remember
  * - Version 1.2: better fading windows
  * - Version 1.3: Adding block to reload helper
- * - Verison 1.4: parse plugin parameters in double quotes ("") as a single entry
+ * - Version 1.4: parse plugin parameters in double quotes ("") as a single entry
+ * - Version 1.4.1: bug fix for " parsing in plugin parameters
  *
  * Terms of Use:
  * =======================================================================
@@ -116,7 +117,13 @@ Gimmer_Core.compressArgs = function(args){
     let textArg = [];
     for(let i=0;i<args.length;i++){
         if(args[i][0] === '"'){
-            textArg.push(args[i].replace('"',""));
+            if(args[i][args[i].length -1] === '"'){
+                returnArgs.push(args[i].replace('"',"").replace('"',""));
+            }
+            else{
+                textArg.push(args[i].replace('"',""));
+            }
+
         }
         else if(args[i][args[i].length -1] === '"'){
             textArg.push(args[i].replace('"',""));
