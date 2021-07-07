@@ -729,64 +729,63 @@ Bitmap.prototype.drawTextAlpha = function(text, x, y, maxWidth, lineHeight, alig
 };
 
 
-class TAObject{
-    constructor(id, x, y, color, fontsize, bold, opacity, text, outline) {
-        this.id = id.toString();
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.fontsize = Number(fontsize);
-        this.bold = (bold === "true");
-        this.defaultOpacity = Number(opacity) / 255;
-        this.text = text;
-        this.currentOpacity = Number(opacity) / 255;
-        this.visible = true;
-        this.isFadingOut = false;
-        this.isFadingIn = false;
-        this.fadeFrames = 0;
-        this.isTypingIn = false;
-        this.typingIndex = 0;
-        this.typingFrames = 0;
-        this.duration = -1;
-        this.durationHandler = "fade";
-        this.durationParam = 0;
-        this.needsDelete = false;
-        this.deletesOnceInvisible = false;
-        this.outline = outline;
-    }
-
-    getDefaultOpacity = function(){
-        return this.defaultOpacity;
-    }
-
-    setFont = function(font){
-        this.font = font;
-    }
-
-    setDuration = function(duration, handler, handlerParam){
-        this.duration = Number(duration);
-        if(['fade','delete','hide'].indexOf(handler) > -1){
-            this.durationHandler = handler;
-            this.durationParam = handlerParam;
-        }
-        return this;
-    }
-
-    handleDurationZero = function(){
-        switch(this.durationHandler){
-            case 'fade':
-                this.isFadingOut = true;
-                this.fadeFrames = this.durationParam;
-                break;
-            case 'delete':
-                this.needsDelete = true;
-                break;
-            case 'hide':
-                this.visible = false;
-                break;
-        }
-        this.duration = -1;
-    }
+function TAObject(id, x, y, color, fontsize, bold, opacity, text, outline) {
+    this.id = id.toString();
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.fontsize = Number(fontsize);
+    this.bold = (bold === "true");
+    this.defaultOpacity = Number(opacity) / 255;
+    this.text = text;
+    this.currentOpacity = Number(opacity) / 255;
+    this.visible = true;
+    this.isFadingOut = false;
+    this.isFadingIn = false;
+    this.fadeFrames = 0;
+    this.isTypingIn = false;
+    this.typingIndex = 0;
+    this.typingFrames = 0;
+    this.duration = -1;
+    this.durationHandler = "fade";
+    this.durationParam = 0;
+    this.needsDelete = false;
+    this.deletesOnceInvisible = false;
+    this.outline = outline;
 }
+
+TAObject.prototype.getDefaultOpacity = function(){
+    return this.defaultOpacity;
+}
+
+TAObject.prototype.setFont = function(font){
+    this.font = font;
+}
+
+TAObject.prototype.setDuration = function(duration, handler, handlerParam){
+    this.duration = Number(duration);
+    if(['fade','delete','hide'].indexOf(handler) > -1){
+        this.durationHandler = handler;
+        this.durationParam = handlerParam;
+    }
+    return this;
+}
+
+TAObject.prototype.handleDurationZero = function(){
+    switch(this.durationHandler){
+        case 'fade':
+            this.isFadingOut = true;
+            this.fadeFrames = this.durationParam;
+            break;
+        case 'delete':
+            this.needsDelete = true;
+            break;
+        case 'hide':
+            this.visible = false;
+            break;
+    }
+    this.duration = -1;
+}
+
 
 Gimmer_Core.TextAnywhere.InitializeTexts();
