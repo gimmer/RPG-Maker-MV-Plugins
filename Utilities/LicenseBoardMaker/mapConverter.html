@@ -61,9 +61,8 @@
         let dragSpot = $(evt.target);
         var files = evt.originalEvent.dataTransfer.files;
         // Loop through the FileList and read
-        let f;
-        for (var i = 0; i < files.length; i++) {
-            f = files[i];
+        for (var i = 0, f; f = files[i]; i++) {
+
             // Only process json files.
             if (!f.type.match('application/json')) {
                 continue;
@@ -115,15 +114,13 @@
                 let tileX = (Math.floor(tileId / 128) % 2 * 8 + tileId % 8);
                 let tileY = (Math.floor(tileId % 256 / 8) % 16);
                 let license = makeLicenseFromData(tileX,tileY, regionId, x, y, mapData.events, costEquations);
-                if(license){
-                    if((x+mod) % 2 ){
-                        license.iconIndexBackground = 0
-                    }
-                    else{
-                        license.iconIndexBackground = 1;
-                    }
-                    licenses.push(license);
+                if((x+mod) % 2 ){
+                    license.iconIndexBackground = 0
                 }
+                else{
+                    license.iconIndexBackground = 1;
+                }
+                licenses.push(license);
             }
             mod = (mod > 0 ? 0 : 1);
         }
@@ -137,9 +134,6 @@
     }
 
     function makeLicenseFromData(tileX, tileY, regionId, x, y, events, costEquations){
-        if(!licenseMap[tileX+","+tileY]){
-            return false;
-        }
         let baseLicense = JSON.parse(JSON.stringify(licenseMap[tileX+","+tileY]));
         baseLicense.x = x;
         baseLicense.y = y;
