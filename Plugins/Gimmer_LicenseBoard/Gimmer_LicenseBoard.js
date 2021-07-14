@@ -9,7 +9,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.2 - License Board to replace the exp leveling system with stats bought with licenses
+ * @plugindesc v1.3.1 - License Board to replace the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========
@@ -39,6 +39,8 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * [ {"name":"board1", "data": LICENSE DATA HERE}, {"name":"board2", "data": LICENSE DATA HERE},etc  ]
  * Version 1.3
  * - Adding a toggle to see all licenses, added some text params for the popup
+ * Version 1.3.1
+ * - Preventing wheel scrolling
  *
  * Terms of Use:
  * =======================================================================
@@ -209,7 +211,7 @@ DataManager.onLoad = function(object){
     Gimmer_Core.LicenseBoard.DataManager_onLoad.call(this,object);
 
     if(object === $dataLicenseBoard){
-        $dataLicenseBoard.forEach(function(board, boardKey){
+        $dataLicenseBoard.forEach(function(board){
             let boardData = board.data;
             let boardIndex = board.name;
             $dataLicenseMap[boardIndex] = {}
@@ -554,6 +556,10 @@ function Window_LicenseBoard() {
 
 Window_LicenseBoard.prototype = Object.create(Window_Selectable.prototype);
 Window_LicenseBoard.prototype.constructor = Window_LicenseBoard;
+
+Window_LicenseBoard.prototype.processWheel = function(){
+    return false;
+}
 
 //constructor
 Window_LicenseBoard.prototype.initialize = function(x, y, width, height, actor) {

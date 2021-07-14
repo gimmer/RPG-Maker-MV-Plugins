@@ -16,7 +16,7 @@ All plugins created by Gimmer_
 | [Gimmer_ControllerType][Gimmer_ControllerType]     | Display buttons matching the controller the player's using. | [1.1][Gimmer_ControllerType_release]     |
 | [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions] | Allows you to animate text to match emotions.           | [1.1][Gimmer_ExpressingEmotions_release] |
 | [Gimmer_GameTimer][Gimmer_GameTimer]               | Use the system clock to time how long a player takes to do something. | [1.1][Gimmer_GameTimer_release] |
-| [Gimmer_LicenseBoard][Gimmer_LicenseBoard]         | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill. | [1.2][Gimmer_LicenseBoard_release] |
+| [Gimmer_LicenseBoard][Gimmer_LicenseBoard]         | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill. | [1.3.1][Gimmer_LicenseBoard_release] |
 | [Gimmer_MakingFaces][Gimmer_MakingFaces]           | Use the command \TF[faceIndex] to change the face index of an actor during chat messages. | [1.1][Gimmer_MakingFaces_release] |
 | [Gimmer_MatchingFaces][Gimmer_MatchingFaces]       | Set a meta parameter on any Actor in the database "<faceName: String>". | [1.1][Gimmer_MatchingFaces_release] |
 | [Gimmer_MirrorMirrorOnTheWall][Gimmer_MirrorMirrorOnTheWall]       | Choose tiles that are mirrors. | [1.0][Gimmer_MirrorMirrorOnTheWall_release] |
