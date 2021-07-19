@@ -12,6 +12,7 @@ All plugins created by Gimmer_
 | [Gimmer_AnimatedTitle][Gimmer_AnimatedTitle]       | Animate your Title Scene by using a video background.       | [1.1][Gimmer_AnimatedTitle_release]      |
 | [Gimmer_BeKingRewind][Gimmer_BeKindRewind]         | Rewind time on the map screen                                | [0.1][Gimmer_BeKindRewind_release]      |
 | [Gimmer_CenterText][Gimmer_CenterText]             | Allows you to use a command to center text in a window.     | [1.0][Gimmer_CenterText_release]         |
+| [Gimmer_CommentsAreNotFunny][Gimmer_CommentsAreNotFunny] | Allows you to comment out event lines for debugging  | [1.0][Gimmer_CommentsAreNotFunny_release] |
 | [Gimmer_CleverColors][Gimmer_CleverColors] | Automatically wrap certain words or phases in Show Text in certain colors | [1.0][Gimmer_CleverColors_release]
 | [Gimmer_ControllerType][Gimmer_ControllerType]     | Display buttons matching the controller the player's using. | [1.1][Gimmer_ControllerType_release]     |
 | [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions] | Allows you to animate text to match emotions.           | [1.1][Gimmer_ExpressingEmotions_release] |
@@ -102,3 +103,6 @@ All plugins created by Gimmer_
   
 [Gimmer_CleverColors]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CleverColors/
 [Gimmer_CleverColors_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CleverColors/Gimmer_CleverColors.js
+
+[Gimmer_CommentsAreNotFunny]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CommentsAreNotFunny/
+[Gimmer_CommentsAreNotFunny_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CommentsAreNotFunny/Gimmer_CommentsAreNotFunny.js 
