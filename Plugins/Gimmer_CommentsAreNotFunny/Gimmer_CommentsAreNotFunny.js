@@ -19,7 +19,7 @@ Gimmer_Core['CANF'] = {'loaded':true};
 
 Gimmer_Core.CANF.Game_Interpreter_prototype_setup = Game_Interpreter.prototype.setup;
 Game_Interpreter.prototype.setup = function(list, eventId){
-    if(eventId == 30){
+    if(eventId == eventId){
         list = this.reduceListUsingComments(list)
     }
     Gimmer_Core.CANF.Game_Interpreter_prototype_setup.call(this, list, eventId);
