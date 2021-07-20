@@ -22,7 +22,6 @@ Game_Interpreter.prototype.setup = function(list, eventId){
     if(eventId == 30){
         list = this.reduceListUsingComments(list)
     }
-    a
     Gimmer_Core.CANF.Game_Interpreter_prototype_setup.call(this, list, eventId);
 }
 
