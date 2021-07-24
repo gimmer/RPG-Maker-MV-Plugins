@@ -16,6 +16,7 @@ Can block F5 from reloading the game.
 ## Helpers
 
 * Disable F5 Reload: prevents F5 from reloading the browser and restarting the game. Use in production.
+* Show Mouse Coordinates: shows a little box with mouse coordinates underneath
 
 
 ## Terms of Use:

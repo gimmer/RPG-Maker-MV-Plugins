@@ -4,7 +4,7 @@ All plugins created by Gimmer_
 | Project                                            | Description                                                 | Latest release                           |
 | -------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------- |
 |                                                    | **Gimmer Core**                                             |                                          |
-| [Gimmer_Core][Gimmer_Core]                         | Core plugin required for all other plugins.                 | [1.4.1][Gimmer_Core_release]               |
+| [Gimmer_Core][Gimmer_Core]                         | Core plugin required for all other plugins.                 | [1.5][Gimmer_Core_release]               |
 |                                                    | **Compatible with MV and MZ**                              |                                          |
 | [Gimmer_FolderPictures][Gimmer_FolderPictures]     | Save your pictures into folders, and use them.              | [1.1][Gimmer_FolderPictures_release]     |
 |                                                    | **Compatible with MV only**                                |                                          |

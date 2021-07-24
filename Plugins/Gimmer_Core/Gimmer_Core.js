@@ -5,7 +5,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.4.1 - General plugin framework for my other plugins
+ * @plugindesc v1.5 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -28,14 +28,21 @@ Gimmer_Core.isPlayerStopped = false;
  * @parent ---Parameters---
  * @type Boolean
  * @desc Debug messages in console for all Gimmer plugins
- * Default: False
+ * Default False
  * @default false
  *
  * @param Advanced Debug
  * @parent debug
  * @type Boolean
  * @desc Debug messages in console will have more information.
- * Default: False
+ * Default False
+ * @default false
+ *
+ * @param Show Mouse Coordinates
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc Show mouse coordinates on the screen
+ * Default False
  * @default false
  *
  * @param ---Helpers---
@@ -44,7 +51,7 @@ Gimmer_Core.isPlayerStopped = false;
  * @parent ---Helpers---
  * @type Boolean
  * @desc Prevent F5 from reloading the game, good for production builds
- * Default: False
+ * Default False
  * @default false
  *
  * ===============
@@ -56,6 +63,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.3: Adding block to reload helper
  * - Version 1.4: parse plugin parameters in double quotes ("") as a single entry
  * - Version 1.4.1: bug fix for " parsing in plugin parameters
+ * - Version 1.5: Show mouse cursor for debugging
  *
  * Terms of Use:
  * =======================================================================
@@ -68,8 +76,7 @@ var gParameters = PluginManager.parameters('Gimmer_Core');
 Gimmer_Core.debug = (gParameters['debug'] === "true");
 Gimmer_Core.advancedDebug = (Gimmer_Core.debug && gParameters['Advanced Debug'] === "true");
 Gimmer_Core.blockF5 = (gParameters['Block F5 Reload'] === "true");
-
-
+Gimmer_Core.showMouseCoords = (gParameters['Show Mouse Coordinates'] === "true");
 
 
 Gimmer_Core.SceneManager_onKeyDown = SceneManager.onKeyDown;
@@ -79,6 +86,30 @@ SceneManager.onKeyDown = function(event) {
     }
     Gimmer_Core.SceneManager_onKeyDown.call(this, event);
 };
+
+if(Gimmer_Core.showMouseCoords){
+    //Add a sprite to the
+    Gimmer_Core.SceneManager_onSceneStart = SceneManager.onSceneStart;
+    SceneManager.onSceneStart = function(){
+        const width = 100;
+        const height = 50;
+        this._scene._coordWindow = new Window_Plain(Graphics.boxWidth - width, Graphics.boxHeight - height, width, height);
+        this._scene.addChild(this._scene._coordWindow);
+        this._scene._coordWindow.contents.fontSize = 12;
+        Gimmer_Core.SceneManager_onSceneStart.call(this);
+    }
+
+    Gimmer_Core.TouchInput_onMouseMove = TouchInput._onMouseMove;
+    TouchInput._onMouseMove  = function(event){
+        Gimmer_Core.TouchInput_onMouseMove.call(this,event);
+        if(SceneManager._scene && SceneManager._scene._coordWindow){
+            const x = Graphics.pageToCanvasX(event.pageX);
+            const y = Graphics.pageToCanvasY(event.pageY);
+            SceneManager._scene._coordWindow.contents.clear();
+            SceneManager._scene._coordWindow.contents.drawText(x+","+y, 0, 0,75, 12, "center");
+        }
+    }
+}
 
 
 
