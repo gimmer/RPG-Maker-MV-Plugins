@@ -24,6 +24,6 @@ Translating it would take forever.
 
 ###Limitations
 * Because RPGMaker MV copies data from the database files into game objects, and then copies the game objects into memory as save files, a game that starts on one language has to stay on that language
-  * E.G. Actors.json has the first character as "Francis" and you translate his name in French to "Francois"
-  * After the game starts, the Game_Actor object for "Francis" will have the English or French name in it forever. Changing languages can't replace that name with the other language variant, because the player might have named the character themselves. 
+  * E.G. Actors.json has the first character as "Jeff" and you translate his name in French to "FrenchJeff"
+  * After the game starts, the Game_Actor object for "Jeff" will have the English or French name in it forever. Changing languages can't replace that name with the other language variant, because the player might have named the character themselves. 
   * (In theory I could use direct string matching to figure this out and try to change things, but it felt really messy, e.g. the player names the character Francois in the English version, and it autocorrects back to Francis)
