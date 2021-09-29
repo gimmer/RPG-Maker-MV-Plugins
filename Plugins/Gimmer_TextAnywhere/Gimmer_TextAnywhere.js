@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.6 - Display text anywhere on the screen
+ * @plugindesc v2.7 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -175,6 +175,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.4: Bug fix so it doesn't break when you don't HAVE text
  * - Version 2.5: Bug fix so faded out text doesn't flash back on the screen for a second
  * - Version 2.6: Added in AdvancedTypeTempText to support typing with fonts
+ * - Version 2.7: Fixing in Type Temp Text to support text and font tags
  *
  * Terms of Use:
  * =======================================================================
@@ -341,6 +342,9 @@ Scene_Map.prototype.update = function(){
 Scene_Map.prototype.updateTextOverlay = function(){
     this._textOverLay.contents.clear();
     Object.values(Gimmer_Core.TextAnywhere.Texts).forEach(function(text){
+        if(!text.alive){
+            return;
+        }
         if(text.needsDelete){
             delete Gimmer_Core.TextAnywhere.Texts[text.id];
             return;
@@ -352,8 +356,8 @@ Scene_Map.prototype.updateTextOverlay = function(){
             this.updateTextFadeOut(text);
             this.updateTextFadeIn(text);
             let tempText = this._textOverLay.convertEscapeCharacters(text.text);
-            tempText = this.updateTypingIn(text, tempText);
-            this.displayTextAnywhere(text,tempText);
+            let textLength = this.updateTypingIn(text, tempText);
+            this.displayTextAnywhere(text,tempText, textLength);
         }
     }, this)
 }
@@ -370,20 +374,21 @@ Scene_Map.prototype.updateTextDuration = function(text){
 
 Scene_Map.prototype.updateTypingIn = function(text, tempText){
     if(text.isTypingIn){
+        let textState = this._textOverLay.drawTextEx(tempText,0,this._textOverLay.contents.height,0,-1,true);
+        tempText = textState.normalText;
         let charsPerFrame = tempText.length / text.typingFrames;
         text.typingIndex += charsPerFrame;
         if(text.typingIndex > tempText.length){
             text.isTypingIn = false;
             text.typingIndex = 0;
+            return tempText.length;
         }
-        else{
-            tempText = tempText.substr(0, Math.round(text.typingIndex));
-        }
+        return Math.round(text.typingIndex);
     }
-    return tempText;
+    return -2;
 }
 
-Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
+Scene_Map.prototype.displayTextAnywhere = function (text, tempText, textLength){
     tempText = "\x1bCCCC["+text.color+"]" +  tempText;
     tempText = "\x1bSSSS["+text.fontsize+"]" + tempText;
     if(Imported.YEP_MessageCore){
@@ -404,22 +409,31 @@ Scene_Map.prototype.displayTextAnywhere = function (text, tempText){
         tempText = "\x1bFURN["+text.font+"]"+tempText;
     }
 
-    this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), text.currentOpacity);
+    this._textOverLay.drawTextEx(tempText, Number(eval(text.x)), Number(eval(text.y)), text.currentOpacity, textLength);
     this._textOverLay.resetFontSettings();
 }
 
 //Copied from YEP_Core
-Window_Base.prototype.drawTextEx = function(text, x, y, alpha) {
+Window_Base.prototype.drawTextEx = function(text, x, y, alpha, stopAt, returnObject) {
     if (text) {
         if(!alpha){
             alpha = 255;
         }
+        if(stopAt === undefined){
+            stopAt = -2;
+        }
         this.resetFontSettings();
-        var textState = { index: 0, x: x, y: y, left: x, alpha: alpha };
+        var textState = { index: 0, x: x, y: y, left: x, alpha: alpha, myindex: 0, normalText: "" };
         textState.text = this.convertEscapeCharacters(text);
         textState.height = this.calcTextHeight(textState, false);
         while (textState.index < textState.text.length) {
+            if(stopAt === textState.myindex){
+                return textState.x - x;
+            }
             this.processCharacter(textState);
+        }
+        if(returnObject){
+            return textState;
         }
         return textState.x - x;
     } else {
@@ -431,7 +445,9 @@ Window_Base.prototype.processNormalCharacter = function(textState) {
     var c = textState.text[textState.index++];
     var w = this.textWidth(c);
     this.contents.drawTextAlpha(c, textState.x, textState.y, w * 2, textState.height, textState.align, textState.alpha );
+    textState.normalText += c;
     textState.x += w;
+    textState.myindex++;
 };
 
 Gimmer_Core.TextAnywhere.Window_Base_prototype_processEscapeCharacter = Window_Base.prototype.processEscapeCharacter;
@@ -557,7 +573,10 @@ Gimmer_Core.pluginCommands["ADDTEMPTEXT"] = function(params){
     let duration = Number(params[3]);
     let durationType = params[4];
     let durationTypeParam = params[5];
-    Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text).setDuration(duration, durationType, durationTypeParam).deletesOnceInvisible = true;
+    let obj = Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text);
+    obj.setDuration(duration, durationType, durationTypeParam);
+    obj.deletesOnceInvisible = true;
+    obj.alive = true;
 }
 
 Gimmer_Core.pluginCommands["TYPETEMPTEXT"] = function(params){
@@ -574,6 +593,7 @@ Gimmer_Core.pluginCommands["TYPETEMPTEXT"] = function(params){
     textObj.deletesOnceInvisible = true;
     textObj.typingFrames = typingFrames;
     textObj.setDuration(duration, durationType, durationTypeParam);
+    textObj.alive = true;
 }
 Gimmer_Core.pluginCommands["ADVANCEDTYPETEMPTEXT"] = function(params){
     let id = params[0];
@@ -596,6 +616,7 @@ Gimmer_Core.pluginCommands["ADVANCEDTYPETEMPTEXT"] = function(params){
     textObj.deletesOnceInvisible = true;
     textObj.typingFrames = typingFrames;
     textObj.setDuration(duration, durationType, durationTypeParam);
+    textObj.alive = true;
     Gimmer_Core.TextAnywhere.Texts[id] = textObj;
 }
 
@@ -604,7 +625,7 @@ Gimmer_Core.pluginCommands["QUICKADDTEXT"] = function (params){
     let x = params[1];
     let y = params[2];
     let text = params[3];
-    Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text);
+    Gimmer_Core.TextAnywhere.quickAddText(id,x,y,text).alive = true;
 }
 
 Gimmer_Core.pluginCommands["ADVANCEDADDTEXT"] = function (params){
@@ -617,7 +638,7 @@ Gimmer_Core.pluginCommands["ADVANCEDADDTEXT"] = function (params){
     let opacity = params[6];
     let text = params[7];
     let outline = (params[8] === "true");
-    Gimmer_Core.TextAnywhere.advancedAddText(id,x,y,color, bold,fontsize,opacity,text, outline);
+    Gimmer_Core.TextAnywhere.advancedAddText(id,x,y,color, bold,fontsize,opacity,text, outline).alive = true;
 }
 
 Gimmer_Core.pluginCommands["HIDETEXTLAYER"] = function(){
@@ -752,6 +773,7 @@ function TAObject(id, x, y, color, fontsize, bold, opacity, text, outline) {
     this.needsDelete = false;
     this.deletesOnceInvisible = false;
     this.outline = outline;
+    this.alive = false;
 }
 
 TAObject.prototype.getDefaultOpacity = function(){
