@@ -5,6 +5,7 @@ Replaces EXP with LP, and lets your characters advance by buying licenses to gai
 ### Video Tutorial [The Basics]:
 
 View here: https://www.youtube.com/watch?v=7jTHd0iQoQw
+Note: Some of this is a bit out of date as new features have been added.
 
 ### Text Tutorial:
 
@@ -17,17 +18,17 @@ You will require the following items:
 ##### Setup Required
 Characters will start at license point 0,0 automatically at the beginning of a new game.
 
-To change this, add in \<StartingLicensePosition:x,y> in a character's classes note area.
+To change this, add in &lt;StartingLicensePosition:x,y> in a character's classes note area.
 
 A character will also start with no licenses.
 
-To change this, add in \<StartingLicenses:x,y|x2,y2|x3,y3> to the classes note section.
+To change this, add in &lt;StartingLicenses:x,y|x2,y2|x3,y3> to the classes note section.
 **Note: a character can see every node around the ones they own, so if you start them with random nodes around the board it may be a bit disjointed**
 
 Classes level 1 stats and skill lists are still used as the base stats of a character, as are any existing "Can equip" settings for a class.
 However, if a class starts with "can equip" parameters set, there is nothing in the code keeping them from claiming a license to learn this again, effectively doing nothing for them, so better to start them with those licenses, or omit them from your board.
 
-Enemies "EXP" will now be LP. You can scale this however you like, but bare in mind characters will only advance with licenses with this system set.
+Enemies "EXP" will now be LP. You can scale this however you like, but bear in mind characters will only advance with licenses with this system set.
 The event command "gain experience" will hand out LP instead.
 
 #### More Info on Required Files
@@ -59,14 +60,18 @@ This is used in the optional success window
 This is a json encoded array of license objects.
 
 A license object has the following parameters:
-* type: (string) attribute, equip, skill, or nope. Controls what kind of license it is.
+* type: (string) attribute, xparam, sparam, equip, skill, or nope. Controls what kind of license it is.
 * description: text to show at the top of the screen in the help window. For skill licenses that hand out more than one skill, this is what shows in the success window as well
 * target:
     * For attributes: (int) 0-7 (HP, MP, ATK, DEF, MAT, MDF, AGI, LUK)
+    * For xparam: (int) 0-8 (HIT, EVA, CRI, CEV, MEV, MRF, CNT, HRG, MRG, TRG)
+    * For sparam: (int) 0-9 (TGR, GRD, REC, PHA, MCR, TCR, PDR, MDR, FDR, EXR)
+      * (See Game_BattlerBase object for the word definitions of these. They are also listed in order in the plugin's "Labels" settings for you to label yourself)
     * For skills: does nothing
     * For Equip: (string) "weapon" or "armor"
 * value:
     * For attributes: (int) the amount you will gain
+    * For xparams and sparams: (float) the decimal you will gain. If you want to gain 1% of something, set the value to 0.01
     * For skills: (string) the skillId you will gain. If you want multiple, put them in a comma seperated list: "1,2,3"
 * cost: (int) How many points to cost?
 * iconIndex: (int) What icon to show?

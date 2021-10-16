@@ -3,13 +3,13 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {};
-Imported['Gimmer_LicenseBoard'] = '1.2';
+Imported['Gimmer_LicenseBoard'] = '1.4';
 
 Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.3.1 - License Board to replace the exp leveling system with stats bought with licenses
+ * @plugindesc v1.4 - License Board to replace the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========
@@ -41,12 +41,17 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * - Adding a toggle to see all licenses, added some text params for the popup
  * Version 1.3.1
  * - Preventing wheel scrolling
+ * Version 1.4
+ * - Support for xparam and sparam type nodes in the license board.
+ * - Text fixes to use TextManager for success text
  *
  * Terms of Use:
  * =======================================================================
  * Free for both commercial and non-commercial use, with credit.
  * More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
  * =======================================================================
+ *
+ * @param --Parameters--
  *
  * @param License Board Name
  * @parent ---Parameters---
@@ -153,6 +158,154 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Default: false
  * @default false
  *
+ * @param --Labels--
+ *
+ * @param --Xparams--
+ * @parent --Labels--
+ *
+ * @param --Sparams--
+ * @parent --Labels--
+ *
+ * @param Label For To Hit rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "To Hit rate" xparam?
+ * @default To Hit rate
+ * Default To Hit rate
+ *
+ * @param Label For Evade rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Evade rate" xparam?
+ * @default Evade rate
+ * Default Evade rate
+ *
+ * @param Label For Crit rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Crit rate" xparam?
+ * @default Crit rate
+ * Default Crit rate
+ *
+ * @param Label For Critical Evasion rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Critical Evasion rate" xparam?
+ * @default Critical Evasion rate
+ * Default Critical Evasion rate
+ *
+ * @param Label For Magic Evasion rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Magic Evasion rate" xparam?
+ * @default Magic Evasion rate
+ * Default Magic Evasion rate
+ *
+ * @param Label For Magic Reflection rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Magic Reflection rate" xparam?
+ * @default Magic Reflection rate
+ * Default Magic Reflection rate
+ *
+ * @param Label For Counter attack rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Counter attack rate" xparam?
+ * @default Counter attack rate
+ * Default Counter attack rate
+ *
+ * @param Label For Hp Regeneration rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Hp Regeneration rate" xparam?
+ * @default Hp Regeneration rate
+ * Default Hp Regeneration rate
+ *
+ * @param Label For Mp Regeneration rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Mp Regeneration rate" xparam?
+ * @default Mp Regeneration rate
+ * Default Mp Regeneration reat
+ *
+ * @param Label For Tp Regeneration rate
+ * @parent --Xparams--
+ * @type String
+ * @desc What to label "Tp Regeneration rate" xparam?
+ * @default Tp Regeneration rate
+ * Default Tp Regeneration rate
+ *
+ * @param Label For Target Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Target Rate" xparam?
+ * @default Target Rate
+ * Default Target Rate
+ *
+ * @param Label For Guard effect rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Guard effect rate" xparam?
+ * @default Guard effect rate
+ * Default Guard effect rate
+ *
+ * @param Label For Recovery effect rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Recovery effect rate" xparam?
+ * @default Recovery effect rate
+ * Default Recovery effect rate
+ *
+ * @param Label For Pharmacology
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Pharmacology" xparam?
+ * @default Pharmacology
+ * Default TPharmacology
+ *
+ * @param Label For Mp Cost Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Mp Cost Rate" xparam?
+ * @default Mp Cost Rate
+ * Default Mp Cost Rate
+ *
+ * @param Label For Tp Charge Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Tp Charge Rate" xparam?
+ * @default Tp Charge Rate
+ * Default Tp Charge Rate
+ *
+ * @param Label For Physical Damage Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Physical Damage Rate" xparam?
+ * @default Physical Damage Rate
+ * Default Physical Damage Rate
+ *
+ * @param Label For Magical Damage Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Magical Damage Rate" xparam?
+ * @default Magical Damage Rate
+ * Default Magical Damage Rate
+ *
+ * @param Label For Floor Damage Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Floor Damage Rate" xparam?
+ * @default Floor Damage Rate
+ * Default Floor Damage Rate
+ *
+ * @param Label For Experience Rate
+ * @parent --Sparams--
+ * @type String
+ * @desc What to label "Experience Rate" xparam?
+ * @default Experience Rate
+ * Default Experience Rate
+ *
  */
 
 
@@ -198,6 +351,30 @@ Gimmer_Core.LicenseBoard.MDF = 5;
 Gimmer_Core.LicenseBoard.AGI = 6;
 Gimmer_Core.LicenseBoard.LUK = 7;
 
+//Xparams
+Gimmer_Core.LicenseBoard.HIT = 0;
+Gimmer_Core.LicenseBoard.EVA = 1;
+Gimmer_Core.LicenseBoard.CRI = 2;
+Gimmer_Core.LicenseBoard.CEV = 3;
+Gimmer_Core.LicenseBoard.MEV = 4;
+Gimmer_Core.LicenseBoard.MRF = 5;
+Gimmer_Core.LicenseBoard.CNT = 6;
+Gimmer_Core.LicenseBoard.HRG = 7;
+Gimmer_Core.LicenseBoard.MRG = 8;
+Gimmer_Core.LicenseBoard.TRG = 9;
+
+//Sparams
+Gimmer_Core.LicenseBoard.TGR = 0;
+Gimmer_Core.LicenseBoard.GRD = 1;
+Gimmer_Core.LicenseBoard.REC = 2;
+Gimmer_Core.LicenseBoard.PHA = 3;
+Gimmer_Core.LicenseBoard.MCR = 4;
+Gimmer_Core.LicenseBoard.TCR = 5;
+Gimmer_Core.LicenseBoard.PDR = 6;
+Gimmer_Core.LicenseBoard.MDR = 7;
+Gimmer_Core.LicenseBoard.FDR = 8;
+Gimmer_Core.LicenseBoard.EXR = 9;
+
 var $dataLicenseBoard = {};
 var $dataLicenseMap = {};
 var $dataLicenseEasyCoords = {};
@@ -235,7 +412,34 @@ DataManager.onLoad = function(object){
                 $dataLicenseBoard[boardIndex][index] = new BoardLicense(license);
             });
         });
+    }
 
+    if(object === $dataSystem){
+        $dataSystem.terms.xparams = [
+            lbParams["Label For To Hit rate"],
+            lbParams["Label For Evade rate"],
+            lbParams["Label For Crit rate"],
+            lbParams["Label For Critical Evasion rate"],
+            lbParams["Label For Magic Evasion rate"],
+            lbParams["Label For Magic Reflection rate"],
+            lbParams["Label For Counter attack rate"],
+            lbParams["Label For Hp Regeneration rate"],
+            lbParams["Label For Mp Regeneration rate"],
+            lbParams["Label For Tp Regeneration rate"],
+        ];
+
+        $dataSystem.terms.sparams = [
+            lbParams["Label For Target rate"],
+            lbParams["Label For Guard effect rate"],
+            lbParams["Label For Recovery effect rate"],
+            lbParams["Label For Pharmacology"],
+            lbParams["Label For Mp Cost rate"],
+            lbParams["Label For Tp Charge rate"],
+            lbParams["Label For Physical Damage rate"],
+            lbParams["Label For Magical Damage rate"],
+            lbParams["Label For Floor Damage rate"],
+            lbParams["Label For Experience rate"],
+        ];
     }
 }
 
@@ -498,6 +702,28 @@ Game_Actor.prototype.paramPlus = function(paramId) {
 
     return value;
 };
+
+//Alter game actor to get trait objects from trait type licenses
+Gimmer_Core.LicenseBoard._Game_Actor_prototype_traitObjects = Game_Actor.prototype.traitObjects;
+Game_Actor.prototype.traitObjects = function(){
+    let traitObjects = Gimmer_Core.LicenseBoard._Game_Actor_prototype_traitObjects.call(this);
+    //let traitLicenses = {'traits':[{code:23,dataId:0,value: 0.5}]};
+    let traitLicenses = {'traits':[]};
+    for(var i = 0; i < this._licenses.length; i++){
+        var license = $dataLicenseBoard[this.getBoardName()][this._licenses[i]];
+        if(license.type === 'sparam'){
+            traitLicenses.traits.push({code:Game_BattlerBase.TRAIT_SPARAM,dataId: license.target,value: license.value});
+        }
+        else if(license.type === 'xparam'){
+            traitLicenses.traits.push({code:Game_BattlerBase.TRAIT_XPARAM,dataId: license.target,value: license.value});
+        }
+    }
+
+    if(traitLicenses.traits.length > 0){
+        traitObjects = traitObjects.concat(traitLicenses);
+    }
+    return traitObjects;
+}
 
 Game_Actor.prototype.getBoardName = function(){
     return this.currentClass().meta.BoardName;
@@ -1215,6 +1441,16 @@ Scene_Boot.loadSystemImages = function(){
     ImageManager.reserveSystem('LicenseIconSet');
 }
 
+
+//Extend Text Manager for Xparam and Sparam
+TextManager.sparam = function(paramId){
+    return $dataSystem.terms.sparams[paramId] || '';
+}
+
+TextManager.xparam = function(paramId){
+    return $dataSystem.terms.xparams[paramId] || '';
+}
+
 //Helper class for a BoardLicense
 class BoardLicense {
     constructor(license) {
@@ -1235,35 +1471,24 @@ class BoardLicense {
         let textArray = [];
         let text = "#ACTOR# ";
         switch(this.type){
+            case 'sparam':
+                text += Gimmer_Core.LicenseBoard.AttributeGainedWord;
+                textArray.push(text);
+                text = TextManager.sparam(this.target);
+                text = "+"+(parseFloat(this.value) * 100).toString()+"% "+text;
+                textArray.push(text);
+                break;
+            case 'xparam':
+                text += Gimmer_Core.LicenseBoard.AttributeGainedWord;
+                textArray.push(text);
+                text = TextManager.xparam(this.target);
+                text = "+"+(parseFloat(this.value) * 100).toString()+"% "+text;
+                textArray.push(text);
+                break;
             case 'attribute':
                 text += Gimmer_Core.LicenseBoard.AttributeGainedWord;//"gained";
                 textArray.push(text);
-                switch(this.target){
-                    case Gimmer_Core.LicenseBoard.MHP = 0:
-                        text = "HP";
-                        break;
-                    case Gimmer_Core.LicenseBoard.MMP = 1:
-                        text = "MP";
-                        break;
-                    case Gimmer_Core.LicenseBoard.ATK = 2:
-                        text = "ATK";
-                        break;
-                    case Gimmer_Core.LicenseBoard.DEF = 3:
-                        text = "DEF";
-                        break;
-                    case Gimmer_Core.LicenseBoard.MAT = 4:
-                        text = "MAT";
-                        break;
-                    case Gimmer_Core.LicenseBoard.MDF = 5:
-                        text = "MDF";
-                        break;
-                    case Gimmer_Core.LicenseBoard.AGI = 6:
-                        text = "AGI";
-                        break;
-                    case Gimmer_Core.LicenseBoard.LUK = 7:
-                        text = "LUK";
-                        break;
-                }
+                text = TextManager.param(this.target);
                 text = "+"+this.value+" "+text;
                 textArray.push(text);
                 break;

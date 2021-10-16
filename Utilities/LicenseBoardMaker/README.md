@@ -36,5 +36,7 @@
 12. Drag the Map000x.json file from the project's data folder onto the "Drag Here" square.
 13. Save the Licenses.json file it creates in the data folder of your project
 
+####Note: Currently this tool does not create xparam and sparam nodes. You have to make those yourself until I get the chance to add new icons.
+
 ##Credits:
 [Codapill](codapill.com) for all graphical assets provided!  
