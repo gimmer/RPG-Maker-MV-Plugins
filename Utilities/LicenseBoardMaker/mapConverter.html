@@ -97,7 +97,27 @@
         '1,1': {cost: 0, description: "", type:"equip", target: "armor", value: "", iconIndex:41, iconIndexInactive: 25, x: -1, y: -1, iconIndexBackground: -1},
         '2,1': {cost: 0, description: "", type:"skill", target: "special", value: "", iconIndex:43, iconIndexInactive: 27, x: -1, y: -1, iconIndexBackground: -1},
         '3,1': {cost: 0, description: "", type:"skill", target: "magic", value: "", iconIndex:42, iconIndexInactive: 26, x: -1, y: -1, iconIndexBackground: -1},
-        '4,1': {cost: 0, description: "", type:"nope", target: "", value: "", iconIndex:2, iconIndexInactive: 2, x: -1, y: -1, iconIndexBackground: -1}
+        '4,1': {cost: 0, description: "", type:"nope", target: "", value: "", iconIndex:2, iconIndexInactive: 2, x: -1, y: -1, iconIndexBackground: -1},
+        '0,2': {cost: 0, description: "HIT", type:"xparam", target: 0, value: "", iconIndex:64, iconIndexInactive: 48, x: -1, y: -1, iconIndexBackground: -1},
+        '1,2': {cost: 0, description: "EVA", type:"xparam", target: 1, value: "", iconIndex:65, iconIndexInactive: 49, x: -1, y: -1, iconIndexBackground: -1},
+        '2,2': {cost: 0, description: "CRI", type:"xparam", target: 2, value: "", iconIndex:66, iconIndexInactive: 50, x: -1, y: -1, iconIndexBackground: -1},
+        '3,2': {cost: 0, description: "CEV", type:"xparam", target: 3, value: "", iconIndex:67, iconIndexInactive: 51, x: -1, y: -1, iconIndexBackground: -1},
+        '4,2': {cost: 0, description: "MEV", type:"xparam", target: 4, value: "", iconIndex:68, iconIndexInactive: 52, x: -1, y: -1, iconIndexBackground: -1},
+        '5,2': {cost: 0, description: "MRF", type:"xparam", target: 5, value: "", iconIndex:69, iconIndexInactive: 53, x: -1, y: -1, iconIndexBackground: -1},
+        '6,2': {cost: 0, description: "CNT", type:"xparam", target: 6, value: "", iconIndex:70, iconIndexInactive: 54, x: -1, y: -1, iconIndexBackground: -1},
+        '7,2': {cost: 0, description: "HRG", type:"xparam", target: 7, value: "", iconIndex:71, iconIndexInactive: 55, x: -1, y: -1, iconIndexBackground: -1},
+        '0,3': {cost: 0, description: "MRG", type:"xparam", target: 8, value: "", iconIndex:72, iconIndexInactive: 56, x: -1, y: -1, iconIndexBackground: -1},
+        '1,3': {cost: 0, description: "TRG", type:"xparam", target: 9, value: "", iconIndex:73, iconIndexInactive: 57, x: -1, y: -1, iconIndexBackground: -1},
+        '0,4': {cost: 0, description: "HIT", type:"sparam", target: 0, value: "", iconIndex:96, iconIndexInactive: 80, x: -1, y: -1, iconIndexBackground: -1},
+        '1,4': {cost: 0, description: "EVA", type:"sparam", target: 1, value: "", iconIndex:97, iconIndexInactive: 81, x: -1, y: -1, iconIndexBackground: -1},
+        '2,4': {cost: 0, description: "CRI", type:"sparam", target: 2, value: "", iconIndex:98, iconIndexInactive: 82, x: -1, y: -1, iconIndexBackground: -1},
+        '3,4': {cost: 0, description: "CEV", type:"sparam", target: 3, value: "", iconIndex:99, iconIndexInactive: 83, x: -1, y: -1, iconIndexBackground: -1},
+        '4,4': {cost: 0, description: "MEV", type:"sparam", target: 4, value: "", iconIndex:100, iconIndexInactive: 84, x: -1, y: -1, iconIndexBackground: -1},
+        '5,4': {cost: 0, description: "MRF", type:"sparam", target: 5, value: "", iconIndex:101, iconIndexInactive: 85, x: -1, y: -1, iconIndexBackground: -1},
+        '6,4': {cost: 0, description: "CNT", type:"sparam", target: 6, value: "", iconIndex:102, iconIndexInactive: 86, x: -1, y: -1, iconIndexBackground: -1},
+        '7,4': {cost: 0, description: "HRG", type:"sparam", target: 7, value: "", iconIndex:103, iconIndexInactive: 87, x: -1, y: -1, iconIndexBackground: -1},
+        '0,5': {cost: 0, description: "MRG", type:"sparam", target: 8, value: "", iconIndex:104, iconIndexInactive: 88, x: -1, y: -1, iconIndexBackground: -1},
+        '1,5': {cost: 0, description: "TRG", type:"sparam", target: 9, value: "", iconIndex:105, iconIndexInactive: 89, x: -1, y: -1, iconIndexBackground: -1},
     }
 
     function translateMapDataToLicenses(mapData){
@@ -141,10 +161,19 @@
         baseLicense.x = x;
         baseLicense.y = y;
         let metadata = getMetaDataFromEvents(events, baseLicense.x, baseLicense.y);
+        let oldDescription = baseLicense.description
         switch(baseLicense.type){
+            case 'xparam':
+            case 'sparam':
+                baseLicense.value = (parseInt(regionId) / 100).toFixed(2);
+                baseLicense.description = "Gain +"+baseLicense.value+" "+oldDescription;
+                if(oldDescription.toLowerCase() in costEquations){
+                    let v = baseLicense.value;
+                    baseLicense.cost = Math.floor(eval(costEquations[oldDescription.toLowerCase()]));
+                }
+                break;
             case 'attribute':
                 baseLicense.value = parseInt(regionId);
-                let oldDescription = baseLicense.description
                 baseLicense.description = "Gain +"+baseLicense.value+" "+oldDescription;
                 if(oldDescription.toLowerCase() in costEquations){
                     let v = baseLicense.value;
@@ -174,6 +203,9 @@
 
         if(baseLicense.type === 'skill'){
             baseLicense.value = baseLicense.value.toString();
+        }
+        else if(baseLicense.type === 'xparam' || baseLicense.type === 'sparam'){
+            baseLicense.value = parseFloat(baseLicense.value);
         }
         else{
             baseLicense.value = parseInt(baseLicense.value);
