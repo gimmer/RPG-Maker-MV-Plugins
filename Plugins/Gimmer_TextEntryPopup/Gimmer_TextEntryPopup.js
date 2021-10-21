@@ -107,7 +107,7 @@ Gimmer_Core['TextEntryPopup'] = {'loaded':true};
  *
  * Run the plugin command ShowPopup to show the window
  * Syntax:
- * ShowPopup desiredString maxLengthNumber placeholdertext description text
+ * ShowPopup desiredString maxLengthNumber placeholdertext descriptionText
  *
  * Run the plugin command HidePopup to hide the window
  *
