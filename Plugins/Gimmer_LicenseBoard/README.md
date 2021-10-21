@@ -16,6 +16,10 @@ You will require the following items:
 * data/Licenses.json: a json list of all the licenses. An example file is provided.
 
 ##### Setup Required
+Set the note tag for the class of your heroes: &lt;BoardName:default> (change default to whatever you name your own board)
+
+You can have more than one board in the database, and set them individually on each class. 
+
 Characters will start at license point 0,0 automatically at the beginning of a new game.
 
 To change this, add in &lt;StartingLicensePosition:x,y> in a character's classes note area.
@@ -23,6 +27,8 @@ To change this, add in &lt;StartingLicensePosition:x,y> in a character's classes
 A character will also start with no licenses.
 
 To change this, add in &lt;StartingLicenses:x,y|x2,y2|x3,y3> to the classes note section.
+
+
 **Note: a character can see every node around the ones they own, so if you start them with random nodes around the board it may be a bit disjointed**
 
 Classes level 1 stats and skill lists are still used as the base stats of a character, as are any existing "Can equip" settings for a class.
@@ -88,3 +94,4 @@ More Gimmer_ plugins at: https://github.com/gimmer/RPG-Maker-MV-Plugins
 
 ##Credits:
 [Codapill](codapill.com) for all graphical assets provided!
+[xiamumomo]() for the updated regulra and large iconset to support for xparams and sparams!

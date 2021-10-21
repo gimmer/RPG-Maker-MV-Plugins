@@ -429,16 +429,16 @@ DataManager.onLoad = function(object){
         ];
 
         $dataSystem.terms.sparams = [
-            lbParams["Label For Target rate"],
+            lbParams["Label For Target Rate"],
             lbParams["Label For Guard effect rate"],
             lbParams["Label For Recovery effect rate"],
             lbParams["Label For Pharmacology"],
-            lbParams["Label For Mp Cost rate"],
-            lbParams["Label For Tp Charge rate"],
-            lbParams["Label For Physical Damage rate"],
-            lbParams["Label For Magical Damage rate"],
-            lbParams["Label For Floor Damage rate"],
-            lbParams["Label For Experience rate"],
+            lbParams["Label For Mp Cost Rate"],
+            lbParams["Label For Tp Charge Rate"],
+            lbParams["Label For Physical Damage Rate"],
+            lbParams["Label For Magical Damage Rate"],
+            lbParams["Label For Floor Damage Rate"],
+            lbParams["Label For Experience Rate"],
         ];
     }
 }
@@ -1261,7 +1261,7 @@ Window_LicenseSuccess.prototype.initialize = function(actor){
 Window_LicenseSuccess.prototype.refresh = function(){
     this.contents.clear();
     if(this._item){
-        this.drawIcon(this._item.iconIndex - 32, this.width / 2 - (this._iconWidth / 2), 10);
+        this.drawIcon(this._item.iconIndex - 32, this.width / 2 - (this._iconWidth / 2), 10, this.getSuccessIconRow());
         let textX = 0;
         let text = this._item.claimText(this._actor);
         let textY = this.height - this.fittingHeight(text.length);
@@ -1272,13 +1272,26 @@ Window_LicenseSuccess.prototype.refresh = function(){
     }
 }
 
+Window_LicenseSuccess.prototype.getSuccessIconRow = function(){
+    let row = 0;
+    if(this._item){
+        if(this._item.type === 'xparam'){
+            row = 1;
+        }
+        else if(this._item.type === 'sparam'){
+            row = 2;
+        }
+    }
+    return row;
+}
+
 //Draw the success icon
-Window_LicenseSuccess.prototype.drawIcon = function(iconIndex,x,y){
+Window_LicenseSuccess.prototype.drawIcon = function(iconIndex,x,y, row){
     var bitmap = ImageManager.loadSystem('LargeLicenseIconSet');
     var pw = this._iconWidth;
     var ph = this._iconHeight;
     var sx = iconIndex % 16 * pw;
-    var sy = 0;
+    var sy = row * ph;
     this.contents.blt(bitmap, sx, sy, pw, ph, x, y);
 }
 
