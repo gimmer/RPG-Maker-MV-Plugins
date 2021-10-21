@@ -6,7 +6,7 @@
 2. Remove all tile sets
 3. Add a new tile set, with everything blank except for A5, which uses the provided License_Tileset.png
 4. Create a new map X by Y to match the square of your license board
-5. Paint out your tiles however you like, baring in mind that the black tiles cannot be passed through by the cursor
+5. Paint out your tiles however you like, baring in mind that the black tiles cannot be passed through by the cursor. Everything either needs a stat of a black square.
 6. Add regionIds to the tiles to have the following effects:
     * On attributes, this is the amount of the attribute they will get
     * On weapons / armor tiles, this is the corresponding weaponId or armorId they will learn to use
