@@ -8,12 +8,21 @@ Gimmer_Core['TextEntryPopup'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Show a text popup that gets in the way but doesn't stop the map
+ * @plugindesc v1.1 - Show a text popup that you can type in.
  * @author Gimmer_
  * @help
  * ====================
  * Gimmer_TextEntryPopup
  * ====================
+ *
+ * Run the plugin command ShowPopup to show the window
+ * Syntax:
+ * ShowPopup maxLengthNumber placeholdertext descriptionText
+ *
+ * Run the plugin command HidePopup to hide the window
+ *
+ * Use the script call "Gimmer_Core.TextEntryPopup.lastEntry()" in a condition branch to get the text that was most recent entered.
+ * The text clears if the window opens again
  *
  * Terms of Use:
  * =======================================================================
@@ -105,11 +114,14 @@ Gimmer_Core['TextEntryPopup'] = {'loaded':true};
  * @type String
  * @desc Default value for all inputs. Just leave blank if you don't want it
  *
- * Run the plugin command ShowPopup to show the window
- * Syntax:
- * ShowPopup desiredString maxLengthNumber placeholdertext descriptionText
+ * @param ---Misc Parameters---
  *
- * Run the plugin command HidePopup to hide the window
+ * @param All Lower Case
+ * @parent ---Misc Parameters---
+ * @type Boolean
+ * @desc Treat all entries as lower case for the purposes of later conditional checks?
+ * @default True
+ * Default True
  *
  */
 
@@ -120,7 +132,6 @@ Gimmer_Core.TextEntryPopup.windowWidth = tepp['Window Width'].toString();
 Gimmer_Core.TextEntryPopup.windowHeight = tepp['Window Height'].toString();
 Gimmer_Core.TextEntryPopup.windowColor = tepp['Window Background Color'];
 Gimmer_Core.TextEntryPopup.windowOpacity = Number(tepp['Window Opacity']);
-dd(Gimmer_Core.TextEntryPopup);
 
 //Defaults:
 Gimmer_Core.TextEntryPopup.DefaultMaxLength = Number(tepp['Default Max Length']);
@@ -134,21 +145,35 @@ Gimmer_Core.TextEntryPopup.DefaultStartingText = tepp['Default Placeholder Text'
 Gimmer_Core.TextEntryPopup.TextY = tepp['Y Offset of Entry Line'].toString();
 Gimmer_Core.TextEntryPopup.DescriptionY = tepp['Y Offset of Description'].toString();
 
+//Misc
+Gimmer_Core.TextEntryPopup.lowerCaseInput = (tepp['All Lower Case'] === "true");
+
 
 Gimmer_Core.TextEntryPopup.isWindowOpen = function (){
     return ('_scene' in SceneManager && SceneManager._scene && '_textEntryPopup' in SceneManager._scene && SceneManager._scene._textEntryPopup.visible);
 }
 
+Gimmer_Core.TextEntryPopup.lastEntry = function(){
+    let text = "";
+    if('_scene' in SceneManager && SceneManager._scene && '_enteredText' in SceneManager._scene){
+        text = SceneManager._scene._enteredText;
+        if(Gimmer_Core.TextEntryPopup.lowerCaseInput){
+            text = text.toLowerCase();
+        }
+    }
+    return text;
+}
+
 Gimmer_Core.pluginCommands['SHOWPOPUP'] = function (params){
     if(SceneManager._scene.constructor === Scene_Map){
+        $gameMap._interpreter.setWaitMode("textEntry");
         if(!params){
             params = [];
         }
-        SceneManager._scene._textEntryPopup.setInitial(params[1],params[2],params[3])
+        SceneManager._scene._textEntryPopup.setInitial(params[0],params[1],params[2])
         SceneManager._scene._showPopup = true;
-        SceneManager._scene._requiredText = params[0];
+        SceneManager._scene._enteredText = "";
     }
-
 }
 
 Gimmer_Core.pluginCommands['HIDEPOPUP'] = function (){
@@ -171,13 +196,22 @@ Scene_Map.prototype.createAllWindows = function(){
     this.createPopupWindow();
     this._showPopup = false;
     this._hidePopup = false;
-    this._requiredText = "";
+    this._enteredText = "";
 }
 
-Scene_Map.prototype.getRequiredText = function(){
-    return this._textEntryPopup.convertEscapeCharacters(this._requiredText).toString();
+Gimmer_Core.TextEntryPopup._Game_Interpreter_prototype_updateWaitMode = Game_Interpreter.prototype.updateWaitMode;
+Game_Interpreter.prototype.updateWaitMode = function(){
+    let waiting = false;
+    if(this._waitMode === "textEntry"){
+        waiting = Gimmer_Core.TextEntryPopup.isWindowOpen() || SceneManager._scene._showPopup;
+    }
+    if(!waiting){
+        return Gimmer_Core.TextEntryPopup._Game_Interpreter_prototype_updateWaitMode.call(this);
+    }
+    else{
+        return waiting;
+    }
 }
-
 
 Scene_Map.prototype.createPopupWindow = function(){
     this._textEntryPopup = new Window_TextInput(
@@ -192,13 +226,9 @@ Scene_Map.prototype.createPopupWindow = function(){
 }
 
 Scene_Map.prototype.onInputOk = function(text){
-    if(text.toString() === this.getRequiredText()){
-        SoundManager.playOk();
-        this._hidePopup = true;
-    }
-    else{
-        SoundManager.playBuzzer();
-    }
+    this._enteredText = text;
+    SoundManager.playOk();
+    this._hidePopup = true;
 }
 
 Gimmer_Core.TextEntryPopup._Scene_Map_prototype_update = Scene_Map.prototype.update;
