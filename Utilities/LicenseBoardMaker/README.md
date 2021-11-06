@@ -17,7 +17,7 @@
     * \<value:1,2,3> to be the skills learned. Can be a single value as well
 8. (optional) On any other node, you can a blank event with the description, cost, or value tags (as seen in step 7) in order to define those statically, otherwise defaults will be calculated / set.
 9. Add to the map the following notes that will act as equations used to calculate license costs based on type and value
-    * \<hp: ...> : This would mean .
+    * \<hp: ...>
     * \<mp: ...> 
     * \<atk: ...>
     * \<def: ...>
@@ -31,6 +31,8 @@
         * EG: \<hp:v/10> would mean "HP nodes cost the value they give divided by 10 points to buy"
     * Or can be static:
         * EG: \<weapon:10> would mean all weapon nodes cost 10 points.
+    * Or can include the function "numLicenses()" to resolve the number of license of this type the actor already has
+      * EG: \<hp:1*numLicenses> would cost 0 LP for the first license, 1 for the second, 2 for the third, 4 for the forth, etc. 
 10. Save the map
 11. Double click on "mapConverter.html" and open it in your web browser.
 12. Drag the Map000x.json file from the project's data folder onto the "Drag Here" square.

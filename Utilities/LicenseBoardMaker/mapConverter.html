@@ -192,7 +192,7 @@
 
         //override with event data
         if('cost' in metadata){
-            baseLicense.cost = parseInt(metadata.cost);
+            baseLicense.cost = metadata.cost.toString();
         }
         if('description' in metadata && metadata.description.length > 0){
             baseLicense.description = metadata.description;
@@ -210,8 +210,6 @@
         else{
             baseLicense.value = parseInt(baseLicense.value);
         }
-
-        baseLicense.cost = parseInt(baseLicense.cost);
 
         return baseLicense;
     }

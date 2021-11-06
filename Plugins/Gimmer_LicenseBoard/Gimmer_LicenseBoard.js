@@ -44,6 +44,9 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Version 1.4
  * - Support for xparam and sparam type nodes in the license board.
  * - Text fixes to use TextManager for success text
+ * Version 1.5
+ * - Support for "cost" in licenses being equations, rather than only ints
+ * - Plugin parameter for already claimed licenses.
  *
  * Terms of Use:
  * =======================================================================
@@ -59,6 +62,13 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * @desc What do you want to call the board menu option?
  * Default: License Board
  * @default License Board
+ *
+ * @param Already Claimed Text
+ * @parent ---Parameters---
+ * @type String
+ * @desc What to show when you've already claimed a license in the help window?
+ * Default: Already claimed!
+ * @default Already claimed!
  *
  * @param Point Label
  * @parent ---Parameters---
@@ -326,6 +336,7 @@ Gimmer_Core.LicenseBoard.SkillGainedWord =  lbParams["Skill Gained Word"];
 Gimmer_Core.LicenseBoard.EquipLearnedWord = lbParams["Equip Learned Word"];
 Gimmer_Core.LicenseBoard.WeaponUsingPhase = lbParams["Weapon Using Phrase"];
 Gimmer_Core.LicenseBoard.ArmorUsingPhase = lbParams["Armor Using Phrase"];
+Gimmer_Core.LicenseBoard.AlreadyClaimedText = lbParams["Already Claimed Text"];
 
 //Tracking Variables
 Gimmer_Core.LicenseBoard.maxX = 0;
@@ -616,7 +627,7 @@ Game_Actor.prototype.initLicenses = function(){
         startingLicenses.forEach(function(coords){
             let index = $dataLicenseMap[board][coords];
             let license = $dataLicenseBoard[board][index];
-            this.gainExp(license.cost);
+            this.gainExp(license.getCost(this));
             this.claimLicense(index,license);
         }, this);
     }
@@ -630,7 +641,7 @@ Game_Actor.prototype.claimLicense = function(index, license){
     if(this._licenses.indexOf(index) === -1 && license.type !== 'nope'){
         //Give them the license
         this._licenses.push(index);
-        this.deductExp(license.cost);
+        this.deductExp(license.getCost(this));
         //Some attributes need immediate application
         if(license.type === 'attribute'){
             switch(license.target){
@@ -707,7 +718,6 @@ Game_Actor.prototype.paramPlus = function(paramId) {
 Gimmer_Core.LicenseBoard._Game_Actor_prototype_traitObjects = Game_Actor.prototype.traitObjects;
 Game_Actor.prototype.traitObjects = function(){
     let traitObjects = Gimmer_Core.LicenseBoard._Game_Actor_prototype_traitObjects.call(this);
-    //let traitLicenses = {'traits':[{code:23,dataId:0,value: 0.5}]};
     let traitLicenses = {'traits':[]};
     for(var i = 0; i < this._licenses.length; i++){
         var license = $dataLicenseBoard[this.getBoardName()][this._licenses[i]];
@@ -736,7 +746,7 @@ Game_Actor.prototype.hasLicense = function(licenseId){
 
 //Helper function to see if you can afford it
 Game_Actor.prototype.canAffordLicense = function(license){
-    return (this.getExp() >= license.cost);
+    return (this.getExp() >= license.getCost(this));
 }
 
 //Prevent leveling up by making sure the nextLevelExp is unattainable
@@ -801,7 +811,7 @@ Window_LicenseBoard.prototype.initialize = function(x, y, width, height, actor) 
 
 //Can a license be claimed? Do they not have it, and have enough points
 Window_LicenseBoard.prototype.isCurrentItemEnabled = function(){
-    return (this._actor._licenses.indexOf(this.index()) === -1 && this._actor.getExp() >= this.item().cost);
+    return (this._actor._licenses.indexOf(this.index()) === -1 && this._actor.getExp() >= this.item().getCost(this._actor));
 }
 
 //What's the max items of the license board
@@ -1402,12 +1412,19 @@ Window_LicenseHelp.prototype.refresh = function() {
         let lpString = "Current "+lpShort+": "+(this._actor.getExp().toString() || "0");
         let lpWidth = this.textWidth(lpString)
         this.drawText(this._license.description, this.textPadding(), 0, this.width - lpWidth);
+        let licenseId = $dataLicenseMap[this._actor.getBoardName()][Gimmer_Core.LicenseBoard.getLicenseCoordinateString(this._license)];
         if(this._actor){
-            this.drawText("Current "+lpShort+": "+(this._actor.getExp().toString() || "0"),0,this.lineHeight(),this.width - lpWidth,'right');
-            if(!this._actor.canAffordLicense(this._license)) {
-                this.contents.textColor = '#FF0000';
+            if(this._actor.hasLicense(licenseId)){
+                this.drawText(Gimmer_Core.LicenseBoard.AlreadyClaimedText, 0, this.lineHeight(), this.width);
             }
-            this.drawText("LP: "+this._license.cost ,this.textPadding(), this.lineHeight());
+            else{
+                this.drawText("Current "+lpShort+": "+(this._actor.getExp().toString() || "0"),0,this.lineHeight(),this.width - lpWidth,'right');
+                if(!this._actor.canAffordLicense(this._license)) {
+                    this.contents.textColor = '#FF0000';
+                }
+                this.drawText("LP: "+this._license.getCost(this._actor) ,this.textPadding(), this.lineHeight());
+            }
+
         }
         this.resetTextColor();
     }
@@ -1465,89 +1482,111 @@ TextManager.xparam = function(paramId){
 }
 
 //Helper class for a BoardLicense
-class BoardLicense {
-    constructor(license) {
-        this.type = license.type;
-        this.description = license.description;
-        this.target = license.target;
-        this.value = license.value;
-        this.cost = license.cost;
-        this.iconIndex = license.iconIndex;
-        this.iconIndexInactive = license.iconIndexInactive;
-        this.x = license.x;
-        this.y = license.y;
-        this.iconIndexBackground = license.iconIndexBackground;
-    }
+function BoardLicense(license) {
+    this.type = license.type;
+    this.description = license.description;
+    this.target = license.target;
+    this.value = license.value;
+    this.costEquation = license.cost.toString();
+    this.iconIndex = license.iconIndex;
+    this.iconIndexInactive = license.iconIndexInactive;
+    this.x = license.x;
+    this.y = license.y;
+    this.iconIndexBackground = license.iconIndexBackground;
+}
 
-    //What's the description for a given node?
-    targetText(){
-        let textArray = [];
-        let text = "#ACTOR# ";
-        switch(this.type){
-            case 'sparam':
-                text += Gimmer_Core.LicenseBoard.AttributeGainedWord;
-                textArray.push(text);
-                text = TextManager.sparam(this.target);
-                text = "+"+(parseFloat(this.value) * 100).toString()+"% "+text;
-                textArray.push(text);
-                break;
-            case 'xparam':
-                text += Gimmer_Core.LicenseBoard.AttributeGainedWord;
-                textArray.push(text);
-                text = TextManager.xparam(this.target);
-                text = "+"+(parseFloat(this.value) * 100).toString()+"% "+text;
-                textArray.push(text);
-                break;
-            case 'attribute':
-                text += Gimmer_Core.LicenseBoard.AttributeGainedWord;//"gained";
-                textArray.push(text);
-                text = TextManager.param(this.target);
-                text = "+"+this.value+" "+text;
-                textArray.push(text);
-                break;
-            case 'skill':
-                text += Gimmer_Core.LicenseBoard.SkillGainedWord;// "gained";
-                textArray.push(text);
-                if(this.value.toString().contains(",")){
-                    text = this.description;
-                }
-                else{
-                    let skill = $dataSkills[parseInt(this.value)];
-                    text = skill.name;
-                }
-                textArray.push(text);
-                break;
-            case 'equip':
-                text += Gimmer_Core.LicenseBoard.EquipLearnedWord;//"learned";
-                textArray.push(text);
-                let key = false;
-                if(this.value.toString().contains(",")){
-                    text = " "+this.description;
-                }
-                else{
-                    switch(this.target){
-                        case 'weapon':
-                            text = " "+Gimmer_Core.LicenseBoard.WeaponUsingPhase+" ";//" to wield ";
-                            key = "weaponTypes";
-                            break;
-                        case 'armor':
-                            text = " "+Gimmer_Core.LicenseBoard.ArmorUsingPhase+" ";//" to wear ";
-                            key = "armorTypes";
-                            break;
-                    }
-                    text += $dataSystem[key][parseInt(this.value)];
-                }
-                textArray.push(text);
-                break;
+BoardLicense.prototype.getCost = function(actor){
+    let v = this.value; //this is used by the eval below
+    let numLicenses = this.getNumLicenses(this.type, this.target, actor);
+    let costEquation = this.costEquation;
+    costEquation = costEquation.replace("numLicenses()",numLicenses);
+    return Number(eval(costEquation));
+}
+
+BoardLicense.prototype.getNumLicenses = function(type, target, actor){
+    let count = 0;
+    if(actor) {
+        for(var i = 0; i < actor._licenses.length; i++){
+            var license = $dataLicenseBoard[actor.getBoardName()][actor._licenses[i]];
+            if(license.type === type && license.target === target){
+                count += 1
+            }
         }
-        return textArray;
     }
+    else{
+        dd("Actor not set when asking about type "+type+" and target "+target);
+    }
+    return count;
+}
 
-    //get the text for an actor claiming a specific license
-    claimText(actor){
-        let textArray = this.targetText();
-        textArray[0] = textArray[0].replace("#ACTOR#",actor.name());
-        textArray[1] += "!";
-        return textArray;
+//What's the description for a given node?
+BoardLicense.prototype.targetText = function(){
+    let textArray = [];
+    let text = "#ACTOR# ";
+    switch(this.type){
+        case 'sparam':
+            text += Gimmer_Core.LicenseBoard.AttributeGainedWord;
+            textArray.push(text);
+            text = TextManager.sparam(this.target);
+            text = "+"+(parseFloat(this.value) * 100).toString()+"% "+text;
+            textArray.push(text);
+            break;
+        case 'xparam':
+            text += Gimmer_Core.LicenseBoard.AttributeGainedWord;
+            textArray.push(text);
+            text = TextManager.xparam(this.target);
+            text = "+"+(parseFloat(this.value) * 100).toString()+"% "+text;
+            textArray.push(text);
+            break;
+        case 'attribute':
+            text += Gimmer_Core.LicenseBoard.AttributeGainedWord;//"gained";
+            textArray.push(text);
+            text = TextManager.param(this.target);
+            text = "+"+this.value+" "+text;
+            textArray.push(text);
+            break;
+        case 'skill':
+            text += Gimmer_Core.LicenseBoard.SkillGainedWord;// "gained";
+            textArray.push(text);
+            if(this.value.toString().contains(",")){
+                text = this.description;
+            }
+            else{
+                let skill = $dataSkills[parseInt(this.value)];
+                text = skill.name;
+            }
+            textArray.push(text);
+            break;
+        case 'equip':
+            text += Gimmer_Core.LicenseBoard.EquipLearnedWord;//"learned";
+            textArray.push(text);
+            let key = false;
+            if(this.value.toString().contains(",")){
+                text = " "+this.description;
+            }
+            else{
+                switch(this.target){
+                    case 'weapon':
+                        text = " "+Gimmer_Core.LicenseBoard.WeaponUsingPhase+" ";//" to wield ";
+                        key = "weaponTypes";
+                        break;
+                    case 'armor':
+                        text = " "+Gimmer_Core.LicenseBoard.ArmorUsingPhase+" ";//" to wear ";
+                        key = "armorTypes";
+                        break;
+                }
+                text += $dataSystem[key][parseInt(this.value)];
+            }
+            textArray.push(text);
+            break;
     }
+    return textArray;
+}
+
+//get the text for an actor claiming a specific license
+BoardLicense.prototype.claimText = function(actor){
+    let textArray = this.targetText();
+    textArray[0] = textArray[0].replace("#ACTOR#",actor.name());
+    textArray[1] += "!";
+    return textArray;
 }

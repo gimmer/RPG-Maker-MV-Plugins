@@ -79,7 +79,7 @@ A license object has the following parameters:
     * For attributes: (int) the amount you will gain
     * For xparams and sparams: (float) the decimal you will gain. If you want to gain 1% of something, set the value to 0.01
     * For skills: (string) the skillId you will gain. If you want multiple, put them in a comma seperated list: "1,2,3"
-* cost: (int) How many points to cost?
+* cost: (string) what equation to calculate the cost of the license. Will be eval'd at claim time.
 * iconIndex: (int) What icon to show?
 * iconIndexInactive: (int) What icon to show when not yet claimed
 * x: (int) x position on the board.
