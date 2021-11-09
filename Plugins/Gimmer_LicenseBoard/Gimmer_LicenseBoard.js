@@ -3,7 +3,7 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {};
-Imported['Gimmer_LicenseBoard'] = '1.4';
+Imported['Gimmer_LicenseBoard'] = '1.5.1';
 
 Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
@@ -47,6 +47,8 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Version 1.5
  * - Support for "cost" in licenses being equations, rather than only ints
  * - Plugin parameter for already claimed licenses.
+ * Version 1.5.1
+ * - Support for numLicenses() and numLicensesOfType() in equations.
  *
  * Terms of Use:
  * =======================================================================
@@ -1497,13 +1499,15 @@ function BoardLicense(license) {
 
 BoardLicense.prototype.getCost = function(actor){
     let v = this.value; //this is used by the eval below
-    let numLicenses = this.getNumLicenses(this.type, this.target, actor);
+    let numLicensesOfType = this.getNumLicensesOfType(this.type, this.target, actor);
+    let numLicenses = actor._licenses.length
     let costEquation = this.costEquation;
+    costEquation = costEquation.replace("numLicensesOfType()",numLicensesOfType);
     costEquation = costEquation.replace("numLicenses()",numLicenses);
     return Number(eval(costEquation));
 }
 
-BoardLicense.prototype.getNumLicenses = function(type, target, actor){
+BoardLicense.prototype.getNumLicensesOfType = function(type, target, actor){
     let count = 0;
     if(actor) {
         for(var i = 0; i < actor._licenses.length; i++){

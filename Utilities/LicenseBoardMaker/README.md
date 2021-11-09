@@ -31,8 +31,10 @@
         * EG: \<hp:v/10> would mean "HP nodes cost the value they give divided by 10 points to buy"
     * Or can be static:
         * EG: \<weapon:10> would mean all weapon nodes cost 10 points.
-    * Or can include the function "numLicenses()" to resolve the number of license of this type the actor already has
-      * EG: \<hp:1*numLicenses> would cost 0 LP for the first license, 1 for the second, 2 for the third, 4 for the forth, etc. 
+    * Or can include the function "numLicenses()" to resolve the number of license the actor already has
+      * EG: \<hp:1*numLicenses()> would cost 0 LP for the first license, 1 for the second, 2 for the third, 4 for the forth, etc.
+    * Or can include the function "numLicensesOfType()" to resolve to the number of licenses the actor has of the same type
+      * EG: \<hp:1*numLicensesOfType()> would cost 0 LP for the first license of type HP, 1 for the second, 2 for the third, etc. Getting other licenses wouldn't change this equation.
 10. Save the map
 11. Double click on "mapConverter.html" and open it in your web browser.
 12. Drag the Map000x.json file from the project's data folder onto the "Drag Here" square.
