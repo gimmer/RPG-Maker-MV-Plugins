@@ -9,7 +9,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.4 - License Board to replace the exp leveling system with stats bought with licenses
+ * @plugindesc v1.5.1 - License Board to replace the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========

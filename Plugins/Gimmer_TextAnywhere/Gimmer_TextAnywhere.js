@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.7 - Display text anywhere on the screen
+ * @plugindesc v2.8 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -176,6 +176,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.5: Bug fix so faded out text doesn't flash back on the screen for a second
  * - Version 2.6: Added in AdvancedTypeTempText to support typing with fonts
  * - Version 2.7: Fixing in Type Temp Text to support text and font tags
+ * - Version 2.8: Added optional support for making a button held down to show the text layer
  *
  * Terms of Use:
  * =======================================================================
@@ -185,6 +186,40 @@ if(Gimmer_Core === undefined){
  *
  * @param ---Parameters---
  * @default
+ *
+ * @param Trigger Via Button
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc Do you want text to only show when a button is held down?
+ * Default: False
+ * @default False
+ *
+ * @param Trigger Button Type
+ * @parent Trigger Via Button
+ * @type Select
+ * @desc Do you want to trigger the text via mouse or keyboard?
+ * @option mouse
+ * @option keyboard
+ * Default keyboard
+ * @default keyboard
+ *
+ * @param Trigger Button Keyboard
+ * @parent Trigger Via Button
+ * @type Number
+ * @desc What keycode to trigger the UI? See https://keycode.info/
+ * @default 9
+ * Default 9 (tab)
+ *
+ * @param Trigger Button Mouse
+ * @parent Trigger Via Button
+ * @type Select
+ * @desc What mouse button (Right, Middle, or Left) to trigger the text?
+ * @option Right
+ * @option Middle
+ * @option Left
+ * Default Right
+ * @default Right
+ *
  *
  * @param Default Text List
  * @parent --Parameters--
@@ -285,7 +320,7 @@ if(Gimmer_Core === undefined){
 */
 
 Imported = Imported || {};
-Imported.Gimmer_TextAnywhere = '2.0'
+Imported.Gimmer_TextAnywhere = '2.8'
 
 Gimmer_Core['TextAnywhere'] = {'loaded':true};
 
@@ -296,6 +331,53 @@ Gimmer_Core.TextAnywhere.DefaultFontSize = Number(TAParams["Default Font Size"])
 Gimmer_Core.TextAnywhere.DefaultBold = (TAParams["Default Bold"] === "true");
 Gimmer_Core.TextAnywhere.DefaultOutline = (TAParams["Default Include Outline"] === "true");
 Gimmer_Core.TextAnywhere.DefaultOpacity = Number(TAParams['Default Opacity']);
+Gimmer_Core.TextAnywhere.TriggerByButton = (TAParams["Trigger Via Button"] === "true");
+if(Gimmer_Core.TextAnywhere.TriggerByButton){
+    Gimmer_Core.TextAnywhere.TriggerType = TAParams['Trigger Button Type'];
+    switch(Gimmer_Core.TextAnywhere.TriggerType.toLowerCase()){
+        case 'keyboard':
+            Input.keyMapper[Number(TAParams['Trigger Button Keyboard'])] = 'TATOGGLE';
+            break;
+        case 'mouse':
+            TouchInput._uiToggled = false;
+            const clickFunction = function(event) {
+                var x = Graphics.pageToCanvasX(event.pageX);
+                var y = Graphics.pageToCanvasY(event.pageY);
+                if (Graphics.isInsideCanvas(x, y)) {
+                    this._uiToggled = true;
+                }
+            };
+            let closeUIOnEventId;
+            dd(TAParams['Trigger Button Mouse']);
+            switch(TAParams['Trigger Button Mouse'].trim()){
+                case 'Right':
+                    closeUIOnEventId = 2;
+                    TouchInput._onRightButtonDown = clickFunction;
+                    break;
+                case 'Middle':
+                    closeUIOnEventId = 1;
+                    TouchInput._onMiddleButtonDown = clickFunction;
+                    break;
+                case 'Left':
+                    closeUIOnEventId = 0;
+                    Gimmer_Core.TextAnywhere._TouchInput_onLeftButtonDown = TouchInput._onLeftButtonDown;
+                    TouchInput._onLeftButtonDown = function(event){
+                        Gimmer_Core.TextAnywhere._TouchInput_onLeftButtonDown.call(this, event);
+                        clickFunction.call(this, event);
+                    };
+                    break;
+            }
+
+            Gimmer_Core.TextAnywhere._TouchInput_onMouseUp = TouchInput._onMouseUp;
+            TouchInput._onMouseUp = function(event){
+                Gimmer_Core.TextAnywhere._TouchInput_onMouseUp.call(this,event);
+                if(event.button === closeUIOnEventId){
+                    this._uiToggled = false;
+                }
+            }
+            break;
+    }
+}
 
 Gimmer_Core.TextAnywhere.SkipOutline = false;
 Gimmer_Core.TextAnywhere.SeedForId = new Date().getTime();
@@ -315,10 +397,27 @@ Gimmer_Core.TextAnywhere.InitializeTexts = function(){
     texts.forEach(function(text){
         text = JSON.parse(text);
         let textObj = new TAObject(text.id, text.x, text.y, text.color, text.fontsize, text.bold, text.defaultOpacity, text.text, (text.includeOutline === "true"));
+        textObj.alive = true;
         GlobalTextObj[textObj.id] = textObj;
     });
 
     Gimmer_Core.TextAnywhere.Texts = GlobalTextObj;
+}
+
+Gimmer_Core.TextAnywhere.showDisplayLayer = function(){
+    let display = false;
+    if(Gimmer_Core.TextAnywhere.TriggerByButton){
+        if(Gimmer_Core.TextAnywhere.TriggerType === "keyboard"){
+            display = (Input.isPressed('TATOGGLE') || Input.isLongPressed('TATOGGLE'))
+        }
+        else if(Gimmer_Core.TextAnywhere.TriggerType === "mouse"){
+            display = TouchInput._uiToggled;
+        }
+    }
+    else{
+        display = true;
+    }
+    return display;
 }
 
 Gimmer_Core.TextAnywhere.Scene_Map_prototype_createAllWindows = Scene_Map.prototype.createAllWindows;
@@ -341,25 +440,28 @@ Scene_Map.prototype.update = function(){
 
 Scene_Map.prototype.updateTextOverlay = function(){
     this._textOverLay.contents.clear();
-    Object.values(Gimmer_Core.TextAnywhere.Texts).forEach(function(text){
-        if(!text.alive){
-            return;
-        }
-        if(text.needsDelete){
-            delete Gimmer_Core.TextAnywhere.Texts[text.id];
-            return;
-        }
 
-        this.updateTextVisibility(text);
-        if(text.visible){
-            this.updateTextDuration(text);
-            this.updateTextFadeOut(text);
-            this.updateTextFadeIn(text);
-            let tempText = this._textOverLay.convertEscapeCharacters(text.text);
-            let textLength = this.updateTypingIn(text, tempText);
-            this.displayTextAnywhere(text,tempText, textLength);
-        }
-    }, this)
+    if(Gimmer_Core.TextAnywhere.showDisplayLayer()){
+        Object.values(Gimmer_Core.TextAnywhere.Texts).forEach(function(text){
+            if(!text.alive){
+                return;
+            }
+            if(text.needsDelete){
+                delete Gimmer_Core.TextAnywhere.Texts[text.id];
+                return;
+            }
+
+            this.updateTextVisibility(text);
+            if(text.visible){
+                this.updateTextDuration(text);
+                this.updateTextFadeOut(text);
+                this.updateTextFadeIn(text);
+                let tempText = this._textOverLay.convertEscapeCharacters(text.text);
+                let textLength = this.updateTypingIn(text, tempText);
+                this.displayTextAnywhere(text,tempText, textLength);
+            }
+        }, this)
+    }
 }
 
 Scene_Map.prototype.updateTextDuration = function(text){
@@ -549,11 +651,13 @@ Gimmer_Core.TextAnywhere.quickAddText = function(id,x,y,text){
     let opacity = this.DefaultOpacity;
     let outline = this.DefaultOutline;
     Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text, outline);
+    Gimmer_Core.TextAnywhere.Texts[id].alive = true;
     return Gimmer_Core.TextAnywhere.Texts[id];
 }
 
 Gimmer_Core.TextAnywhere.advancedAddText = function(id,x,y,color,bold,fontsize,opacity, text, outline){
     Gimmer_Core.TextAnywhere.Texts[id] = new TAObject(id,x,y,color, fontsize, bold, opacity,text, outline);
+    Gimmer_Core.TextAnywhere.Texts[id].alive = true;
     return Gimmer_Core.TextAnywhere.Texts[id];
 }
 

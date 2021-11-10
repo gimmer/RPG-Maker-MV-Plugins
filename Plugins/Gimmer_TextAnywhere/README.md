@@ -13,6 +13,8 @@ In the plugin menu, go into the texts variable, and use the built in structure t
 
 Text will show continuously on the map screen.
 
+Optionally, you can bind keyboard or mouse buttons to make the UI appear
+
 Want to hide text?
 
 Plugin Command HideTextLayer

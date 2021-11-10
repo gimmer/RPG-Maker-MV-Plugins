@@ -17,7 +17,7 @@ All plugins created by Gimmer_
 | [Gimmer_ControllerType][Gimmer_ControllerType]     | Display buttons matching the controller the player's using. | [1.1][Gimmer_ControllerType_release]     |
 | [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions] | Allows you to animate text to match emotions.           | [1.1][Gimmer_ExpressingEmotions_release] |
 | [Gimmer_GameTimer][Gimmer_GameTimer]               | Use the system clock to time how long a player takes to do something. | [1.1][Gimmer_GameTimer_release] |
-| [Gimmer_LicenseBoard][Gimmer_LicenseBoard]         | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill. | [1.4][Gimmer_LicenseBoard_release] |
+| [Gimmer_LicenseBoard][Gimmer_LicenseBoard]         | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill. | [1.5.1][Gimmer_LicenseBoard_release] |
 | [Gimmer_MakingFaces][Gimmer_MakingFaces]           | Use the command \TF[faceIndex] to change the face index of an actor during chat messages. | [1.1][Gimmer_MakingFaces_release] |
 | [Gimmer_MatchingFaces][Gimmer_MatchingFaces]       | Set a meta parameter on any Actor in the database "<faceName: String>". | [1.1][Gimmer_MatchingFaces_release] |
 | [Gimmer_MirrorMirrorOnTheWall][Gimmer_MirrorMirrorOnTheWall]       | Choose tiles that are mirrors. | [1.0][Gimmer_MirrorMirrorOnTheWall_release] |
@@ -26,7 +26,7 @@ All plugins created by Gimmer_
 | [Gimmer_SelfSwitcheroo][Gimmer_SelfSwitcheroo]     | Adds a plugin command that allows you to change any events' self switch. | [1.0][Gimmer_SelfSwitcheroo_release] |
 | [Gimmer_SpottingPlayers][Gimmer_SpottingPlayers]   | Allows events to be given cones of vision, and to run a common event when the player enters their line of sight. | [1.1][Gimmer_SpottingPlayers_release] |
 | [Gimmer_SystemMenu][Gimmer_SystemMenu]             | Allows you to move Options, Save, and Game End to a different smaller menu. | [1.1][Gimmer_SystemMenu_release] |
-| [Gimmer_TextAnywhere][Gimmer_TextAnywhere]         | Fill in an array of text variables, and that text will show anywhere on the screen. | [2.7][Gimmer_TextAnywhere_release] |
+| [Gimmer_TextAnywhere][Gimmer_TextAnywhere]         | Fill in an array of text variables, and that text will show anywhere on the screen. | [2.8][Gimmer_TextAnywhere_release] |
 | [Gimmer_TextEntryPopup][Gimmer_TextEntryPopup]     | Create a popup asking for text to be entered that can be use in conditional branches, without pausing the map. | [1.1][Gimmer_TextEntryPopup_release] |
 | [Gimmer_TimelyTitles][Gimmer_TimelyTitles]         | Change title screen depending on the time of day (using the local player's timezone) | [1.0][Gimmer_TimelyTitles_release] |
 | [Gimmer_VisualMeters][Gimmer_VisualMeters]         | Create visual meters of various UI elements.                | [1.1][Gimmer_VisualMeters_release] |
