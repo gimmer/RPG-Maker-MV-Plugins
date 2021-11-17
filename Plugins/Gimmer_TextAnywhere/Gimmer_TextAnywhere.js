@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.8 - Display text anywhere on the screen
+ * @plugindesc v2.8.1 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -177,6 +177,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.6: Added in AdvancedTypeTempText to support typing with fonts
  * - Version 2.7: Fixing in Type Temp Text to support text and font tags
  * - Version 2.8: Added optional support for making a button held down to show the text layer
+ * - Version 2.8.1: Change the text layer only show and hide on buttons for texts provided in the plugin parameters
  *
  * Terms of Use:
  * =======================================================================
@@ -320,7 +321,7 @@ if(Gimmer_Core === undefined){
 */
 
 Imported = Imported || {};
-Imported.Gimmer_TextAnywhere = '2.8'
+Imported.Gimmer_TextAnywhere = '2.8.1'
 
 Gimmer_Core['TextAnywhere'] = {'loaded':true};
 
@@ -348,7 +349,6 @@ if(Gimmer_Core.TextAnywhere.TriggerByButton){
                 }
             };
             let closeUIOnEventId;
-            dd(TAParams['Trigger Button Mouse']);
             switch(TAParams['Trigger Button Mouse'].trim()){
                 case 'Right':
                     closeUIOnEventId = 2;
@@ -390,6 +390,7 @@ Gimmer_Core.TextAnywhere.InitializeTexts = function(){
     let GlobalTextObj = {};
     let textList = PluginManager.parameters('Gimmer_TextAnywhere')['Default Text List'];
     let texts = [];
+    let ids = [];
     if(textList !== ""){
         texts = JSON.parse(textList);
     }
@@ -399,14 +400,16 @@ Gimmer_Core.TextAnywhere.InitializeTexts = function(){
         let textObj = new TAObject(text.id, text.x, text.y, text.color, text.fontsize, text.bold, text.defaultOpacity, text.text, (text.includeOutline === "true"));
         textObj.alive = true;
         GlobalTextObj[textObj.id] = textObj;
+        ids.push(textObj.id);
     });
 
     Gimmer_Core.TextAnywhere.Texts = GlobalTextObj;
+    Gimmer_Core.TextAnywhere.HudIDs = ids;
 }
 
-Gimmer_Core.TextAnywhere.showDisplayLayer = function(){
+Gimmer_Core.TextAnywhere.showDisplayLayer = function(id){
     let display = false;
-    if(Gimmer_Core.TextAnywhere.TriggerByButton){
+    if(Gimmer_Core.TextAnywhere.TriggerByButton && Gimmer_Core.TextAnywhere.HudIDs.indexOf(id) >= 0){
         if(Gimmer_Core.TextAnywhere.TriggerType === "keyboard"){
             display = (Input.isPressed('TATOGGLE') || Input.isLongPressed('TATOGGLE'))
         }
@@ -440,28 +443,29 @@ Scene_Map.prototype.update = function(){
 
 Scene_Map.prototype.updateTextOverlay = function(){
     this._textOverLay.contents.clear();
+    Object.values(Gimmer_Core.TextAnywhere.Texts).forEach(function(text){
+        if(!Gimmer_Core.TextAnywhere.showDisplayLayer(text.id)){
+            return;
+        }
+        if(!text.alive){
+            return;
+        }
+        if(text.needsDelete){
+            delete Gimmer_Core.TextAnywhere.Texts[text.id];
+            return;
+        }
 
-    if(Gimmer_Core.TextAnywhere.showDisplayLayer()){
-        Object.values(Gimmer_Core.TextAnywhere.Texts).forEach(function(text){
-            if(!text.alive){
-                return;
-            }
-            if(text.needsDelete){
-                delete Gimmer_Core.TextAnywhere.Texts[text.id];
-                return;
-            }
+        this.updateTextVisibility(text);
+        if(text.visible){
+            this.updateTextDuration(text);
+            this.updateTextFadeOut(text);
+            this.updateTextFadeIn(text);
+            let tempText = this._textOverLay.convertEscapeCharacters(text.text);
+            let textLength = this.updateTypingIn(text, tempText);
+            this.displayTextAnywhere(text,tempText, textLength);
+        }
+    }, this)
 
-            this.updateTextVisibility(text);
-            if(text.visible){
-                this.updateTextDuration(text);
-                this.updateTextFadeOut(text);
-                this.updateTextFadeIn(text);
-                let tempText = this._textOverLay.convertEscapeCharacters(text.text);
-                let textLength = this.updateTypingIn(text, tempText);
-                this.displayTextAnywhere(text,tempText, textLength);
-            }
-        }, this)
-    }
 }
 
 Scene_Map.prototype.updateTextDuration = function(text){
