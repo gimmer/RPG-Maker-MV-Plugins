@@ -3,13 +3,13 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {};
-Imported['Gimmer_LicenseBoard'] = '1.5.1';
+Imported['Gimmer_LicenseBoard'] = '1.5.2';
 
 Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.5.1 - License Board to replace the exp leveling system with stats bought with licenses
+ * @plugindesc v1.5.2 - License Board to replace the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========
@@ -49,6 +49,8 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * - Plugin parameter for already claimed licenses.
  * Version 1.5.1
  * - Support for numLicenses() and numLicensesOfType() in equations.
+ * Version 1.5.2
+ * - Bug fix for cost deducating wrong, and cost listings not rounded.
  *
  * Terms of Use:
  * =======================================================================
@@ -642,8 +644,8 @@ Game_Actor.prototype.claimLicense = function(index, license){
     let gotIt = false;
     if(this._licenses.indexOf(index) === -1 && license.type !== 'nope'){
         //Give them the license
-        this._licenses.push(index);
         this.deductExp(license.getCost(this));
+        this._licenses.push(index);
         //Some attributes need immediate application
         if(license.type === 'attribute'){
             switch(license.target){
@@ -813,7 +815,8 @@ Window_LicenseBoard.prototype.initialize = function(x, y, width, height, actor) 
 
 //Can a license be claimed? Do they not have it, and have enough points
 Window_LicenseBoard.prototype.isCurrentItemEnabled = function(){
-    return (this._actor._licenses.indexOf(this.index()) === -1 && this._actor.getExp() >= this.item().getCost(this._actor));
+    let item = this.item();
+    return (item && this._actor._licenses.indexOf(this.index()) === -1 && this._actor.getExp() >= item.getCost(this._actor));
 }
 
 //What's the max items of the license board
@@ -1504,7 +1507,7 @@ BoardLicense.prototype.getCost = function(actor){
     let costEquation = this.costEquation;
     costEquation = costEquation.replace("numLicensesOfType()",numLicensesOfType);
     costEquation = costEquation.replace("numLicenses()",numLicenses);
-    return Number(eval(costEquation));
+    return Math.round(Number(eval(costEquation)));
 }
 
 BoardLicense.prototype.getNumLicensesOfType = function(type, target, actor){

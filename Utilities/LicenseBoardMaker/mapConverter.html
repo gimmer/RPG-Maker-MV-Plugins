@@ -168,24 +168,21 @@
                 baseLicense.value = (parseInt(regionId) / 100).toFixed(2);
                 baseLicense.description = "Gain +"+baseLicense.value+" "+oldDescription;
                 if(oldDescription.toLowerCase() in costEquations){
-                    let v = baseLicense.value;
-                    baseLicense.cost = Math.floor(eval(costEquations[oldDescription.toLowerCase()]));
+                    baseLicense.cost = costEquations[oldDescription.toLowerCase()];
                 }
                 break;
             case 'attribute':
                 baseLicense.value = parseInt(regionId);
                 baseLicense.description = "Gain +"+baseLicense.value+" "+oldDescription;
                 if(oldDescription.toLowerCase() in costEquations){
-                    let v = baseLicense.value;
-                    baseLicense.cost = Math.floor(eval(costEquations[oldDescription.toLowerCase()]));
+                    baseLicense.cost = costEquations[oldDescription.toLowerCase()];
                 }
                 break;
             case 'equip':
                 baseLicense.value = regionId.toString();
                 baseLicense.description = "Equip new "+baseLicense.target;
                 if(baseLicense.target in costEquations){
-                    let v = baseLicense.value;
-                    baseLicense.cost = Math.floor(eval(costEquations[baseLicense.target]));
+                    baseLicense.cost = costEquations[baseLicense.target];
                 }
                 break;
         }
