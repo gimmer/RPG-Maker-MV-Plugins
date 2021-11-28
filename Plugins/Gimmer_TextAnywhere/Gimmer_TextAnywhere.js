@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.8.1 - Display text anywhere on the screen
+ * @plugindesc v2.9 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -178,6 +178,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.7: Fixing in Type Temp Text to support text and font tags
  * - Version 2.8: Added optional support for making a button held down to show the text layer
  * - Version 2.8.1: Change the text layer only show and hide on buttons for texts provided in the plugin parameters
+ * - Version 2.9: Show pictures when showing the HUD optionally
  *
  * Terms of Use:
  * =======================================================================
@@ -220,6 +221,11 @@ if(Gimmer_Core === undefined){
  * @option Left
  * Default Right
  * @default Right
+ *
+ * @param UI Picture List
+ * @parent Trigger Via Button
+ * @type struct<Picture>[]
+ * @desc A list of pictures you want to show when the Text is triggered by button. Can use them to build a UI underneath the text layer to make a HUD
  *
  *
  * @param Default Text List
@@ -319,9 +325,26 @@ if(Gimmer_Core === undefined){
  * @type String
  * @string What's the text you want (us \V[1] for variables);
 */
+/*~struct~Picture:
+ * @param pictureId
+ * @type Number
+ * @desc PictureId you want to use
+ *
+ * @param x
+ * @type Number
+ * @desc x coordinate for picture (assume Upper Left origin)
+ *
+ * @param y
+ * @type Number
+ * @desc y coordinate for picture (assume Upper Left origin)
+ *
+ * @param img
+ * @type File
+ * @desc Picture file you want to use
+*/
 
 Imported = Imported || {};
-Imported.Gimmer_TextAnywhere = '2.8.1'
+Imported.Gimmer_TextAnywhere = '2.9'
 
 Gimmer_Core['TextAnywhere'] = {'loaded':true};
 
@@ -333,15 +356,17 @@ Gimmer_Core.TextAnywhere.DefaultBold = (TAParams["Default Bold"] === "true");
 Gimmer_Core.TextAnywhere.DefaultOutline = (TAParams["Default Include Outline"] === "true");
 Gimmer_Core.TextAnywhere.DefaultOpacity = Number(TAParams['Default Opacity']);
 Gimmer_Core.TextAnywhere.TriggerByButton = (TAParams["Trigger Via Button"] === "true");
+Gimmer_Core.TextAnywhere.UIPicturesDisplayed = false;
+Gimmer_Core.TextAnywhere.UIPictures = JSON.parse(TAParams["UI Picture List"]);
 if(Gimmer_Core.TextAnywhere.TriggerByButton){
     Gimmer_Core.TextAnywhere.TriggerType = TAParams['Trigger Button Type'];
-    switch(Gimmer_Core.TextAnywhere.TriggerType.toLowerCase()){
+    switch(Gimmer_Core.TextAnywhere.TriggerType.toLowerCase()) {
         case 'keyboard':
             Input.keyMapper[Number(TAParams['Trigger Button Keyboard'])] = 'TATOGGLE';
             break;
         case 'mouse':
             TouchInput._uiToggled = false;
-            const clickFunction = function(event) {
+            const clickFunction = function (event) {
                 var x = Graphics.pageToCanvasX(event.pageX);
                 var y = Graphics.pageToCanvasY(event.pageY);
                 if (Graphics.isInsideCanvas(x, y)) {
@@ -349,7 +374,7 @@ if(Gimmer_Core.TextAnywhere.TriggerByButton){
                 }
             };
             let closeUIOnEventId;
-            switch(TAParams['Trigger Button Mouse'].trim()){
+            switch (TAParams['Trigger Button Mouse'].trim()) {
                 case 'Right':
                     closeUIOnEventId = 2;
                     TouchInput._onRightButtonDown = clickFunction;
@@ -361,7 +386,7 @@ if(Gimmer_Core.TextAnywhere.TriggerByButton){
                 case 'Left':
                     closeUIOnEventId = 0;
                     Gimmer_Core.TextAnywhere._TouchInput_onLeftButtonDown = TouchInput._onLeftButtonDown;
-                    TouchInput._onLeftButtonDown = function(event){
+                    TouchInput._onLeftButtonDown = function (event) {
                         Gimmer_Core.TextAnywhere._TouchInput_onLeftButtonDown.call(this, event);
                         clickFunction.call(this, event);
                     };
@@ -369,13 +394,24 @@ if(Gimmer_Core.TextAnywhere.TriggerByButton){
             }
 
             Gimmer_Core.TextAnywhere._TouchInput_onMouseUp = TouchInput._onMouseUp;
-            TouchInput._onMouseUp = function(event){
-                Gimmer_Core.TextAnywhere._TouchInput_onMouseUp.call(this,event);
-                if(event.button === closeUIOnEventId){
+            TouchInput._onMouseUp = function (event) {
+                Gimmer_Core.TextAnywhere._TouchInput_onMouseUp.call(this, event);
+                if (event.button === closeUIOnEventId) {
                     this._uiToggled = false;
                 }
             }
             break;
+    }
+    if(Gimmer_Core.TextAnywhere.UIPictures.length){
+        Gimmer_Core.TextAnywhere.UIPictures.forEach(function(picture, key){
+            picture = JSON.parse(picture);
+            picture.x = Number(picture.x);
+            picture.y = Number(picture.y);
+            picture.pictureId = Number(picture.pictureId);
+            picture.img = picture.img.split("/").pop();
+            Gimmer_Core.TextAnywhere.UIPictures[key] = picture;
+            ImageManager.reservePicture(picture.img);
+        });
     }
 }
 
@@ -416,6 +452,21 @@ Gimmer_Core.TextAnywhere.showDisplayLayer = function(id){
         else if(Gimmer_Core.TextAnywhere.TriggerType === "mouse"){
             display = TouchInput._uiToggled;
         }
+        if(Gimmer_Core.TextAnywhere.UIPictures.length){
+            if(display && !Gimmer_Core.TextAnywhere.UIPicturesDisplayed){
+                Gimmer_Core.TextAnywhere.UIPictures.forEach(function(picture){
+                    $gameScreen.showPicture(picture.pictureId, picture.img, 0, picture.x, picture.y, 100, 100, 255, 0);
+                });
+                Gimmer_Core.TextAnywhere.UIPicturesDisplayed = true;
+            }
+            else if(!display && Gimmer_Core.TextAnywhere.UIPicturesDisplayed){
+                Gimmer_Core.TextAnywhere.UIPictures.forEach(function(picture){
+                    $gameScreen.erasePicture(picture.pictureId);
+                });
+                Gimmer_Core.TextAnywhere.UIPicturesDisplayed = false;
+            }
+        }
+
     }
     else{
         display = true;
@@ -432,6 +483,7 @@ Scene_Map.prototype.createAllWindows = function(){
 Scene_Map.prototype.addTextOverlay = function(){
     let temp = new Window_Base();
     this._textOverLay = new Window_Plain(-temp.standardPadding(),-temp.standardPadding(),Graphics.width + temp.standardPadding() * 2,Graphics.height + temp.standardPadding() * 2);
+    this._uiPicturesShowing = false;
     this.addChild(this._textOverLay);
 }
 
@@ -447,6 +499,7 @@ Scene_Map.prototype.updateTextOverlay = function(){
         if(!Gimmer_Core.TextAnywhere.showDisplayLayer(text.id)){
             return;
         }
+
         if(!text.alive){
             return;
         }

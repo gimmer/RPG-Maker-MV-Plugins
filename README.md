@@ -26,7 +26,7 @@ All plugins created by Gimmer_
 | [Gimmer_SelfSwitcheroo][Gimmer_SelfSwitcheroo]     | Adds a plugin command that allows you to change any events' self switch. | [1.0][Gimmer_SelfSwitcheroo_release] |
 | [Gimmer_SpottingPlayers][Gimmer_SpottingPlayers]   | Allows events to be given cones of vision, and to run a common event when the player enters their line of sight. | [1.1][Gimmer_SpottingPlayers_release] |
 | [Gimmer_SystemMenu][Gimmer_SystemMenu]             | Allows you to move Options, Save, and Game End to a different smaller menu. | [1.1][Gimmer_SystemMenu_release] |
-| [Gimmer_TextAnywhere][Gimmer_TextAnywhere]         | Fill in an array of text variables, and that text will show anywhere on the screen. | [2.8.1][Gimmer_TextAnywhere_release] |
+| [Gimmer_TextAnywhere][Gimmer_TextAnywhere]         | Fill in an array of text variables, and that text will show anywhere on the screen. | [2.9][Gimmer_TextAnywhere_release] |
 | [Gimmer_TextEntryPopup][Gimmer_TextEntryPopup]     | Create a popup asking for text to be entered that can be use in conditional branches, without pausing the map. | [1.1][Gimmer_TextEntryPopup_release] |
 | [Gimmer_TimelyTitles][Gimmer_TimelyTitles]         | Change title screen depending on the time of day (using the local player's timezone) | [1.0][Gimmer_TimelyTitles_release] |
 | [Gimmer_VisualMeters][Gimmer_VisualMeters]         | Create visual meters of various UI elements.                | [1.1][Gimmer_VisualMeters_release] |

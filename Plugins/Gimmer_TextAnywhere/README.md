@@ -14,6 +14,7 @@ In the plugin menu, go into the texts variable, and use the built in structure t
 Text will show continuously on the map screen.
 
 Optionally, you can bind keyboard or mouse buttons to make the UI appear
+Optionally, you can make pictures show when you make the UI text appear, which will appear under the text making a simple HUD
 
 Want to hide text?
 
