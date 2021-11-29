@@ -1,11 +1,11 @@
-##Gimmer_LanguageHelper
+## Gimmer_LanguageHelper
 
 A plugin to help with translation.
 
 Scenario: you've already made a game. It's got so many words.
 Translating it would take forever.
 
-###Let's Get Going
+### Let's Get Going
 1. Run the BuildLanguageFile.exe program with the first parameter being the path to your game project
    1. This will produce .backups of every map.json, troops.json, and commonevents.json
    2. This will produce .updated files of each of those same things, having replace all dialog with hash codes
@@ -22,7 +22,7 @@ Translating it would take forever.
 6. Take away the LanguageEN.json file and translate it. Each line is an entry in strings.
 7. Add that new language's Label and Suffix to the Gimmer_LanguageHelper parameter list
 
-###Limitations
+### Limitations
 * Because RPGMaker MV copies data from the database files into game objects, and then copies the game objects into memory as save files, a game that starts on one language has to stay on that language
   * E.G. Actors.json has the first character as "Jeff" and you translate his name in French to "FrenchJeff"
   * After the game starts, the Game_Actor object for "Jeff" will have the English or French name in it forever. Changing languages can't replace that name with the other language variant, because the player might have named the character themselves. 
