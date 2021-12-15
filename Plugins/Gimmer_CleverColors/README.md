@@ -13,7 +13,7 @@ and colorId as value.
 3. Watch the colors appear!
 4. (Optional) Don't want color on a word? Prefix it with an "!"
 
-####Plugin Commands:
+#### Plugin Commands:
 
 Add a color: CC_ADD word_or_phase color_id  
 E.G.: CC_ADD LOVE 4  
