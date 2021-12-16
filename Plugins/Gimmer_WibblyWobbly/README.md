@@ -11,7 +11,7 @@ Allows you to make the main character on the seem drunk
     * Whether the character sways side to side while drunk
     * Whether being drunk affects the walking speed of the character erratically
     
-######Plugin Commands:
+###### Plugin Commands:
 * GetDrunk: Become drunk
     * Arg1: Number or "forever": how long to stay drunk after the command is run in frames.
     * Arg2: Number, or left blank. If provided, the number of frames to wait before becoming drunk again in a continous drunken pulse.
@@ -19,7 +19,7 @@ Allows you to make the main character on the seem drunk
     * Arg1: Optional number: how long to wait before sobering up, otherwise it will be instant.
     
 
-##Disclaimer:
+## Disclaimer:
 This addon does not support excessive drinking, or the use of alcohol by minors. Please drunk responsibly.
 
 ## Terms of Use:
