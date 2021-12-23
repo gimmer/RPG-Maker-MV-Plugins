@@ -1,6 +1,6 @@
 ## Gimmer_LicenseBoard
 
-Replaces EXP with LP, and lets your characters advance by buying licenses to gain skill ups, new equipment types, skills, and spells.
+Replaces and/or augment EXP with LP, and lets your characters advance by buying licenses to gain skill ups, new equipment types, skills, and spells.
 
 ### Video Tutorial [The Basics]:
 
@@ -36,6 +36,11 @@ However, if a class starts with "can equip" parameters set, there is nothing in 
 
 Enemies "EXP" will now be LP. You can scale this however you like, but bear in mind characters will only advance with licenses with this system set.
 The event command "gain experience" will hand out LP instead.
+
+### EXP and FP Side by Side
+Want to keep EXP as part of the leveling process? Turn on the flag "Include EXP" and enemies will reward exp and lp separately.
+
+Requires you to &lt;lp:num> tags to every enemy for how much LP you get from each enemy.
 
 #### More Info on Required Files
 ##### LicenseIconSet

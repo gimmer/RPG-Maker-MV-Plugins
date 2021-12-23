@@ -3,13 +3,13 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {};
-Imported['Gimmer_LicenseBoard'] = '1.5.2';
+Imported['Gimmer_LicenseBoard'] = '2.0';
 
 Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.5.2 - License Board to replace the exp leveling system with stats bought with licenses
+ * @plugindesc v2.0 - License Board to replace / augement the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========
@@ -19,13 +19,21 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * This plugin replaces the xp system with a License Point (LP) system, with stats, equip skills, and magic being bought with points earned in battles
  * Note: This assumes you will only us the LP system, and not exp. Settings an enemies XP value controls the LP they hand out now instead, so you will have to balance encounters around that.
  *
- * NOTE: Currently you cannot change classes, but each class can have it's own board.
+ * NOTE: Currently you cannot change classes, but each class can have its own board.
  *
  * Class Note Tags:
  *
  * <StartingLicensePosition:x,y> Where a class starts on the board
  * <BoardName:name> What board to use for a given class
  * <StartingLicenses:x,y|x2,y2|x3,y3,etc> The positions of license that a given class should start with
+ *
+ * =============
+ * XP and LP Side by Side
+ * =============
+ *
+ * Want to keep EXP as part of the leveling process? Turn on this flag and enemies will reward exp and lp separately.
+ *
+ * Requires you to <lp:num> tags to every enemy for how much LP you get from each enemy.
  *
  * ========
  * Version History
@@ -50,7 +58,9 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Version 1.5.1
  * - Support for numLicenses() and numLicensesOfType() in equations.
  * Version 1.5.2
- * - Bug fix for cost deducating wrong, and cost listings not rounded.
+ * - Bug fix for cost deducting wrong, and cost listings not rounded.
+ * Version 2.0
+ * - Support for having exp and lp separately
  *
  * Terms of Use:
  * =======================================================================
@@ -159,6 +169,12 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Default: to wear
  * @default to wear
  *
+ * @param Include EXP
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc Do you want EXP to remain and still function normally? By default, LP replaces EXP and leveling is done only via the board. Change this to "true" if you want both systems to run side by side. See the "XP and LP Side by Side" section of the description
+ * Default False
+ * @default false
  *
  * @param Trigger Switch
  * @parent ---Parameters---
@@ -341,6 +357,7 @@ Gimmer_Core.LicenseBoard.EquipLearnedWord = lbParams["Equip Learned Word"];
 Gimmer_Core.LicenseBoard.WeaponUsingPhase = lbParams["Weapon Using Phrase"];
 Gimmer_Core.LicenseBoard.ArmorUsingPhase = lbParams["Armor Using Phrase"];
 Gimmer_Core.LicenseBoard.AlreadyClaimedText = lbParams["Already Claimed Text"];
+Gimmer_Core.LicenseBoard.UsingExp = (lbParams["Include EXP"] === "true");
 
 //Tracking Variables
 Gimmer_Core.LicenseBoard.maxX = 0;
@@ -605,6 +622,7 @@ Game_Actor.prototype.initMembers = function(){
     Gimmer_Core.LicenseBoard._Game_Actor_prototype_initMembers.call(this);
     this._licenses = [];
     this._lastLicenseId = -1;
+    this._lp = 0;
 }
 
 //Record the lastLicenseId on the board so you reopen where you were each time
@@ -625,13 +643,14 @@ Game_Actor.prototype.setup = function(actorId){
 
 //Help function to give the required license points and then claim all the liceses a class starts as
 Game_Actor.prototype.initLicenses = function(){
+    this._lp = 0;
     if('StartingLicenses' in this.currentClass().meta){
         let startingLicenses = this.currentClass().meta.StartingLicenses.split("|");
         let board = this.currentClass().meta.BoardName;
         startingLicenses.forEach(function(coords){
             let index = $dataLicenseMap[board][coords];
             let license = $dataLicenseBoard[board][index];
-            this.gainExp(license.getCost(this));
+            this.gainLicenseResource(license.getCost(this));
             this.claimLicense(index,license);
         }, this);
     }
@@ -644,7 +663,7 @@ Game_Actor.prototype.claimLicense = function(index, license){
     let gotIt = false;
     if(this._licenses.indexOf(index) === -1 && license.type !== 'nope'){
         //Give them the license
-        this.deductExp(license.getCost(this));
+        this.payForLicense(license.getCost(this))
         this._licenses.push(index);
         //Some attributes need immediate application
         if(license.type === 'attribute'){
@@ -695,8 +714,48 @@ Game_Actor.prototype.hasAdjacentLicense = function(license){
 }
 
 //Helper to get exp for the current class. Assumes you won't ever change classes
+
+Game_Actor.prototype.getLicenseResource = function(){
+    if(!Gimmer_Core.LicenseBoard.UsingExp){
+        return this.getExp();
+    }
+    else{
+        return this.getLP();
+    }
+}
+
+Game_Actor.prototype.getLP = function(){
+    return this._lp;
+}
+
 Game_Actor.prototype.getExp = function(){
     return this._exp[this._classId];
+}
+
+Game_Actor.prototype.gainLicenseResource = function(amount){
+    if(!Gimmer_Core.LicenseBoard.UsingExp){
+        this.gainExp(amount)
+    }
+    else{
+        this.gainLP(amount);
+    }
+}
+
+Game_Actor.prototype.gainLP = function(amount){
+    this._lp += amount;
+}
+
+Game_Actor.prototype.payForLicense = function(amount){
+    if(!Gimmer_Core.LicenseBoard.UsingExp){
+        return this.deductExp(amount)
+    }
+    else{
+        return this.deductLP(amount);
+    }
+}
+
+Game_Actor.prototype.deductLP = function(amount){
+    return this._lp -= amount;
 }
 
 //Remove experience to buy licenses
@@ -750,13 +809,15 @@ Game_Actor.prototype.hasLicense = function(licenseId){
 
 //Helper function to see if you can afford it
 Game_Actor.prototype.canAffordLicense = function(license){
-    return (this.getExp() >= license.getCost(this));
+    return (this.getLicenseResource() >= license.getCost(this));
 }
 
 //Prevent leveling up by making sure the nextLevelExp is unattainable
-Game_Actor.prototype.nextLevelExp = function() {
-    return 99999999999;
-};
+if(!Gimmer_Core.LicenseBoard.UsingExp){
+    Game_Actor.prototype.nextLevelExp = function() {
+        return 99999999999;
+    };
+}
 
 //Extend can equip weapon to see if you have a license for it
 Game_Actor.prototype.canEquipWeapon = function(item){
@@ -816,7 +877,7 @@ Window_LicenseBoard.prototype.initialize = function(x, y, width, height, actor) 
 //Can a license be claimed? Do they not have it, and have enough points
 Window_LicenseBoard.prototype.isCurrentItemEnabled = function(){
     let item = this.item();
-    return (item && this._actor._licenses.indexOf(this.index()) === -1 && this._actor.getExp() >= item.getCost(this._actor));
+    return (item && this._actor._licenses.indexOf(this.index()) === -1 && this._actor.getLicenseResource() >= item.getCost(this._actor));
 }
 
 //What's the max items of the license board
@@ -1414,7 +1475,7 @@ Window_LicenseHelp.prototype.refresh = function() {
     this.contents.clear();
     if(this._licenseVisible){
         let lpShort = Gimmer_Core.LicenseBoard.PointsLabelShort;
-        let lpString = "Current "+lpShort+": "+(this._actor.getExp().toString() || "0");
+        let lpString = "Current "+lpShort+": "+(this._actor.getLicenseResource().toString() || "0");
         let lpWidth = this.textWidth(lpString)
         this.drawText(this._license.description, this.textPadding(), 0, this.width - lpWidth);
         let licenseId = $dataLicenseMap[this._actor.getBoardName()][Gimmer_Core.LicenseBoard.getLicenseCoordinateString(this._license)];
@@ -1423,7 +1484,7 @@ Window_LicenseHelp.prototype.refresh = function() {
                 this.drawText(Gimmer_Core.LicenseBoard.AlreadyClaimedText, 0, this.lineHeight(), this.width);
             }
             else{
-                this.drawText("Current "+lpShort+": "+(this._actor.getExp().toString() || "0"),0,this.lineHeight(),this.width - lpWidth,'right');
+                this.drawText("Current "+lpShort+": "+(this._actor.getLicenseResource().toString() || "0"),0,this.lineHeight(),this.width - lpWidth,'right');
                 if(!this._actor.canAffordLicense(this._license)) {
                     this.contents.textColor = '#FF0000';
                 }
@@ -1444,30 +1505,102 @@ Window_LicenseHelp.prototype.setActor = function(actor){
 }
 
 //Exp to LP conversion
-BattleManager.displayExp = function() {
-    var exp = this._rewards.exp;
-    if (exp > 0) {
-        var text = TextManager.obtainExp.format(exp, Gimmer_Core.LicenseBoard.PointsLabelShort);
-        $gameMessage.add('\\.' + text);
-    }
-};
+if(!Gimmer_Core.LicenseBoard.UsingExp) {
+    BattleManager.displayExp = function () {
+        var exp = this._rewards.exp;
+        if (exp > 0) {
+            var text = TextManager.obtainExp.format(exp, Gimmer_Core.LicenseBoard.PointsLabelShort);
+            $gameMessage.add('\\.' + text);
+        }
+    };
 
-//Remove some stuff from the menu that doesn't fit the game
-Window_Base.prototype.drawActorLevel = function(actor, x, y){}
-Window_Base.prototype.drawActorClass = function(actor, x, y, width) {};
+    //Remove some stuff from the menu that doesn't fit the game
+    Window_Base.prototype.drawActorLevel = function(actor, x, y){}
+    Window_Base.prototype.drawActorClass = function(actor, x, y, width) {};
 
-//Exp is now LP
-Window_Status.prototype.drawExpInfo = function(x, y) {
-    var lineHeight = this.lineHeight();
-    var value1 = this._actor.getExp();
-    if (this._actor.hasAllLicenses()) {
-        value1 = '-------';
+    //Exp is now LP
+    Window_Status.prototype.drawExpInfo = function(x, y) {
+        var lineHeight = this.lineHeight();
+        var value1 = this._actor.getLicenseResource();
+        if (this._actor.hasAllLicenses()) {
+            value1 = '-------';
+        }
+        this.changeTextColor(this.systemColor());
+        this.drawText(Gimmer_Core.LicenseBoard.PointsLabel, x, 0, 270);
+        this.resetTextColor();
+        this.drawText(value1, x, y + lineHeight * 1, 270, 'right');
+    };
+
+}
+else{
+    Gimmer_Core.LicenseBoard._Window_Status_prototype_drawExpInfo =  Window_Status.prototype.drawExpInfo;
+    Window_Status.prototype.drawExpInfo = function(x,y){
+        if(Gimmer_Core.LicenseBoard.isTriggered()){
+            Gimmer_Core.LicenseBoard.tempLineHeight = Window_Base.prototype.lineHeight;
+            Window_Base.prototype.lineHeight = function(){
+                return 24;
+            }
+        }
+        Gimmer_Core.LicenseBoard._Window_Status_prototype_drawExpInfo.call(this,x,y);
+        if(Gimmer_Core.LicenseBoard.isTriggered()) {
+            this.changeTextColor(this.systemColor());
+            this.drawText(Gimmer_Core.LicenseBoard.PointsLabel, x, y + this.lineHeight() * 4, 270);
+            this.resetTextColor();
+            this.drawText(this._actor.getLicenseResource(), x, y + this.lineHeight() * 5, 270, 'right');
+            Window_Base.prototype.lineHeight = Gimmer_Core.LicenseBoard.tempLineHeight;
+        }
     }
-    this.changeTextColor(this.systemColor());
-    this.drawText(Gimmer_Core.LicenseBoard.PointsLabel, x, 0, 270);
-    this.resetTextColor();
-    this.drawText(value1, x, y + lineHeight * 1, 270, 'right');
-};
+
+    Game_Enemy.prototype.lp = function() {
+        return Number(this.enemy().meta['lp']) || 0;
+    };
+
+    Game_Troop.prototype.lpTotal = function(){
+        return this.deadMembers().reduce(function(r, enemy) {
+            return r + enemy.lp();
+        }, 0);
+    }
+
+    Gimmer_Core.LicenseBoard._BattleManager_makeRewards = BattleManager.makeRewards;
+    BattleManager.makeRewards = function (){
+        Gimmer_Core.LicenseBoard._BattleManager_makeRewards.call(this);
+        this._rewards.lp = $gameTroop.lpTotal();
+    }
+
+    BattleManager.displayRewards = function(){
+        this.displayExp();
+        this.displayLP();
+        this.displayGold();
+        this.displayDropItems();
+    }
+
+    BattleManager.displayLP = function(){
+        if(Gimmer_Core.LicenseBoard.isTriggered()) {
+            var lp = this._rewards.lp;
+            if (lp > 0) {
+                var text = TextManager.obtainExp.format(lp, Gimmer_Core.LicenseBoard.PointsLabelShort);
+                $gameMessage.add('\\.' + text);
+            }
+        }
+    }
+
+    Gimmer_Core.LicenseBoard._BattleManager_gainRewards = BattleManager.gainRewards;
+    BattleManager.gainRewards = function(){
+        Gimmer_Core.LicenseBoard._BattleManager_gainRewards.call(this);
+        this.gainLP();
+    }
+
+    BattleManager.gainLP = function(){
+        if(Gimmer_Core.LicenseBoard.isTriggered()) {
+            var lp = this._rewards.lp;
+            $gameParty.allMembers().forEach(function (actor) {
+                actor.gainLP(lp);
+            });
+        }
+    }
+}
+
+
 
 //Load License Images
 Gimmer_Core.LicenseBoard._Scene_Boot_loadSystemImages = Scene_Boot.loadSystemImages;
