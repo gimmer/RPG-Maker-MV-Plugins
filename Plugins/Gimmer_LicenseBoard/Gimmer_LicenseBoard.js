@@ -9,7 +9,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v2.0 - License Board to replace / augement the exp leveling system with stats bought with licenses
+ * @plugindesc v2.1 - License Board to replace / augement the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========
@@ -31,7 +31,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * XP and LP Side by Side
  * =============
  *
- * Want to keep EXP as part of the leveling process? Turn on this flag and enemies will reward exp and lp separately.
+ * Want to keep EXP as part of the leveling process? Turn on this flag and enemies will reward exp and lp seperately.
  *
  * Requires you to <lp:num> tags to every enemy for how much LP you get from each enemy.
  *
@@ -61,6 +61,8 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * - Bug fix for cost deducting wrong, and cost listings not rounded.
  * Version 2.0
  * - Support for having exp and lp separately
+ * Version 2.1
+ *  - Support for toggling where you want the tags to be, so you can use actor tags instead to let people change classes
  *
  * Terms of Use:
  * =======================================================================
@@ -140,7 +142,6 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * Default: gained
  * @default gained
  *
- *
  * @param Skill Gained Word
  * @parent Show Success Window
  * @type String
@@ -175,6 +176,15 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * @desc Do you want EXP to remain and still function normally? By default, LP replaces EXP and leveling is done only via the board. Change this to "true" if you want both systems to run side by side. See the "XP and LP Side by Side" section of the description
  * Default False
  * @default false
+ *
+ * @param Boards Linked To
+ * @parent ---Parameters---
+ * @type Select
+ * @option class
+ * @option actor
+ * @desc Where do you want to put the various License board related tags (like BoardName: and StartingLicenses). Defaults to "class".
+ * Default class
+ * @default class
  *
  * @param Trigger Switch
  * @parent ---Parameters---
@@ -358,6 +368,7 @@ Gimmer_Core.LicenseBoard.WeaponUsingPhase = lbParams["Weapon Using Phrase"];
 Gimmer_Core.LicenseBoard.ArmorUsingPhase = lbParams["Armor Using Phrase"];
 Gimmer_Core.LicenseBoard.AlreadyClaimedText = lbParams["Already Claimed Text"];
 Gimmer_Core.LicenseBoard.UsingExp = (lbParams["Include EXP"] === "true");
+Gimmer_Core.LicenseBoard.MetaTagSource = lbParams['Boards Linked To'];
 
 //Tracking Variables
 Gimmer_Core.LicenseBoard.maxX = 0;
@@ -627,7 +638,7 @@ Game_Actor.prototype.initMembers = function(){
 
 //Record the lastLicenseId on the board so you reopen where you were each time
 Game_Actor.prototype.getLastLicenseId = function(){
-    let id = $dataLicenseMap[this.currentClass().meta.BoardName][this.currentClass().meta.StartingLicensePosition];
+    let id = $dataLicenseMap[this.getBoardName()][this.getStartingPosition()];
     if(this._lastLicenseId >= 0){
         id = this._lastLicenseId;
     }
@@ -644,16 +655,14 @@ Game_Actor.prototype.setup = function(actorId){
 //Help function to give the required license points and then claim all the liceses a class starts as
 Game_Actor.prototype.initLicenses = function(){
     this._lp = 0;
-    if('StartingLicenses' in this.currentClass().meta){
-        let startingLicenses = this.currentClass().meta.StartingLicenses.split("|");
-        let board = this.currentClass().meta.BoardName;
-        startingLicenses.forEach(function(coords){
-            let index = $dataLicenseMap[board][coords];
-            let license = $dataLicenseBoard[board][index];
-            this.gainLicenseResource(license.getCost(this));
-            this.claimLicense(index,license);
-        }, this);
-    }
+    let startingLicenses = this.getStartingLicenses();
+    let board = this.getBoardName();
+    startingLicenses.forEach(function(coords){
+        let index = $dataLicenseMap[board][coords];
+        let license = $dataLicenseBoard[board][index];
+        this.gainLicenseResource(license.getCost(this));
+        this.claimLicense(index,license);
+    }, this);
 }
 
 
@@ -799,7 +808,44 @@ Game_Actor.prototype.traitObjects = function(){
 }
 
 Game_Actor.prototype.getBoardName = function(){
-    return this.currentClass().meta.BoardName;
+    let source;
+    switch(Gimmer_Core.LicenseBoard.MetaTagSource){
+        case "class":
+            source = this.currentClass();
+            break;
+        case 'actor':
+            source = this.actor();
+            break;
+    }
+
+    return source.meta.BoardName;
+}
+
+Game_Actor.prototype.getStartingPosition = function(){
+    let source;
+    switch(Gimmer_Core.LicenseBoard.MetaTagSource){
+        case "class":
+            source = this.currentClass();
+            break;
+        case 'actor':
+            source = this.actor();
+            break;
+    }
+
+    return source.meta.StartingLicensePosition;
+}
+
+Game_Actor.prototype.getStartingLicenses = function(){
+    let source;
+    switch(Gimmer_Core.LicenseBoard.MetaTagSource) {
+        case "class":
+            source = this.currentClass();
+            break;
+        case 'actor':
+            source = this.actor();
+            break;
+    }
+    return ('StartingLicenses' in source.meta ? source.StartingLicenses.split("|") : []);
 }
 
 //Helper function to find if an actor has a specific license
