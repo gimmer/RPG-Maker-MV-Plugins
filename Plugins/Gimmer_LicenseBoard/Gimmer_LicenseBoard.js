@@ -9,7 +9,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v2.1 - License Board to replace / augement the exp leveling system with stats bought with licenses
+ * @plugindesc v2.1.1 - License Board to replace / augement the exp leveling system with stats bought with licenses
  * @author Gimmer_
  * @help
  * ===========
@@ -26,6 +26,9 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * <StartingLicensePosition:x,y> Where a class starts on the board
  * <BoardName:name> What board to use for a given class
  * <StartingLicenses:x,y|x2,y2|x3,y3,etc> The positions of license that a given class should start with
+ *
+ * Actor Tags
+ * <MaxLP:number> The max amount of LP that actor can have. There is also a global maximum, but you can override by characters.
  *
  * =============
  * XP and LP Side by Side
@@ -63,6 +66,9 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * - Support for having exp and lp separately
  * Version 2.1
  *  - Support for toggling where you want the tags to be, so you can use actor tags instead to let people change classes
+ * Version 2.1.1
+ *  - Support for mouse clicking on licenses (a bit janky)
+ *  - Support for upper limit on LP
  *
  * Terms of Use:
  * =======================================================================
@@ -176,6 +182,13 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * @desc Do you want EXP to remain and still function normally? By default, LP replaces EXP and leveling is done only via the board. Change this to "true" if you want both systems to run side by side. See the "XP and LP Side by Side" section of the description
  * Default False
  * @default false
+ *
+ * @param Max LP
+ * @parent ---Include EXP---
+ * @type Number
+ * @desc If EXP is still being used, do you want a max LP value that actors can store before they stop earning more? (Leave 0 for no limit)
+ * Default 0
+ * @default 0
  *
  * @param Boards Linked To
  * @parent ---Parameters---
@@ -369,6 +382,7 @@ Gimmer_Core.LicenseBoard.ArmorUsingPhase = lbParams["Armor Using Phrase"];
 Gimmer_Core.LicenseBoard.AlreadyClaimedText = lbParams["Already Claimed Text"];
 Gimmer_Core.LicenseBoard.UsingExp = (lbParams["Include EXP"] === "true");
 Gimmer_Core.LicenseBoard.MetaTagSource = lbParams['Boards Linked To'];
+Gimmer_Core.LicenseBoard.MaxLP = (Number(lbParams['Max LP']) > 0 ? Number(lbParams['Max LP']) : Number.MAX_SAFE_INTEGER);
 
 //Tracking Variables
 Gimmer_Core.LicenseBoard.maxX = 0;
@@ -750,8 +764,22 @@ Game_Actor.prototype.gainLicenseResource = function(amount){
     }
 }
 
+Gimmer_Core.LicenseBoard._Game_Actor_prototype_changeExp = Game_Actor.prototype.changeExp;
+Game_Actor.prototype.changeExp = function(exp, show){
+    if(!Gimmer_Core.LicenseBoard.UsingExp) {
+        exp = exp.clamp(exp, this.getMaxLicenseResource());
+    }
+    Gimmer_Core.LicenseBoard._Game_Actor_prototype_changeExp.call(this, exp, show);
+}
+
+Game_Actor.prototype.getMaxLicenseResource = function(){
+    return ('MaxLP' in this.actor().meta ? this.actor().meta.MaxLP : Gimmer_Core.LicenseBoard.MaxLP);
+}
+
 Game_Actor.prototype.gainLP = function(amount){
-    this._lp += amount;
+    var newAmount = this._lp + amount;
+    newAmount = newAmount.clamp(newAmount, this.getMaxLicenseResource())
+    this._lp = newAmount;
 }
 
 Game_Actor.prototype.payForLicense = function(amount){
@@ -906,6 +934,10 @@ Window_LicenseBoard.prototype.constructor = Window_LicenseBoard;
 
 Window_LicenseBoard.prototype.processWheel = function(){
     return false;
+}
+
+Window_LicenseBoard.prototype.onTouch = function(triggered){
+    this.select(this.hitTest(this.canvasToLocalX(TouchInput.x),this.canvasToLocalY(TouchInput.y)));
 }
 
 //constructor
@@ -1113,7 +1145,7 @@ Window_LicenseBoard.prototype.hitTest = function(x, y) {
         y = y + this._scrollY;
         x = Math.floor(x / this.itemWidth());
         y = Math.floor(y / this.itemHeight());
-        return $dataLicenseMap[x+","+y];
+        return $dataLicenseMap[this.boardName][x+","+y];
     }
     return -1;
 };
@@ -1566,15 +1598,17 @@ if(!Gimmer_Core.LicenseBoard.UsingExp) {
 
     //Exp is now LP
     Window_Status.prototype.drawExpInfo = function(x, y) {
-        var lineHeight = this.lineHeight();
-        var value1 = this._actor.getLicenseResource();
-        if (this._actor.hasAllLicenses()) {
-            value1 = '-------';
+        if(Gimmer_Core.LicenseBoard.isTriggered()) {
+            var lineHeight = this.lineHeight();
+            var value1 = this._actor.getLicenseResource();
+            if (this._actor.hasAllLicenses()) {
+                value1 = '-------';
+            }
+            this.changeTextColor(this.systemColor());
+            this.drawText(Gimmer_Core.LicenseBoard.PointsLabel, x, y, 270);
+            this.resetTextColor();
+            this.drawText(value1, x, y + lineHeight * 1, 270, 'right');
         }
-        this.changeTextColor(this.systemColor());
-        this.drawText(Gimmer_Core.LicenseBoard.PointsLabel, x, 0, 270);
-        this.resetTextColor();
-        this.drawText(value1, x, y + lineHeight * 1, 270, 'right');
     };
 
 }

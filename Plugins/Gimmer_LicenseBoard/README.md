@@ -28,6 +28,7 @@ A character will also start with no licenses.
 
 To change this, add in &lt;StartingLicenses:x,y|x2,y2|x3,y3> to the classes note section.
 
+To choose a max amount of LP that can be gathered, set a global max in the plugin parameters and add the tag &lt;MaxLP:num> on the actor's note tags.
 
 **Note: a character can see every node around the ones they own, so if you start them with random nodes around the board it may be a bit disjointed**
 
