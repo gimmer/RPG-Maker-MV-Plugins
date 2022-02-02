@@ -1,11 +1,14 @@
 var Gimmer_Core = Gimmer_Core || {'debug':false, 'pluginCommands':{}};
 
+Imported = Imported || {};
+Imported['Gimmer_Core'] = "1.6.1";
+
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.5 - General plugin framework for my other plugins
+ * @plugindesc v1.6.1 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -64,7 +67,8 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.4: parse plugin parameters in double quotes ("") as a single entry
  * - Version 1.4.1: bug fix for " parsing in plugin parameters
  * - Version 1.5: Show mouse cursor for debugging
- * - Version 1.6: Updated Polygone object to old js standard
+ * - Version 1.6: Updated Polygon object to old js standard
+ * - Version 1.6.1: Updated common event call back framework as it doesn't seem to work anymore
  *
  * Terms of Use:
  * =======================================================================
@@ -192,21 +196,13 @@ Gimmer_Core.reserveCommonEventWithCallback = function(commentEventId, callback){
     $gameTemp.reserveCommonEvent(commentEventId);
 }
 
+Gimmer_Core.Game_Interpreter_prototype_setupReservedCommonEvent = Game_Interpreter.prototype.setupReservedCommonEvent;
 Game_Interpreter.prototype.setupReservedCommonEvent = function() {
     if ($gameTemp.isCommonEventReserved()) {
-        this.setup($gameTemp.reservedCommonEvent().list, 0, $gameTemp.reservedCommonEvent().id);
-        $gameTemp.clearCommonEvent();
-        return true;
-    } else {
-        return false;
+        this._commonEventId = $gameTemp.reservedCommonEvent().id;
     }
+    return Gimmer_Core.Game_Interpreter_prototype_setupReservedCommonEvent.call(this);
 };
-Gimmer_Core.Game_Interpreter_prototype_setup = Game_Interpreter.prototype.setup;
-Game_Interpreter.prototype.setup = function(list, eventId, commonEventId) {
-    Gimmer_Core.Game_Interpreter_prototype_setup.call(this,list,eventId);
-    this._commonEventId = commonEventId || 0;
-};
-
 
 Gimmer_Core.Game_Interpreter_prototype_terminate = Game_Interpreter.prototype.terminate;
 Game_Interpreter.prototype.terminate = function() {
