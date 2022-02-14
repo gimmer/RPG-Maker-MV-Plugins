@@ -1,14 +1,14 @@
 var Gimmer_Core = Gimmer_Core || {'debug':false, 'pluginCommands':{}};
 
 Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.6.1";
+Imported['Gimmer_Core'] = "1.6.2";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.6.1 - General plugin framework for my other plugins
+ * @plugindesc v1.6.2 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -69,6 +69,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.5: Show mouse cursor for debugging
  * - Version 1.6: Updated Polygon object to old js standard
  * - Version 1.6.1: Updated common event call back framework as it doesn't seem to work anymore
+ * - Version 1.6.2: Fix an error occuring when events terminate
  *
  * Terms of Use:
  * =======================================================================
@@ -203,6 +204,13 @@ Game_Interpreter.prototype.setupReservedCommonEvent = function() {
     }
     return Gimmer_Core.Game_Interpreter_prototype_setupReservedCommonEvent.call(this);
 };
+
+Game_Interpreter.prototype.initialize()
+Gimmer_Core.Game_Interpreter_prototype_initialize = Game_Interpreter.prototype.initialize;
+Game_Interpreter.prototype.initialize = function(depth) {
+    Gimmer_Core.Game_Interpreter_prototype_initialize.call(this, depth);
+    this._commonEventId = -1;
+}
 
 Gimmer_Core.Game_Interpreter_prototype_terminate = Game_Interpreter.prototype.terminate;
 Game_Interpreter.prototype.terminate = function() {
