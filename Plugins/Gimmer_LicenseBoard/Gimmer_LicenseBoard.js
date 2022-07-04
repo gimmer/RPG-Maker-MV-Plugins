@@ -17,7 +17,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * ===========
  *
  * This plugin replaces the xp system with a License Point (LP) system, with stats, equip skills, and magic being bought with points earned in battles
- * Note: This assumes you will only us the LP system, and not exp. Settings an enemies XP value controls the LP they hand out now instead, so you will have to balance encounters around that.
+ * Note: This assumes you will only use the LP system, and not exp. Settings an enemies XP value controls the LP they hand out now instead, so you will have to balance encounters around that.
  *
  * NOTE: Currently you cannot change classes, but each class can have its own board.
  *
@@ -34,7 +34,7 @@ Gimmer_Core['LicenseBoard'] = {'loaded':true};
  * XP and LP Side by Side
  * =============
  *
- * Want to keep EXP as part of the leveling process? Turn on this flag and enemies will reward exp and lp seperately.
+ * Want to keep EXP as part of the leveling process? Turn on this flag and enemies will reward exp and lp separately.
  *
  * Requires you to <lp:num> tags to every enemy for how much LP you get from each enemy.
  *
