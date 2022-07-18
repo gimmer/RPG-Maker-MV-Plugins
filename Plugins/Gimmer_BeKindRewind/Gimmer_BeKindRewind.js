@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.1';
+Imported['Gimmer_BeKindRewind'] = '0.2';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -17,6 +17,7 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * 1) Set a trigger switch to "true" to enable time rewinding powers.
  * 2) Press "TAB" and the game will rewind the last x seconds, where x is defined in the plugin parameters.
  * 3) Set any Variables, Self Switches, or Switches you want not to reset on rewind
+ * 4) Turn on or off the rewinding of a player
  *
  * @param ---Parameters---
  *
@@ -43,6 +44,14 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * @default 5
  * Default 5
  * @desc How many seconds to rewind?
+ *
+ *
+ * @param Rewind Player
+ * @parent ---Parameters---
+ * @type Boolean
+ * @default true
+ * Default true
+ * @desc Should the player rewind?
  *
  * @param Switches To Remember
  * @parent ---Parameters---
@@ -80,6 +89,7 @@ Gimmer_Core.BKR.HistoryMS = Number(bkrParams['Seconds to Remember'] * 1000); //5
 Gimmer_Core.BKR.LockedSwitches = bkrParams['Switches To Remember'];
 Gimmer_Core.BKR.LockedVariables = bkrParams['Variables To Remember'];
 Gimmer_Core.BKR.LockedSelfSwitches = eval(bkrParams['Self Switches To Remember']) || [];
+Gimmer_Core.BKR.RewindPlayer = (bkrParams['Rewind Player'] === "true");
 
 Gimmer_Core.BKR.DebugOn = (bkrParams['Debug Always On'] === "true");
 
@@ -455,7 +465,9 @@ Scene_Map.prototype.update = function (){
     }
     if(this._rewindRequested){
         //set tone, do rewind sound effect
-        Gimmer_Core.BKR.rewindPlayer();
+        if(Gimmer_Core.BKR.RewindPlayer){
+            Gimmer_Core.BKR.rewindPlayer();
+        }
         $gameMap.events().forEach(function(event){
             Gimmer_Core.BKR.rewindEvent(event._eventId);
         });
