@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.2';
+Imported['Gimmer_BeKindRewind'] = '0.3';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -45,6 +45,13 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * Default 5
  * @desc How many seconds to rewind?
  *
+ * @param Min Rewind Time In Seconds
+ * @parent ---Parameters---
+ * @type Number
+ * @default 1
+ * Default 1
+ * @desc What's the minimum number of seconds to rewind if there's no event moving left to do?
+ *
  *
  * @param Rewind Player
  * @parent ---Parameters---
@@ -80,12 +87,14 @@ Gimmer_Core.BKR.selfSwitchBuffer = [];
 Gimmer_Core.BKR.variableBuffer = [];
 Gimmer_Core.BKR.eventMovementCache = {};
 Gimmer_Core.BKR.GlobalRewind = false;
+Gimmer_Core.BKR.RewindCount = 0;
 Gimmer_Core.BKR.SwitchId = Number(bkrParams['Trigger Switch']);
 Gimmer_Core.BKR.eventStart = {};
 Gimmer_Core.BKR.purgeBuffers = true;
 Gimmer_Core.BKR.HistorySeconds = Number(bkrParams['Seconds to Remember']);
 Gimmer_Core.BKR.VariableToStoreRewindTime = Number(bkrParams['Variable To Store Rewind Time'])
 Gimmer_Core.BKR.HistoryMS = Number(bkrParams['Seconds to Remember'] * 1000); //5 seconds
+Gimmer_Core.BKR.MinRewindTime = Number(bkrParams['Min Rewind Time In Seconds']);
 Gimmer_Core.BKR.LockedSwitches = bkrParams['Switches To Remember'];
 Gimmer_Core.BKR.LockedVariables = bkrParams['Variables To Remember'];
 Gimmer_Core.BKR.LockedSelfSwitches = eval(bkrParams['Self Switches To Remember']) || [];
@@ -309,7 +318,6 @@ Game_Event.prototype.refresh = function() {
     var newPageIndex = this._erased ? -1 : this.findProperPageIndex();
     if (this._pageIndex !== newPageIndex) {
         if(this._moveRoute && Gimmer_Core.BKR.isEnabled()){
-            dd('saving move route on page change: page '+this._pageIndex);
             if(!Gimmer_Core.BKR.eventMovementCache[this._eventId]){
                 Gimmer_Core.BKR.eventMovementCache[this._eventId] = {};
             }
@@ -457,6 +465,7 @@ Scene_Map.prototype.update = function (){
         if(Gimmer_Core.BKR.SomethingToDo()){
             this.requestRewind();
             Gimmer_Core.BKR.GlobalRewind = true;
+            Gimmer_Core.BKR.RewindCount = (Gimmer_Core.BKR.MinRewindTime * 60);
             Gimmer_Core.BKR.rewindSelfSwitches();
             Gimmer_Core.BKR.rewindSwitches();
             Gimmer_Core.BKR.rewindVariables();
@@ -487,6 +496,7 @@ Scene_Map.prototype.update = function (){
                 }
             }
         }, this);
+        Gimmer_Core.BKR.RewindCount--;
     }
     else {
         //Cleanup from completed run
@@ -530,6 +540,10 @@ Scene_Map.prototype.isRewinding = function (){
     });
 
     if($gameParty._isRewinding){
+        rewindCount++;
+    }
+
+    if(Gimmer_Core.BKR.RewindCount > 0){
         rewindCount++;
     }
 
