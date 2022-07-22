@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.3';
+Imported['Gimmer_BeKindRewind'] = '0.4';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -60,6 +60,29 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * Default true
  * @desc Should the player rewind?
  *
+ * @param Filter Type
+ * @parent ---Parameters---
+ * @type Select
+ * @option sepia
+ * @option motionblur
+ * @default sepia
+ * Default sepia
+ * @desc Would you like a Sepia Color Filter, or a motion blur filter?
+ *
+ * @param Motion Filter Minimum
+ * @parent Filter Type
+ * @type Number
+ * @default 5
+ * Default 5
+ * @desc Minimum amount of motion blur during motion blur filter?
+ *
+ * @param Motion Filter Maximum
+ * @parent Filter Type
+ * @type Number
+ * @default 20
+ * Default 20
+ * @desc Maximum amount of motion blur during motion blur filter?
+ *
  * @param Switches To Remember
  * @parent ---Parameters---
  * @type switch[]
@@ -99,8 +122,16 @@ Gimmer_Core.BKR.LockedSwitches = bkrParams['Switches To Remember'];
 Gimmer_Core.BKR.LockedVariables = bkrParams['Variables To Remember'];
 Gimmer_Core.BKR.LockedSelfSwitches = eval(bkrParams['Self Switches To Remember']) || [];
 Gimmer_Core.BKR.RewindPlayer = (bkrParams['Rewind Player'] === "true");
-
+Gimmer_Core.BKR.FilterType = bkrParams['Filter Type'];
+if(['sepia','motionblur'].indexOf(Gimmer_Core.BKR.FilterType) === -1){
+    throw Error("You have to choose either sepia or motionblur as your filter!");
+}
+if(Gimmer_Core.BKR.FilterType === 'motionblur' && !('MotionBlurFilter' in PIXI.filters)){
+    throw Error("In order to use MotionBlurFilter, please install pixi-filters.js and add it to index.html");
+}
 Gimmer_Core.BKR.DebugOn = (bkrParams['Debug Always On'] === "true");
+Gimmer_Core.BKR.MotionFilterMin = Number(bkrParams['Motion Filter Minimum']) || 5;
+Gimmer_Core.BKR.MotionFilterMax = Number(bkrParams['Motion Filter Maximum']) || 20;
 
 Gimmer_Core.BKR.onMapChange = function(){
     $gameVariables.setValue(Gimmer_Core.BKR.VariableToStoreRewindTime, Gimmer_Core.BKR.HistorySeconds);
@@ -441,7 +472,13 @@ Scene_Map.prototype.initialize = function(){
 }
 
 Gimmer_Core.BKR.startRewindEffect = function(){
-    SceneManager._scene._spriteset._rewindFilter.sepia();
+    if(Gimmer_Core.BKR.FilterType === 'sepia'){
+        SceneManager._scene._spriteset._rewindFilter.sepia();
+    }
+    else{
+        SceneManager._scene._spriteset._rewindFilter.velocity.x = 5;
+    }
+
     $gameSystem.saveBgm();
     AudioManager.stopBgm();
     AudioManager.playSe({
@@ -453,7 +490,12 @@ Gimmer_Core.BKR.startRewindEffect = function(){
 }
 
 Gimmer_Core.BKR.stopRewindEffect = function(){
-    SceneManager._scene._spriteset._rewindFilter.reset();
+    if(Gimmer_Core.BKR.FilterType === 'sepia'){
+        SceneManager._scene._spriteset._rewindFilter.reset();
+    }
+    else{
+        SceneManager._scene._spriteset._rewindFilter.velocity.x = 0;
+    }
     AudioManager.stopSe();
     $gameSystem.replayBgm();
 }
@@ -496,6 +538,9 @@ Scene_Map.prototype.update = function (){
                 }
             }
         }, this);
+        if(Gimmer_Core.BKR.FilterType === "motionblur"){
+            this.undulateRewindFilter();
+        }
         Gimmer_Core.BKR.RewindCount--;
     }
     else {
@@ -526,6 +571,20 @@ Scene_Map.prototype.update = function (){
         }
 
     }
+}
+
+Scene_Map.prototype.undulateRewindFilter = function(){
+    let x = SceneManager._scene._spriteset._rewindFilter.velocity.x;
+    x += this._spriteset._rewindMod;
+
+    if(x >= Gimmer_Core.BKR.MotionFilterMax){
+        this._spriteset._rewindMod = -1;
+    }
+    else if( x <= Gimmer_Core.BKR.MotionFilterMin){
+        this._spriteset._rewindMod = 1;
+    }
+
+    this._spriteset._rewindFilter.velocity.x = x;
 }
 
 Scene_Map.prototype.isRewinding = function (){
@@ -668,7 +727,16 @@ Game_Variables.prototype.setValue = function(variableId, value) {
 Gimmer_Core.BKR.Spriteset_Map_prototype_initialize = Spriteset_Map.prototype.initialize
 Spriteset_Map.prototype.initialize = function (){
     Gimmer_Core.BKR.Spriteset_Map_prototype_initialize.call(this);
-    this._rewindFilter = new PIXI.filters.ColorMatrixFilter;
+    switch(Gimmer_Core.BKR.FilterType){
+        case 'sepia':
+            this._rewindFilter = new PIXI.filters.ColorMatrixFilter;
+            break;
+        case 'motionblur':
+            this._rewindFilter = new PIXI.filters.MotionBlurFilter;
+            break;
+    }
+
+    this._rewindMod = 1;
     if(this._baseSprite.filters.length){
         this._baseSprite.filters = [this._toneFilter, this._rewindFilter];
     }

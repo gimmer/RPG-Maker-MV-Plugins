@@ -18,6 +18,16 @@ As such it's not as polished as some others, but is certainly fine.
 7) Quick, press "TAB"
 8) Watch time rewind, make the choice again afterwards.
 
+#### Motion Blur Filter
+Want to use the motion blur filter? You'll need pixi-filters.js.
+I've included version 2.7.1 in this repo as it's kind of a pain to find on their regular site, as it's super old.
+
+To use it, you'll have to go save it in the js/libraries folder of your project, and then add the following line to index.html:
+
+    <script type="text/javascript" src="js/libs/pixi-filters.js"></script>
+
+It's best if you do it right under the line for pixi-picture.js to keep it with the other pixi files.
+
 ### Known Issues:
 
 This plugin is current only compatible with 4-way movement. There are simply too many 8-way movement plugins out there
