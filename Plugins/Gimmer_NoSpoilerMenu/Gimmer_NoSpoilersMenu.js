@@ -32,13 +32,11 @@ Imported['Gimmer_NoSpoilersMenu'] = '1.0'
  * @default true
  *
  * @param Block Special From Showing
- * @parent debug
+ * @parent ---Parameters---
  * @type Boolean
  * @desc Block special from showing if you don't have any special attacks?
  * Default True
  * @default true
- *
- * @default false
  *
  * ===============
  * Version History:
@@ -52,15 +50,25 @@ Imported['Gimmer_NoSpoilersMenu'] = '1.0'
  * =======================================================================
  */
 
+let NSParams = PluginManager.parameters('Gimmer_NoSpoilersMenu');
+Gimmer_Core.NSM.HideMagic = (NSParams['Block Magic From Showing'] === "true");
+Gimmer_Core.NSM.HideSpecial = (NSParams['Block Special From Showing'] === "true");
+
+
 Window_ActorCommand.prototype.addSkillCommands = function() {
     var skillTypes = this._actor.addedSkillTypes();
     skillTypes.sort(function(a, b) {
         return a - b;
     });
     skillTypes.forEach(function(stypeId) {
-        let skills = this._actor.skills().filter(function(skill) {
-            return skill.stypeId === stypeId;
-        }, this);
+        let checkParam = (stypeId === 1 ? Gimmer_Core.NSM.HideMagic : Gimmer_Core.NSM.HideSpecial)
+
+        let skills = ['fake'];
+        if(checkParam){
+            skills = this._actor.skills().filter(function(skill) {
+                return skill.stypeId === stypeId;
+            }, this);
+        }
 
         if(skills.length){
             var name = $dataSystem.skillTypes[stypeId];
