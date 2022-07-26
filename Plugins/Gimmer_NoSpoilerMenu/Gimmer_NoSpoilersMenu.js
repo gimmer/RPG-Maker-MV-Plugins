@@ -5,7 +5,7 @@ if(Gimmer_Core === undefined){
 Gimmer_Core['NSM'] = {'loaded':true};
 
 var Imported = Imported || {};
-Imported['Gimmer_NoSpoilersMenu'] = '1.0'
+Imported['Gimmer_NoSpoilersMenu'] = '1.1'
 
 //=============================================================================
 /*:
@@ -42,6 +42,7 @@ Imported['Gimmer_NoSpoilersMenu'] = '1.0'
  * Version History:
  * ===============
  * - Version 1.0: Initial release
+ * - Version 1.1: Removed stuff from status menus
  *
  * Terms of Use:
  * =======================================================================
@@ -76,4 +77,45 @@ Window_ActorCommand.prototype.addSkillCommands = function() {
         }
 
     }, this);
+};
+
+Gimmer_Core.NSM.Window_MenuStatus_prototype_processOk = Window_MenuStatus.prototype.processOk;
+Window_MenuStatus.prototype.processOk = function (){
+    if(SceneManager._scene._commandWindow.currentSymbol() === "skill"){
+        let actorSkills = $gameParty.members()[this._index].skills()
+        if(actorSkills.length === 0){
+            this.playBuzzerSound()
+        }
+        else{
+            Gimmer_Core.NSM.Window_MenuStatus_prototype_processOk.call(this);
+        }
+    }
+    else{
+        Gimmer_Core.NSM.Window_MenuStatus_prototype_processOk.call(this);
+    }
+}
+
+Window_SkillType.prototype.makeCommandList = function() {
+    if (this._actor) {
+        var skillTypes = this._actor.addedSkillTypes();
+        skillTypes.sort(function(a, b) {
+            return a - b;
+        });
+        skillTypes.forEach(function(stypeId) {
+            let checkParam = (stypeId === 1 ? Gimmer_Core.NSM.HideMagic : Gimmer_Core.NSM.HideSpecial)
+
+            let skills = ['fake'];
+            if(checkParam){
+                skills = this._actor.skills().filter(function(skill) {
+                    return skill.stypeId === stypeId;
+                }, this);
+            }
+
+            if(skills.length){
+                var name = $dataSystem.skillTypes[stypeId];
+                this.addCommand(name, 'skill', true, stypeId);
+            }
+
+        }, this);
+    }
 };
