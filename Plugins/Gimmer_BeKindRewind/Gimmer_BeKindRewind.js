@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.4';
+Imported['Gimmer_BeKindRewind'] = '0.5';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -18,6 +18,8 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * 2) Press "TAB" and the game will rewind the last x seconds, where x is defined in the plugin parameters.
  * 3) Set any Variables, Self Switches, or Switches you want not to reset on rewind
  * 4) Turn on or off the rewinding of a player
+ *
+ * Run script call Gimmer_Core.BKR.turboMode() to enable an infinite history
  *
  * @param ---Parameters---
  *
@@ -123,6 +125,16 @@ Gimmer_Core.BKR.LockedVariables = bkrParams['Variables To Remember'];
 Gimmer_Core.BKR.LockedSelfSwitches = eval(bkrParams['Self Switches To Remember']) || [];
 Gimmer_Core.BKR.RewindPlayer = (bkrParams['Rewind Player'] === "true");
 Gimmer_Core.BKR.FilterType = bkrParams['Filter Type'];
+Gimmer_Core.BKR.TurboModeEnabled = false;
+Gimmer_Core.BKR.TempBuffers = {
+    gainBuffer: [],
+    playerMovementBuffer: [],
+    eventMovementBuffer: {},
+    switchBuffer: [],
+    selfSwitchBuffer: [],
+    variableBuffer: []
+};
+Gimmer_Core.BKR.TurboExpireTime = 0;
 if(['sepia','motionblur'].indexOf(Gimmer_Core.BKR.FilterType) === -1){
     throw Error("You have to choose either sepia or motionblur as your filter!");
 }
@@ -142,6 +154,16 @@ Gimmer_Core.BKR.onMapChange = function(){
     Gimmer_Core.BKR.selfSwitchBuffer = [];
     Gimmer_Core.BKR.variableBuffer = [];
     Gimmer_Core.BKR.eventMovementCache = {};
+    Gimmer_Core.BKR.TurboExpireTime = 0;
+    Gimmer_Core.BKR.TurboModeEnabled = false;
+}
+
+Gimmer_Core.BKR.turboMode = function(){
+    this.TurboModeEnabled = true;
+}
+
+Gimmer_Core.BKR.disableTurboMode = function(){
+    this.TurboModeEnabled = false;
 }
 
 Gimmer_Core.BKR.isEnabled = function(){
@@ -193,6 +215,9 @@ Gimmer_Core.BKR.rewindPlayer = function(){
         }
         $gamePlayer.forceMoveRoute(moveRoute);
     }
+    else if(Gimmer_Core.BKR.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.playerMovementBuffer.length > 0){
+        Gimmer_Core.BKR.playerMovementBuffer = Gimmer_Core.BKR.TempBuffers.playerMovementBuffer;
+    }
 }
 
 Gimmer_Core.BKR.rewindGains = function(){
@@ -232,6 +257,14 @@ Gimmer_Core.BKR.rewindEvent = function(eventId){
 
         event.forceMoveRoute(moveRoute);
     }
+    else if(
+        Gimmer_Core.BKR.TurboModeEnabled &&
+        Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId] &&
+        Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route &&
+        Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route.length
+    ){
+        Gimmer_Core.BKR.eventMovementBuffer[eventId].route = Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route;
+    }
 }
 
 Gimmer_Core.BKR.rewindSelfSwitches = function(){
@@ -267,7 +300,7 @@ Gimmer_Core.BKR.rewindVariables = function(){
 Gimmer_Core.BKR.Game_Player_prototype_moveStraight = Game_Player.prototype.moveStraight;
 Game_Player.prototype.moveStraight = function(d){
     if(Gimmer_Core.BKR.isEnabled()){
-        let time = new Date();
+        let time = parseInt(new Date().getTime());
         if(this.direction() !== d){
             Gimmer_Core.BKR.playerMovementBuffer.push(this.turnToReverse(this.direction(), time));
         }
@@ -285,7 +318,7 @@ Game_Player.prototype.jump = function(xPlus, yPlus){
     if(Gimmer_Core.BKR.isEnabled() && !Gimmer_Core.BKR.GlobalRewind){
         let newXplus = xPlus * -1;
         let newYplus = yPlus * -1;
-        Gimmer_Core.BKR.playerMovementBuffer.push({code:Game_Character.ROUTE_JUMP, parameters: [newXplus,newYplus],time: new Date()});
+        Gimmer_Core.BKR.playerMovementBuffer.push({code:Game_Character.ROUTE_JUMP, parameters: [newXplus,newYplus],time: parseInt(new Date().getTime())});
     }
 
     Gimmer_Core.BKR.Game_Player_prototype_jump.call(this, xPlus, yPlus);
@@ -294,7 +327,7 @@ Game_Player.prototype.jump = function(xPlus, yPlus){
 Gimmer_Core.BKR.Game_Event_prototype_moveStraight = Game_Event.prototype.moveStraight;
 Game_Event.prototype.moveStraight = function(d){
     if(Gimmer_Core.BKR.isEnabled()) {
-        let time = new Date();
+        let time = parseInt(new Date().getTime());
         if (!Gimmer_Core.BKR.eventMovementBuffer[this._eventId]) {
             Gimmer_Core.BKR.eventMovementBuffer[this._eventId] = {'route': [], 'moveIndex': 0};
         }
@@ -321,7 +354,13 @@ Game_CharacterBase.prototype.initMembers = function(){
 
 Game_Player.prototype.processRouteEnd = function(){
     if(this._isRewinding){
-        Gimmer_Core.BKR.playerMovementBuffer = [];
+        if(Gimmer_Core.BKR.TurboModeEnabled){
+            Gimmer_Core.BKR.playerMovementBuffer = Gimmer_Core.BKR.TempBuffers.playerMovementBuffer;
+        }
+        else{
+            Gimmer_Core.BKR.playerMovementBuffer = [];
+        }
+
         this._isRewinding = false;
     }
     Game_Character.prototype.processRouteEnd.call(this);
@@ -336,7 +375,12 @@ Game_Event.prototype.restoreMoveRoute = function (){
 
 Game_Event.prototype.processRouteEnd = function(){
     if(this._isRewinding){
-        Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = [];
+        if(Gimmer_Core.BKR.TurboModeEnabled){
+            Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[this._eventId].route;
+        }
+        else{
+            Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = [];
+        }
         this._isRewinding = false;
         if(Gimmer_Core.BKR.eventMovementCache[this._eventId] && Gimmer_Core.BKR.eventMovementCache[this._eventId][this._pageIndex]){
             this.setMoveSpeed(Gimmer_Core.BKR.eventMovementCache[this._eventId][this._pageIndex].moveSpeed);
@@ -402,7 +446,7 @@ Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
                 'item' : item,
                 'amount': changeAmount,
                 'includeEquip': includeEquip,
-                'time': new Date()
+                'time': parseInt(new Date().getTime())
             });
         }
     }
@@ -500,6 +544,81 @@ Gimmer_Core.BKR.stopRewindEffect = function(){
     $gameSystem.replayBgm();
 }
 
+Gimmer_Core.BKR.buildTempBuffers = function(){
+    this.TempBuffers.gainBuffer = JSON.parse(JSON.stringify(this.gainBuffer));
+    this.TempBuffers.playerMovementBuffer = JSON.parse(JSON.stringify(this.playerMovementBuffer));
+    this.TempBuffers.eventMovementBuffer = JSON.parse(JSON.stringify(this.eventMovementBuffer));
+    this.TempBuffers.switchBuffer = JSON.parse(JSON.stringify(this.switchBuffer));
+    this.TempBuffers.variableBuffer = JSON.parse(JSON.stringify(this.variableBuffer));
+    this.TempBuffers.selfSwitchBuffer = JSON.parse(JSON.stringify(this.selfSwitchBuffer));
+    this.TurboExpireTime = parseInt(new Date().getTime()) - this.HistoryMS;
+
+    //Player movement
+    this.TempBuffers.playerMovementBuffer = this.TempBuffers.playerMovementBuffer.filter(function(command) {
+        return (command.time < this.TurboExpireTime);
+    }, this);
+    this.TempBuffers.playerMovementBuffer.forEach(function(command){
+        command.time += this.HistoryMS;
+    },this);
+
+    //Event movement
+    $gameMap.events().forEach(function(event){
+        if(this.TempBuffers.eventMovementBuffer[event._eventId]){
+            this.TempBuffers.eventMovementBuffer[event._eventId].route =  this.TempBuffers.eventMovementBuffer[event._eventId].route.filter(function (command){
+                return (command.time <= this.TurboExpireTime);
+            }, this);
+            this.TempBuffers.eventMovementBuffer[event._eventId].route.forEach(function(command){
+                command.time += this.HistoryMS;
+            },this);
+        }
+
+    }, this);
+
+    //self switches
+    this.TempBuffers.selfSwitchBuffer = this.TempBuffers.selfSwitchBuffer.filter(function(selfSwitch) {
+        return (selfSwitch.time < this.TurboExpireTime);
+    }, this);
+    this.TempBuffers.selfSwitchBuffer.forEach(function(selfSwitch){
+        selfSwitch.time += this.HistoryMS;
+    },this);
+
+    //switches
+    this.TempBuffers.switchBuffer = this.TempBuffers.switchBuffer.filter(function(myswitch) {
+        return (myswitch.time < this.TurboExpireTime);
+    }, this);
+    this.TempBuffers.switchBuffer.forEach(function(myswitch){
+        myswitch.time += this.HistoryMS;
+    },this);
+
+    //Variables
+
+    this.TempBuffers.variableBuffer = this.TempBuffers.variableBuffer.filter(function(variable) {
+        return (variable.time < this.TurboExpireTime);
+    }, this);
+    this.TempBuffers.variableBuffer.forEach(function(variable){
+        variable.time += this.HistoryMS;
+    },this);
+
+    this.TempBuffers.gainBuffer = this.TempBuffers.gainBuffer.filter(function(variable) {
+        return (variable.time < this.TurboExpireTime);
+    }, this);
+    this.TempBuffers.gainBuffer.forEach(function(variable){
+        variable.time += this.HistoryMS;
+    },this);
+}
+
+Gimmer_Core.BKR.restoreTempBuffers = function(){
+    //movement is done in move route processing
+
+    //Take what's in the temp buffer and replace the original ones
+    this.gainBuffer = JSON.parse(JSON.stringify(this.TempBuffers.gainBuffer));
+    this.switchBuffer = JSON.parse(JSON.stringify(this.TempBuffers.switchBuffer));
+    this.variableBuffer = JSON.parse(JSON.stringify(this.TempBuffers.variableBuffer));
+    this.selfSwitchBuffer = JSON.parse(JSON.stringify(this.TempBuffers.selfSwitchBuffer));
+    this.TurboExpireTime = 0;
+
+}
+
 Gimmer_Core.BKR.Scene_Map_prototype_update = Scene_Map.prototype.update;
 Scene_Map.prototype.update = function (){
     Gimmer_Core.BKR.Scene_Map_prototype_update.call(this);
@@ -508,6 +627,10 @@ Scene_Map.prototype.update = function (){
             this.requestRewind();
             Gimmer_Core.BKR.GlobalRewind = true;
             Gimmer_Core.BKR.RewindCount = (Gimmer_Core.BKR.MinRewindTime * 60);
+            if(Gimmer_Core.BKR.TurboModeEnabled){
+                Gimmer_Core.BKR.buildTempBuffers()
+                this.purgeAllBuffers();
+            }
             Gimmer_Core.BKR.rewindSelfSwitches();
             Gimmer_Core.BKR.rewindSwitches();
             Gimmer_Core.BKR.rewindVariables();
@@ -515,7 +638,6 @@ Scene_Map.prototype.update = function (){
         }
     }
     if(this._rewindRequested){
-        //set tone, do rewind sound effect
         if(Gimmer_Core.BKR.RewindPlayer){
             Gimmer_Core.BKR.rewindPlayer();
         }
@@ -523,6 +645,7 @@ Scene_Map.prototype.update = function (){
             Gimmer_Core.BKR.rewindEvent(event._eventId);
         });
         Gimmer_Core.BKR.rewindGains();
+        Gimmer_Core.BKR.restoreTempBuffers();
         this._rewindRequested = false;
     }
     else if(this.isRewinding()){
@@ -562,15 +685,19 @@ Scene_Map.prototype.update = function (){
             Gimmer_Core.BKR.GlobalRewind = false;
         }
 
-        if(Gimmer_Core.BKR.purgeBuffers){
-            this.purgePlayerBuffer();
-            this.purgeEventBuffer();
-            this.purgeSelfSwitchBuffer();
-            this.purgeSwitchBuffer();
-            this.purgeVariableBuffer();
+        if(Gimmer_Core.BKR.purgeBuffers && !Gimmer_Core.BKR.TurboModeEnabled){
+            this.purgeAllBuffers();
         }
 
     }
+}
+
+Scene_Map.prototype.purgeAllBuffers = function(){
+    this.purgePlayerBuffer();
+    this.purgeEventBuffer();
+    this.purgeSelfSwitchBuffer();
+    this.purgeSwitchBuffer();
+    this.purgeVariableBuffer();
 }
 
 Scene_Map.prototype.undulateRewindFilter = function(){
@@ -615,82 +742,79 @@ Scene_Map.prototype.requestRewind = function (){
 
 Scene_Map.prototype.purgePlayerBuffer = function (){
     if(!$gameMap.isEventRunning()){
-        let expiryDate = new Date() - Gimmer_Core.BKR.HistoryMS;
-        Gimmer_Core.BKR.playerMovementBuffer.forEach(function(command, index){
-            if(command.time < expiryDate){
-                Gimmer_Core.BKR.playerMovementBuffer.splice(index,1);
-            }
+        let expiryDate = (Gimmer_Core.BKR.TurboExpireTime > 0 ? Gimmer_Core.BKR.TurboExpireTime : parseInt(new Date().getTime()) - Gimmer_Core.BKR.HistoryMS);
+        Gimmer_Core.BKR.playerMovementBuffer = Gimmer_Core.BKR.playerMovementBuffer.filter(function(command){
+            return (command.time >= expiryDate)
         });
     }
 }
 
 Gimmer_Core.BKR.refreshCaches = function(){
+    dd('refresh');
     Gimmer_Core.BKR.playerMovementBuffer.forEach(function(command, index){
-        Gimmer_Core.BKR.playerMovementBuffer[index].time = new Date();
+        Gimmer_Core.BKR.playerMovementBuffer[index].time = parseInt(new Date().getTime())
     });
     $gameMap.events().forEach(function(event){
         if(Gimmer_Core.BKR.eventMovementBuffer[event._eventId]){
             Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route.forEach(function(command, index){
-                Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route[index].time = new Date();
+                Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route[index].time = parseInt(new Date().getTime())
             });
         }
     });
     Gimmer_Core.BKR.selfSwitchBuffer.forEach(function(selfSwitch, index){
-        Gimmer_Core.BKR.selfSwitchBuffer[index].time  = new Date()
+        Gimmer_Core.BKR.selfSwitchBuffer[index].time  = parseInt(new Date().getTime())
     });
     Gimmer_Core.BKR.switchBuffer.forEach(function(myswitch, index){
-        Gimmer_Core.BKR.switchBuffer[index].time = new Date();
+        Gimmer_Core.BKR.switchBuffer[index].time = parseInt(new Date().getTime())
     });
 
     Gimmer_Core.BKR.variableBuffer.forEach(function(variable, index){
-        Gimmer_Core.BKR.variableBuffer[index].time = new Date();
+        Gimmer_Core.BKR.variableBuffer[index].time = parseInt(new Date().getTime());
+    });
+
+    Gimmer_Core.BKR.gainBuffer.forEach(function(variable, index) {
+        Gimmer_Core.BKR.gainBuffer[index].time = parseInt(new Date().getTime())
     });
 }
 
 Scene_Map.prototype.purgeEventBuffer = function (){
     if(!$gameMap.isEventRunning()){
-        let expiryDate = new Date() - Gimmer_Core.BKR.HistoryMS;
+        let expiryDate = (Gimmer_Core.BKR.TurboExpireTime > 0 ? Gimmer_Core.BKR.TurboExpireTime : parseInt(new Date().getTime()) - Gimmer_Core.BKR.HistoryMS);
         $gameMap.events().forEach(function(event){
+
             if(Gimmer_Core.BKR.eventMovementBuffer[event._eventId]){
-                Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route.forEach(function(command, index){
-                    if(command.time < expiryDate){
-                        Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route.splice(index,1);
-                    }
+                Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route = Gimmer_Core.BKR.eventMovementBuffer[event._eventId].route.filter(function(command){
+                    return (command.time > expiryDate);
                 });
             }
         });
     }
+
 }
 
 Scene_Map.prototype.purgeSelfSwitchBuffer = function(){
     if(!$gameMap.isEventRunning()){
-        let expiryDate = new Date() - Gimmer_Core.BKR.HistoryMS;
-        Gimmer_Core.BKR.selfSwitchBuffer.forEach(function(selfSwitch, index){
-            if(selfSwitch.time < expiryDate){
-                Gimmer_Core.BKR.selfSwitchBuffer.splice(index,1);
-            }
+        let expiryDate = (Gimmer_Core.BKR.TurboExpireTime > 0 ? Gimmer_Core.BKR.TurboExpireTime : parseInt(new Date().getTime()) - Gimmer_Core.BKR.HistoryMS);
+        Gimmer_Core.BKR.selfSwitchBuffer = Gimmer_Core.BKR.selfSwitchBuffer.filter(function(selfSwitch){
+            return (selfSwitch.time >= expiryDate)
         });
     }
 }
 
 Scene_Map.prototype.purgeSwitchBuffer = function(){
     if(!$gameMap.isEventRunning()){
-        let expiryDate = new Date() - Gimmer_Core.BKR.HistoryMS;
-        Gimmer_Core.BKR.switchBuffer.forEach(function(myswitch, index){
-            if(myswitch.time < expiryDate){
-                Gimmer_Core.BKR.switchBuffer.splice(index,1);
-            }
+        let expiryDate = (Gimmer_Core.BKR.TurboExpireTime > 0 ? Gimmer_Core.BKR.TurboExpireTime : parseInt(new Date().getTime()) - Gimmer_Core.BKR.HistoryMS);
+        Gimmer_Core.BKR.switchBuffer = Gimmer_Core.BKR.switchBuffer.filter(function(myswitch){
+            return (myswitch.time >= expiryDate)
         });
     }
 }
 
 Scene_Map.prototype.purgeVariableBuffer = function(){
     if(!$gameMap.isEventRunning()){
-        let expiryDate = new Date() - Gimmer_Core.BKR.HistoryMS;
-        Gimmer_Core.BKR.variableBuffer.forEach(function(variable, index){
-            if(variable.time < expiryDate){
-                Gimmer_Core.BKR.variableBuffer.splice(index,1);
-            }
+        let expiryDate = (Gimmer_Core.BKR.TurboExpireTime > 0 ? Gimmer_Core.BKR.TurboExpireTime : parseInt(new Date().getTime()) - Gimmer_Core.BKR.HistoryMS);
+        Gimmer_Core.BKR.variableBuffer = Gimmer_Core.BKR.variableBuffer.filter(function(variable){
+            return (variable.time >= expiryDate)
         });
     }
 }
@@ -700,7 +824,7 @@ Gimmer_Core.BKR.Game_Switches_prototype_setValue = Game_Switches.prototype.setVa
 Game_Switches.prototype.setValue = function(switchId, value) {
     if (Gimmer_Core.BKR.isEnabled() && !Gimmer_Core.BKR.GlobalRewind && switchId > 0 && switchId < $dataSystem.switches.length && Gimmer_Core.BKR.LockedSwitches.indexOf(switchId.toString()) === -1) {
         let oldValue = !!this._data[switchId];
-        Gimmer_Core.BKR.switchBuffer.push({id:switchId, oldValue:oldValue, time: new Date()});
+        Gimmer_Core.BKR.switchBuffer.push({id:switchId, oldValue:oldValue, time: parseInt(new Date().getTime())});
     }
     Gimmer_Core.BKR.Game_Switches_prototype_setValue.call(this, switchId, value);
 };
@@ -710,7 +834,7 @@ Game_SelfSwitches.prototype.setValue = function(key, value) {
     let checkKey = key[0]+"-"+key[1]+"-"+key[2];
     if(Gimmer_Core.BKR.isEnabled() && !Gimmer_Core.BKR.GlobalRewind && Gimmer_Core.BKR.LockedSelfSwitches.indexOf(checkKey) === -1) {
         let oldValue = !!this._data[key];
-        Gimmer_Core.BKR.selfSwitchBuffer.push({key: key, oldValue: oldValue, time: new Date()});
+        Gimmer_Core.BKR.selfSwitchBuffer.push({key: key, oldValue: oldValue, time: parseInt(new Date().getTime())});
     }
     Gimmer_Core.BKR.Game_SelfSwitches_prototype_setValue.call(this,key,value);
 };
@@ -718,7 +842,7 @@ Game_SelfSwitches.prototype.setValue = function(key, value) {
 Gimmer_Core.BKR.Game_Variables_prototype_setValue = Game_Variables.prototype.setValue;
 Game_Variables.prototype.setValue = function(variableId, value) {
     if (Gimmer_Core.BKR.isEnabled() && !Gimmer_Core.BKR.GlobalRewind && variableId > 0 && variableId < $dataSystem.variables.length  && Gimmer_Core.BKR.LockedVariables.indexOf(variableId.toString()) === -1) {
-        Gimmer_Core.BKR.variableBuffer.push({variableId: variableId, oldValue: this._data[variableId], time: new Date()});
+        Gimmer_Core.BKR.variableBuffer.push({variableId: variableId, oldValue: this._data[variableId], time: parseInt(new Date().getTime())});
     }
     Gimmer_Core.BKR.Game_Variables_prototype_setValue.call(this, variableId, value);
 };
@@ -756,37 +880,40 @@ Game_Interpreter.prototype.setup = function(list, eventId){
 
 Gimmer_Core.BKR.Game_Interpreter_prototype_terminate = Game_Interpreter.prototype.terminate;
 Game_Interpreter.prototype.terminate = function (){
+    let wasRunning = (this._list.count > 0);
     Gimmer_Core.BKR.Game_Interpreter_prototype_terminate.call(this);
-    let diff = new Date() - Gimmer_Core.BKR.eventStart[this._eventId];
-    let eventId = this._eventId;
-    Gimmer_Core.BKR.playerMovementBuffer.forEach(function(line){
-        line.time = new Date(line.time.getTime() + diff);
-    });
-    Object.keys(Gimmer_Core.BKR.eventMovementBuffer).forEach(function(eventKey){
-        Gimmer_Core.BKR.eventMovementBuffer[eventKey].route.forEach(function(step){
-            if(parseInt(eventKey) !== eventId){ //only add the length of the event to the ones that aren't you
-                step.time = new Date(step.time.getTime() + diff)
+    if(wasRunning){
+        let diff = parseInt(new Date().getTime()) - Gimmer_Core.BKR.eventStart[this._eventId];
+        let eventId = this._eventId;
+        Gimmer_Core.BKR.playerMovementBuffer.forEach(function(line){
+            line.time += diff;
+        });
+        Object.keys(Gimmer_Core.BKR.eventMovementBuffer).forEach(function(eventKey){
+            Gimmer_Core.BKR.eventMovementBuffer[eventKey].route.forEach(function(step){
+                if(parseInt(eventKey) !== eventId){ //only add the length of the event to the ones that aren't you
+                    step.time += diff;
+                }
+                else{
+                    step.time = parseInt(new Date().getTime()); //All movement in an event happens at the same time, so it's all or nothing
+                }
+            });
+        });
+        Gimmer_Core.BKR.selfSwitchBuffer.forEach(function(line){
+            if(line.key[0] == this._mapId && line.key[1] == this._eventId){
+                //This switch belongs to the running event, tie it in to the same time
+                line.time = parseInt(new Date().getTime());
             }
             else{
-                step.time = new Date(); //All movement in an event happens at the same time, so it's all or nothing
+                line.time += diff;
             }
-        });
-    });
-    Gimmer_Core.BKR.selfSwitchBuffer.forEach(function(line){
-        if(line.key[0] == this._mapId && line.key[1] == this._eventId){
-            //This switch belongs to the running event, tie it in to the same time
-            line.time = new Date();
-        }
-        else{
-            line.time = new Date(line.time.getTime() + diff);
-        }
 
-    }, this);
-    Gimmer_Core.BKR.switchBuffer.forEach(function(line){
-        line.time = new Date(line.time.getTime() + diff);
-    });
-    Gimmer_Core.BKR.variableBuffer.forEach(function(line){
-        line.time = new Date(line.time.getTime() + diff);
-    });
-    delete Gimmer_Core.BKR.eventStart[this._eventId];
+        }, this);
+        Gimmer_Core.BKR.switchBuffer.forEach(function(line){
+            line.time += diff;
+        });
+        Gimmer_Core.BKR.variableBuffer.forEach(function(line){
+            line.time += diff;
+        });
+        delete Gimmer_Core.BKR.eventStart[this._eventId];
+    }
 }
