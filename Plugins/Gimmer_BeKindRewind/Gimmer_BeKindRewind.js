@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.5';
+Imported['Gimmer_BeKindRewind'] = '0.6';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -228,7 +228,12 @@ Gimmer_Core.BKR.rewindGains = function(){
                 $gameParty.gainItem(gain.item, gain.amount, gain.includeEquip);
             }
         });
-        Gimmer_Core.BKR.gainBuffer = [];
+        if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.gainBuffer.length){
+            Gimmer_Core.BKR.gainBuffer = Gimmer_Core.BKR.TempBuffers.gainBuffer;
+        }
+        else{
+            Gimmer_Core.BKR.gainBuffer = [];
+        }
         $gameParty._isRewinding = false;
     }
 }
@@ -273,7 +278,12 @@ Gimmer_Core.BKR.rewindSelfSwitches = function(){
         Gimmer_Core.BKR.selfSwitchBuffer.reverse().forEach(function(selfswitch){
             $gameSelfSwitches.setValue(selfswitch.key, selfswitch.oldValue);
         });
-        Gimmer_Core.BKR.selfSwitchBuffer = [];
+        if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.selfSwitchBuffer.length){
+            Gimmer_Core.BKR.selfSwitchBuffer = Gimmer_Core.BKR.TempBuffers.selfSwitchBuffer;
+        }
+        else{
+            Gimmer_Core.BKR.selfSwitchBuffer = [];
+        }
     }
 }
 
@@ -283,7 +293,12 @@ Gimmer_Core.BKR.rewindSwitches = function(){
         Gimmer_Core.BKR.switchBuffer.reverse().forEach(function(myswitch){
             $gameSwitches.setValue(myswitch.id, myswitch.oldValue);
         });
-        Gimmer_Core.BKR.switchBuffer = [];
+        if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.switchBuffer.length){
+            Gimmer_Core.BKR.switchBuffer = Gimmer_Core.BKR.TempBuffers.switchBuffer;
+        }
+        else{
+            Gimmer_Core.BKR.switchBuffer = [];
+        }
     }
 }
 
@@ -293,7 +308,12 @@ Gimmer_Core.BKR.rewindVariables = function(){
         Gimmer_Core.BKR.variableBuffer.reverse().forEach(function(variable){
             $gameVariables.setValue(variable.variableId, variable.oldValue);
         });
-        Gimmer_Core.BKR.variableBuffer = [];
+        if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.variableBuffer.length){
+            Gimmer_Core.BKR.variableBuffer = Gimmer_Core.BKR.TempBuffers.variableBuffer;
+        }
+        else{
+            Gimmer_Core.BKR.variableBuffer = [];
+        }
     }
 }
 
