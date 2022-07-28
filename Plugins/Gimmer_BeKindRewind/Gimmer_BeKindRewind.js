@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.6';
+Imported['Gimmer_BeKindRewind'] = '0.7';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -241,6 +241,7 @@ Gimmer_Core.BKR.rewindGains = function(){
 Gimmer_Core.BKR.rewindEvent = function(eventId){
     let event = $gameMap.event(eventId);
     if(Gimmer_Core.BKR.eventMovementBuffer[eventId] && Gimmer_Core.BKR.eventMovementBuffer[eventId].route && Gimmer_Core.BKR.eventMovementBuffer[eventId].route.length > 0){
+        dd('rewinding')
         event._isRewinding = true;
         let origMoveSpeed = event.moveSpeed();
         let rewindSpeed = 6;
@@ -662,6 +663,7 @@ Scene_Map.prototype.update = function (){
             Gimmer_Core.BKR.rewindPlayer();
         }
         $gameMap.events().forEach(function(event){
+            event.refresh();
             Gimmer_Core.BKR.rewindEvent(event._eventId);
         });
         Gimmer_Core.BKR.rewindGains();
