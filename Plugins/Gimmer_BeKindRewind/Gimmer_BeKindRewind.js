@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.7';
+Imported['Gimmer_BeKindRewind'] = '0.8';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -20,6 +20,12 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * 4) Turn on or off the rewinding of a player
  *
  * Run script call Gimmer_Core.BKR.turboMode() to enable an infinite history
+ *
+ * IF you want to use the screen shake option, you need to include Shaker:
+ * https://gist.github.com/Creta5164/b499b5db4cdf4488e1ec78c141e59085
+ *
+ * Note: any plugin options you set that sets something that could be rewound (switch, selfswitch, variable)
+ * will automatically be included in the list of non-rewindable switch, selfswitch, or variable.
  *
  * @param ---Parameters---
  *
@@ -54,13 +60,55 @@ Gimmer_Core['BKR'] = {'loaded':true};
  * Default 1
  * @desc What's the minimum number of seconds to rewind if there's no event moving left to do?
  *
- *
  * @param Rewind Player
  * @parent ---Parameters---
  * @type Boolean
  * @default true
  * Default true
  * @desc Should the player rewind?
+ *
+ * @param Shake Screen
+ * @parent ---Parameters---
+ * @type Boolean
+ * @default false
+ * Default false
+ * @desc Should the screen shake during rewind?
+ *
+ * @param Shake Intensity
+ * @parent Shake Screen
+ * @type Number
+ * @default 2
+ * Default 2
+ * @desc Intensity for shake effect?
+ *
+ * @param Shake Frame Update Frequency
+ * @parent Shake Screen
+ * @type Number
+ * @default 2
+ * Default 2
+ * @desc Frame Update Frequency For the shake Effect?
+ *
+ * @param Shake Frame Count
+ * @parent Shake Screen
+ * @type Number
+ * @default 60
+ * Default 60
+ * @desc How many frames to shake for?
+ *
+ * @param Switch To Enable Shake
+ * @parent Shake Screen
+ * @type switch
+ * @desc Switch that needs to be on to have the screen shake. This lets players turn it off.
+ *
+ * @param Common Event To Run At Rewind Start
+ * @parent ---Parameters---
+ * @type common_event
+ * @desc What common event, if any, do you want to run when time begins to rewind?
+ *
+ * @param Common Event To Run At Rewind End
+ * @parent ---Parameters---
+ * @type common_event
+ * @desc What common event, if any, do you want to run when time finishes rewinding?
  *
  * @param Filter Type
  * @parent ---Parameters---
@@ -120,11 +168,25 @@ Gimmer_Core.BKR.HistorySeconds = Number(bkrParams['Seconds to Remember']);
 Gimmer_Core.BKR.VariableToStoreRewindTime = Number(bkrParams['Variable To Store Rewind Time'])
 Gimmer_Core.BKR.HistoryMS = Number(bkrParams['Seconds to Remember'] * 1000); //5 seconds
 Gimmer_Core.BKR.MinRewindTime = Number(bkrParams['Min Rewind Time In Seconds']);
-Gimmer_Core.BKR.LockedSwitches = bkrParams['Switches To Remember'];
-Gimmer_Core.BKR.LockedVariables = bkrParams['Variables To Remember'];
+Gimmer_Core.BKR.ShakeScreen = (bkrParams['Shake Screen'] === "true");
+Gimmer_Core.BKR.ScreenShakeParams = [Number(bkrParams['Shake Intensity']),Number(bkrParams['Shake Frame Update Frequency']),Number(bkrParams['Shake Frame Count'])];
+Gimmer_Core.BKR.ScreenShakeSwitch = Number(bkrParams['Switch To Enable Shake']);
+Gimmer_Core.BKR.LockedSwitches = eval(bkrParams['Switches To Remember']) || [];
+if(Gimmer_Core.BKR.ScreenShakeSwitch > 0){
+    Gimmer_Core.BKR.LockedSwitches.push(Gimmer_Core.BKR.ScreenShakeSwitch);
+}
+if(Gimmer_Core.BKR.SwitchId > 0){
+    Gimmer_Core.BKR.LockedSwitches.push(Gimmer_Core.BKR.SwitchId);
+}
+Gimmer_Core.BKR.LockedVariables = eval(bkrParams['Variables To Remember']) || [];
+if(Gimmer_Core.BKR.VariableToStoreRewindTime > 0){
+    Gimmer_Core.BKR.LockedVariables.push(Gimmer_Core.BKR.VariableToStoreRewindTime);
+}
 Gimmer_Core.BKR.LockedSelfSwitches = eval(bkrParams['Self Switches To Remember']) || [];
 Gimmer_Core.BKR.RewindPlayer = (bkrParams['Rewind Player'] === "true");
 Gimmer_Core.BKR.FilterType = bkrParams['Filter Type'];
+Gimmer_Core.BKR.StartCommonEvent = Number(bkrParams['Common Event To Run At Rewind Start']);
+Gimmer_Core.BKR.EndCommonEvent = Number(bkrParams['Common Event To Run At Rewind End']);
 Gimmer_Core.BKR.TurboModeEnabled = false;
 Gimmer_Core.BKR.TempBuffers = {
     gainBuffer: [],
@@ -544,6 +606,14 @@ Gimmer_Core.BKR.startRewindEffect = function(){
         SceneManager._scene._spriteset._rewindFilter.velocity.x = 5;
     }
 
+    if(Gimmer_Core.BKR.ShakeScreen && $gameSwitches(Gimmer_Core.BKR.ScreenShakeSwitch, true)){
+        Shaker.shake(Gimmer_Core.BKR.ScreenShakeParams[0], Gimmer_Core.BKR.ScreenShakeParams[1], Gimmer_Core.BKR.ScreenShakeParams[2]);
+    }
+
+    if(Gimmer_Core.BKR.StartCommonEvent > 0){
+        $gameTemp.reserveCommonEvent(Gimmer_Core.BKR.StartCommonEvent);
+    }
+
     $gameSystem.saveBgm();
     AudioManager.stopBgm();
     AudioManager.playSe({
@@ -561,6 +631,11 @@ Gimmer_Core.BKR.stopRewindEffect = function(){
     else{
         SceneManager._scene._spriteset._rewindFilter.velocity.x = 0;
     }
+
+    if(Gimmer_Core.BKR.EndCommonEvent > 0){
+        $gameTemp.reserveCommonEvent(Gimmer_Core.BKR.EndCommonEvent);
+    }
+
     AudioManager.stopSe();
     $gameSystem.replayBgm();
 }
