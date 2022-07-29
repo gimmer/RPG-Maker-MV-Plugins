@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.9';
+Imported['Gimmer_BeKindRewind'] = '0.10';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -438,6 +438,10 @@ Game_CharacterBase.prototype.initMembers = function(){
 Game_Player.prototype.processRouteEnd = function(){
     if(this._isRewinding){
         if(Gimmer_Core.BKR.TurboModeEnabled){
+            let msPassedRewinding = new Date().getTime() - SceneManager._scene._rewindStarted;
+            Gimmer_Core.BKR.TempBuffers.playerMovementBuffer.forEach(function(command){
+                command.time += msPassedRewinding;
+            },this);
             Gimmer_Core.BKR.playerMovementBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.playerMovementBuffer));
         }
         else{
@@ -459,6 +463,10 @@ Game_Event.prototype.restoreMoveRoute = function (){
 Game_Event.prototype.processRouteEnd = function(){
     if(this._isRewinding){
         if(Gimmer_Core.BKR.TurboModeEnabled){
+            let msPassedRewinding = new Date().getTime() - SceneManager._scene._rewindStarted;
+            Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[this._eventId].route.forEach(function(command){
+                command.time += msPassedRewinding;
+            },this);
             Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[this._eventId].route));
         }
         else{
@@ -593,6 +601,7 @@ Gimmer_Core.BKR.Scene_Map_prototype_initialize = Scene_Map.prototype.initialize;
 Scene_Map.prototype.initialize = function(){
     Gimmer_Core.BKR.Scene_Map_prototype_initialize.call(this);
     this._rewindRequested = false;
+    this._rewindStarted = 0;
     this._playerFinishedRewinding = false;
     this._eventsFinishedRewinding = [];
     this._dirtySwitches = false;
@@ -704,7 +713,27 @@ Gimmer_Core.BKR.buildTempBuffers = function(){
     },this);
 }
 
-Gimmer_Core.BKR.restoreTempBuffers = function(){
+Gimmer_Core.BKR.restoreTempBuffers = function(startedAt){
+    //Update temp buffers with the time the rewind effect took to happen
+    let msPassedRewinding = new Date().getTime() - startedAt;
+
+
+    this.TempBuffers.selfSwitchBuffer.forEach(function(selfSwitch){
+        selfSwitch.time += msPassedRewinding;
+    },this);
+
+    this.TempBuffers.switchBuffer.forEach(function(myswitch){
+        myswitch.time += msPassedRewinding;
+    },this);
+
+    this.TempBuffers.variableBuffer.forEach(function(variable){
+        variable.time += msPassedRewinding;
+    },this);
+
+    this.TempBuffers.gainBuffer.forEach(function(variable){
+        variable.time += msPassedRewinding;
+    },this);
+
     //movement is done in move route processing
 
     //Take what's in the temp buffer and replace the original ones
@@ -743,7 +772,6 @@ Scene_Map.prototype.update = function (){
             Gimmer_Core.BKR.rewindEvent(event._eventId);
         });
         Gimmer_Core.BKR.rewindGains();
-        Gimmer_Core.BKR.restoreTempBuffers();
         this._rewindRequested = false;
     }
     else if(this.isRewinding()){
@@ -781,6 +809,9 @@ Scene_Map.prototype.update = function (){
                 this._eventsFinishedRewinding = [];
             }
             Gimmer_Core.BKR.GlobalRewind = false;
+
+            Gimmer_Core.BKR.restoreTempBuffers(this._rewindStarted);
+            this._rewindStarted = 0;
         }
 
         if(Gimmer_Core.BKR.purgeBuffers && !Gimmer_Core.BKR.TurboModeEnabled){
@@ -835,6 +866,7 @@ Scene_Map.prototype.isRewinding = function (){
 }
 
 Scene_Map.prototype.requestRewind = function (){
+    this._rewindStarted = new Date().getTime();
     this._rewindRequested = true;
 }
 
@@ -848,7 +880,6 @@ Scene_Map.prototype.purgePlayerBuffer = function (){
 }
 
 Gimmer_Core.BKR.refreshCaches = function(){
-    dd('refresh');
     Gimmer_Core.BKR.playerMovementBuffer.forEach(function(command, index){
         Gimmer_Core.BKR.playerMovementBuffer[index].time = parseInt(new Date().getTime())
     });
