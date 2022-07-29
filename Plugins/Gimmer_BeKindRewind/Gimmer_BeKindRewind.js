@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.8';
+Imported['Gimmer_BeKindRewind'] = '0.9';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -278,7 +278,7 @@ Gimmer_Core.BKR.rewindPlayer = function(){
         $gamePlayer.forceMoveRoute(moveRoute);
     }
     else if(Gimmer_Core.BKR.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.playerMovementBuffer.length > 0){
-        Gimmer_Core.BKR.playerMovementBuffer = Gimmer_Core.BKR.TempBuffers.playerMovementBuffer;
+        Gimmer_Core.BKR.playerMovementBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.playerMovementBuffer));
     }
 }
 
@@ -291,7 +291,7 @@ Gimmer_Core.BKR.rewindGains = function(){
             }
         });
         if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.gainBuffer.length){
-            Gimmer_Core.BKR.gainBuffer = Gimmer_Core.BKR.TempBuffers.gainBuffer;
+            Gimmer_Core.BKR.gainBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.gainBuffer));
         }
         else{
             Gimmer_Core.BKR.gainBuffer = [];
@@ -331,7 +331,7 @@ Gimmer_Core.BKR.rewindEvent = function(eventId){
         Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route &&
         Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route.length
     ){
-        Gimmer_Core.BKR.eventMovementBuffer[eventId].route = Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route;
+        Gimmer_Core.BKR.eventMovementBuffer[eventId].route = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[eventId].route));
     }
 }
 
@@ -342,7 +342,7 @@ Gimmer_Core.BKR.rewindSelfSwitches = function(){
             $gameSelfSwitches.setValue(selfswitch.key, selfswitch.oldValue);
         });
         if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.selfSwitchBuffer.length){
-            Gimmer_Core.BKR.selfSwitchBuffer = Gimmer_Core.BKR.TempBuffers.selfSwitchBuffer;
+            Gimmer_Core.BKR.selfSwitchBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.selfSwitchBuffer));
         }
         else{
             Gimmer_Core.BKR.selfSwitchBuffer = [];
@@ -357,7 +357,7 @@ Gimmer_Core.BKR.rewindSwitches = function(){
             $gameSwitches.setValue(myswitch.id, myswitch.oldValue);
         });
         if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.switchBuffer.length){
-            Gimmer_Core.BKR.switchBuffer = Gimmer_Core.BKR.TempBuffers.switchBuffer;
+            Gimmer_Core.BKR.switchBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.switchBuffer));
         }
         else{
             Gimmer_Core.BKR.switchBuffer = [];
@@ -372,7 +372,7 @@ Gimmer_Core.BKR.rewindVariables = function(){
             $gameVariables.setValue(variable.variableId, variable.oldValue);
         });
         if(this.TurboModeEnabled && Gimmer_Core.BKR.TempBuffers.variableBuffer.length){
-            Gimmer_Core.BKR.variableBuffer = Gimmer_Core.BKR.TempBuffers.variableBuffer;
+            Gimmer_Core.BKR.variableBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.variableBuffer));
         }
         else{
             Gimmer_Core.BKR.variableBuffer = [];
@@ -438,7 +438,7 @@ Game_CharacterBase.prototype.initMembers = function(){
 Game_Player.prototype.processRouteEnd = function(){
     if(this._isRewinding){
         if(Gimmer_Core.BKR.TurboModeEnabled){
-            Gimmer_Core.BKR.playerMovementBuffer = Gimmer_Core.BKR.TempBuffers.playerMovementBuffer;
+            Gimmer_Core.BKR.playerMovementBuffer = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.playerMovementBuffer));
         }
         else{
             Gimmer_Core.BKR.playerMovementBuffer = [];
@@ -459,7 +459,7 @@ Game_Event.prototype.restoreMoveRoute = function (){
 Game_Event.prototype.processRouteEnd = function(){
     if(this._isRewinding){
         if(Gimmer_Core.BKR.TurboModeEnabled){
-            Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[this._eventId].route;
+            Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = JSON.parse(JSON.stringify(Gimmer_Core.BKR.TempBuffers.eventMovementBuffer[this._eventId].route));
         }
         else{
             Gimmer_Core.BKR.eventMovementBuffer[this._eventId].route = [];
@@ -653,6 +653,7 @@ Gimmer_Core.BKR.buildTempBuffers = function(){
     this.TempBuffers.playerMovementBuffer = this.TempBuffers.playerMovementBuffer.filter(function(command) {
         return (command.time < this.TurboExpireTime);
     }, this);
+
     this.TempBuffers.playerMovementBuffer.forEach(function(command){
         command.time += this.HistoryMS;
     },this);
