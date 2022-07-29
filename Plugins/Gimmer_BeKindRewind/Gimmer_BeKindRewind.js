@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
     throw "Gimmer_Core is required for this plugin";
 }
 
-Imported['Gimmer_BeKindRewind'] = '0.10';
+Imported['Gimmer_BeKindRewind'] = '0.11';
 
 Gimmer_Core['BKR'] = {'loaded':true};
 
@@ -209,15 +209,14 @@ Gimmer_Core.BKR.MotionFilterMax = Number(bkrParams['Motion Filter Maximum']) || 
 
 Gimmer_Core.BKR.onMapChange = function(){
     $gameVariables.setValue(Gimmer_Core.BKR.VariableToStoreRewindTime, Gimmer_Core.BKR.HistorySeconds);
-    Gimmer_Core.BKR.gainBuffer = [];
-    Gimmer_Core.BKR.playerMovementBuffer = [];
-    Gimmer_Core.BKR.eventMovementBuffer = {};
-    Gimmer_Core.BKR.switchBuffer = [];
-    Gimmer_Core.BKR.selfSwitchBuffer = [];
-    Gimmer_Core.BKR.variableBuffer = [];
-    Gimmer_Core.BKR.eventMovementCache = {};
-    Gimmer_Core.BKR.TurboExpireTime = 0;
-    Gimmer_Core.BKR.TurboModeEnabled = false;
+    this.gainBuffer = [];
+    this.playerMovementBuffer = [];
+    this.eventMovementBuffer = {};
+    this.switchBuffer = [];
+    this.selfSwitchBuffer = [];
+    this.variableBuffer = [];
+    this.eventMovementCache = {};
+    this.disableTurboMode();
 }
 
 Gimmer_Core.BKR.turboMode = function(){
@@ -226,6 +225,15 @@ Gimmer_Core.BKR.turboMode = function(){
 
 Gimmer_Core.BKR.disableTurboMode = function(){
     this.TurboModeEnabled = false;
+    this.TurboExpireTime = 0;
+    this.TempBuffers = {
+        gainBuffer: [],
+        playerMovementBuffer: [],
+        eventMovementBuffer: {},
+        switchBuffer: [],
+        selfSwitchBuffer: [],
+        variableBuffer: []
+    };
 }
 
 Gimmer_Core.BKR.isEnabled = function(){
