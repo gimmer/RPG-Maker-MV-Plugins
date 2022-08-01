@@ -3,7 +3,7 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {}
-Imported['Gimmer_CleverColors'] = '1.0';
+Imported['Gimmer_CleverColors'] = '1.1';
 
 Gimmer_Core['CC'] = {'loaded':true};
 
@@ -295,6 +295,12 @@ DataManager.extractSaveContents = function(contents) {
     Gimmer_Core.CC.DataManager_extractSaveContents.call(this, contents);
     $dataColors = contents.colors;
 };
+
+Gimmer_Core.CC.DataManager_setupBattleTest = DataManager.setupBattleTest;
+DataManager.setupBattleTest = function(){
+    Gimmer_Core.CC.initializeDatabase();
+    Gimmer_Core.CC.DataManager_setupBattleTest.call(this);
+}
 
 //Extend add text to magically add colors
 Gimmer_Core.CC.Game_Message_prototype_add = Game_Message.prototype.add;
