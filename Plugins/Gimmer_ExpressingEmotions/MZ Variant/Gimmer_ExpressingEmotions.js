@@ -6,7 +6,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.1 - A plugin to support animated text matching different emotional states MZ Version
+ * @plugindesc v1.2b - A plugin to support animated text matching different emotional states MZ Version
  * @author Gimmer_
  * @help
  * ======================
@@ -306,7 +306,7 @@ Window_Base.prototype.obtainEscapeCode = function(textState) {
 
 Gimmer_Core.ExpressingEmotions._Window_Base_prototype_flushTextState = Window_Base.prototype.flushTextState;
 Window_Base.prototype.flushTextState = function(textState) {
-    if(this.isEmotionalText()) {
+    if(this.isEmotionalText() && textState.drawing) {
         var text = textState.buffer;
         var width = this.textWidth(text);
         var height = textState.height;
@@ -357,8 +357,8 @@ Window_Base.prototype.createEmotionalString = function(textState, char, width, h
     }
     var sprite = new Sprite_Emotional(new Bitmap(width, height), this._currentEmotion, this.contents);
     sprite.bitmap.drawText(char, 0, 0, width, height);
-    sprite.x = textState.x + this.standardPadding();
-    sprite.y = textState.y + this.standardPadding();
+    sprite.x = textState.x + $gameSystem.windowPadding()
+    sprite.y = textState.y + $gameSystem.windowPadding();
     sprite._xBase = sprite.x;
     sprite._yBase = sprite.y;
     this.addChild(sprite);
