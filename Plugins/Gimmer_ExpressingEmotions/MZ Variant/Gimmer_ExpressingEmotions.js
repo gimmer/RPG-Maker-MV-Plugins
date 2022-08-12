@@ -6,7 +6,7 @@ Gimmer_Core['ExpressingEmotions'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.2b - A plugin to support animated text matching different emotional states MZ Version
+ * @plugindesc v1.3b - A plugin to support animated text matching different emotional states MZ Version
  * @author Gimmer_
  * @help
  * ======================
@@ -299,7 +299,6 @@ Window_Base.prototype.obtainEscapeCode = function(textState) {
         return (emote) ? "CUSTOM1" : "";
     }
     else {
-        textState.index--;
         return Gimmer_Core.ExpressingEmotions._Window_Base_obtainEscapeCode.call(this, textState);
     }
 };
@@ -326,8 +325,8 @@ Window_Base.prototype.flushTextState = function(textState) {
     }
 }
 
-Gimmer_Core.ExpressingEmotions._Window_Base_processEscapeCharacter = Window_Base.prototype.processEscapeCharacter;
-Window_Base.prototype.processEscapeCharacter = function(code, textState) {
+Gimmer_Core.ExpressingEmotions._Window_Message_processEscapeCharacter = Window_Message.prototype.processEscapeCharacter;
+Window_Message.prototype.processEscapeCharacter = function(code, textState) {
     switch (code) {
         case 'ANGER':
         case 'FEAR':
@@ -341,7 +340,7 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState) {
             this._currentEmotion = false;
             break;
         default:
-            Gimmer_Core.ExpressingEmotions._Window_Base_processEscapeCharacter.call(this, code, textState);
+            Gimmer_Core.ExpressingEmotions._Window_Message_processEscapeCharacter.call(this, code, textState);
             break;
     }
 };
