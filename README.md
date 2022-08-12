@@ -10,17 +10,19 @@ All plugins created by Gimmer_
 |                                                              | **Compatible with MV only**                                                                                      |                                             |
 | [Gimmer_ActorSpeed][Gimmer_ActorSpeed]                       | Set your actor speed to a decimal value.                                                                         | [1.1][Gimmer_ActorSpeed_release]            |
 | [Gimmer_AnimatedTitle][Gimmer_AnimatedTitle]                 | Animate your Title Scene by using a video background.                                                            | [1.1][Gimmer_AnimatedTitle_release]         |
-| [Gimmer_BeKindRewind][Gimmer_BeKindRewind]                   | Rewind time on the map screen                                                                                    | [0.4][Gimmer_BeKindRewind_release]          |
+| [Gimmer_BeKindRewind][Gimmer_BeKindRewind]                   | Rewind time on the map screen                                                                                    | [0.11][Gimmer_BeKindRewind_release]         |
+| [Gimmer_Boot]                                                | Scaffolding for other plugins                                                                                    | [1.0][Gimmer_Boot_release]                  
 | [Gimmer_CenterText][Gimmer_CenterText]                       | Allows you to use a command to center text in a window.                                                          | [1.0][Gimmer_CenterText_release]            |
 | [Gimmer_CommentsAreNotFunny][Gimmer_CommentsAreNotFunny]     | Allows you to comment out event lines for debugging                                                              | [1.0][Gimmer_CommentsAreNotFunny_release]   |
-| [Gimmer_CleverColors][Gimmer_CleverColors]                   | Automatically wrap certain words or phases in Show Text in certain colors                                        | [1.0][Gimmer_CleverColors_release]          
+| [Gimmer_CleverColors][Gimmer_CleverColors]                   | Automatically wrap certain words or phases in Show Text in certain colors                                        | [1.2][Gimmer_CleverColors_release]          
 | [Gimmer_ControllerType][Gimmer_ControllerType]               | Display buttons matching the controller the player's using.                                                      | [1.1][Gimmer_ControllerType_release]        |
-| [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions]       | Allows you to animate text to match emotions.                                                                    | [1.1][Gimmer_ExpressingEmotions_release]    |
+| [Gimmer_ExpressingEmotions][Gimmer_ExpressingEmotions]       | Allows you to animate text to match emotions. [(MZ VARIANT 1.3b)][Gimmer_EE_MZ]                                  | [1.1][Gimmer_ExpressingEmotions_release]    |
 | [Gimmer_GameTimer][Gimmer_GameTimer]                         | Use the system clock to time how long a player takes to do something.                                            | [1.1][Gimmer_GameTimer_release]             |
 | [Gimmer_LicenseBoard][Gimmer_LicenseBoard]                   | Replaces EXP with LP, letting your characters advance by buying licenses to gain skill.                          | [2.1.1][Gimmer_LicenseBoard_release]        |
 | [Gimmer_MakingFaces][Gimmer_MakingFaces]                     | Use the command \TF[faceIndex] to change the face index of an actor during chat messages.                        | [1.1][Gimmer_MakingFaces_release]           |
 | [Gimmer_MatchingFaces][Gimmer_MatchingFaces]                 | Set a meta parameter on any Actor in the database "<faceName: String>".                                          | [1.1][Gimmer_MatchingFaces_release]         |
 | [Gimmer_MirrorMirrorOnTheWall][Gimmer_MirrorMirrorOnTheWall] | Choose tiles that are mirrors.                                                                                   | [1.0][Gimmer_MirrorMirrorOnTheWall_release] |
+| [Gimmer_NoSpoilerMenu][Gimmer_NoSpoilerMenu]                 | Prevent the menu from giving away that characters might have powers later in the game | [1.1][Gimmer_NoSpoilerMenu_release]         |
 | [Gimmer_PauseArrowBeGone][Gimmer_PauseArrowBeGone]           | Hide and show the arrow at the bottom of show text dialogue boxes.                                               | [1.0][Gimmer_PauseArrowBeGone_release]      |
 | [Gimmer_QuitToDesktop][Gimmer_QuitToDesktop]                 | Extends the quit screen to offer a quit to desktop option.                                                       | [1.1][Gimmer_QuitToDesktop_release]         |
 | [Gimmer_SelfSwitcheroo][Gimmer_SelfSwitcheroo]               | Adds a plugin command that allows you to change any events' self switch.                                         | [1.0][Gimmer_SelfSwitcheroo_release]        |
@@ -52,6 +54,7 @@ All plugins created by Gimmer_
 
   [Gimmer_ExpressingEmotions]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_ExpressingEmotions/
   [Gimmer_ExpressingEmotions_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_ExpressingEmotions/Gimmer_ExpressingEmotions.js
+  [Gimmer_EE_MZ]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_ExpressingEmotions/MZ%20Variant/Gimmer_ExpressingEmotions.js
 
   [Gimmer_GameTimer]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_GameTimer/
   [Gimmer_GameTimer_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_GameTimer/Gimmer_GameTimer.js
@@ -106,3 +109,9 @@ All plugins created by Gimmer_
 
 [Gimmer_CommentsAreNotFunny]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CommentsAreNotFunny/
 [Gimmer_CommentsAreNotFunny_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_CommentsAreNotFunny/Gimmer_CommentsAreNotFunny.js 
+
+[Gimmer_Boot]: https://github.com/gimmer/RPG-Maker-MV-Plugins/tree/master/Plugins/Gimmer_Boot
+[Gimmer_Boot_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_Boot/Gimmer_Boot.js
+
+[Gimmer_NoSpoilerMenu]: https://github.com/gimmer/RPG-Maker-MV-Plugins/tree/master/Plugins/Gimmer_NoSpoilerMenu
+[Gimmer_NoSpoilerMenu_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_NoSpoilerMenu/Gimmer_NoSpoilersMenu.js

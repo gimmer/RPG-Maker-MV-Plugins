@@ -3,7 +3,7 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {};
-Imported['Gimmer_LicenseBoard'] = '2.0';
+Imported['Gimmer_LicenseBoard'] = '2.1.1';
 
 Gimmer_Core['LicenseBoard'] = {'loaded':true};
 

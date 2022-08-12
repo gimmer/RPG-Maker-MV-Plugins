@@ -3,7 +3,7 @@ if(Gimmer_Core === undefined){
 }
 
 Imported = Imported || {};
-Imported['Gimmer_MirrorMirrorOnTheWall'] = '0.1';
+Imported['Gimmer_MirrorMirrorOnTheWall'] = '1.0';
 
 Gimmer_Core['Mirror'] = {'loaded':true};
 

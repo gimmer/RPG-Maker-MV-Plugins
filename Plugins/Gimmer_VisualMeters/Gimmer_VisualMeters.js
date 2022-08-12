@@ -79,7 +79,7 @@ Gimmer_Core['VisualMeters'] = {'loaded':true};
  * @param Use Picture As Unit Of Meter
  * @type file
  * @dir img/pictures
- * @desc What to use an image instead of a rectangle? Choose the picture here. The picture must been one solid single color
+ * @desc What to use an image instead of a rectangle? Choose the picture here. The picture must be one solid single color
  *
  * @param Unit Picture Padding X
  * @type Number

@@ -9,7 +9,7 @@ Imported['Gimmer_NoSpoilersMenu'] = '1.1'
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Hide magic and special from characters menus if they don't have any spells yet, even if their class can use it
+ * @plugindesc v1.1 - Hide magic and special from characters menus if they don't have any spells yet, even if their class can use it
  * @author Gimmer
  * @help
  * ===========
