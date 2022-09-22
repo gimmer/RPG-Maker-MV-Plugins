@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.9 - Display text anywhere on the screen
+ * @plugindesc v2.9.1 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -179,6 +179,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.8: Added optional support for making a button held down to show the text layer
  * - Version 2.8.1: Change the text layer only show and hide on buttons for texts provided in the plugin parameters
  * - Version 2.9: Show pictures when showing the HUD optionally
+ * - Version 2.9.1: Don't crash if you don't have pictures
  *
  * Terms of Use:
  * =======================================================================
@@ -344,7 +345,7 @@ if(Gimmer_Core === undefined){
 */
 
 Imported = Imported || {};
-Imported.Gimmer_TextAnywhere = '2.9'
+Imported.Gimmer_TextAnywhere = '2.9.1'
 
 Gimmer_Core['TextAnywhere'] = {'loaded':true};
 
@@ -357,7 +358,7 @@ Gimmer_Core.TextAnywhere.DefaultOutline = (TAParams["Default Include Outline"] =
 Gimmer_Core.TextAnywhere.DefaultOpacity = Number(TAParams['Default Opacity']);
 Gimmer_Core.TextAnywhere.TriggerByButton = (TAParams["Trigger Via Button"] === "true");
 Gimmer_Core.TextAnywhere.UIPicturesDisplayed = false;
-Gimmer_Core.TextAnywhere.UIPictures = JSON.parse(TAParams["UI Picture List"]);
+Gimmer_Core.TextAnywhere.UIPictures = JSON.parse(TAParams["UI Picture List"] || "[]");
 if(Gimmer_Core.TextAnywhere.TriggerByButton){
     Gimmer_Core.TextAnywhere.TriggerType = TAParams['Trigger Button Type'];
     switch(Gimmer_Core.TextAnywhere.TriggerType.toLowerCase()) {
