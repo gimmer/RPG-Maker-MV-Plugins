@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style type="text/css">
+        #import-map{
+            width: 400px;
+            height: 400px;
+            background-color: #f8f8f8;
+            border: 5px dashed #ccc;
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+            position: relative;
+            box-shadow: inset 0 0 10px #ccc;
+        }
+
+        #import-map span {
+            display: inline-block;
+            position: relative;
+            top: 45%;
+            font-family: 'Arial', sans-serif;
+            color: #444444;
+            border-bottom: 2px solid #222222;
+            font-size: 28px;
+            font-variant-caps: all-small-caps;
+        }
+
+        #display-map {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .grid-box {
+            width: 48px;
+            height: 48px;
+            border: 1px solid black;
+        }
+
+        .enemy-box, .enemy-box__sticky{
+            border: 2px solid red !important;
+        }
+
+        .enemy-default-box__sticky {
+            border: 2px solid yellow !important;
+        }
+
+        .hero-box, .hero-box__sticky{
+            border: 2px solid lightgreen !important;
+        }
+
+        .historical-box {
+            border: 2px solid magenta !important;
+        }
+
+        .step{
+            display:none;
+        }
+
+
+    </style>
+
+</head>
+<body>
+<div class="container">
+    <div id="import-map">
+        <span>Drop Map.png Here</span>
+    </div>
+    <div class="row">
+        <div class="col-10">
+            <div id="display-map"></div>
+        </div>
+        <div class="col-2">
+            <button id="startEvent" class="btn btn-success step">Start New Battle</button>
+            <button id="addEnemyDefaults" class="btn btn-warning step addingButton">Add Enemy Defaults</button>
+            <button id="addEnemy" class="btn btn-primary step addingButton">Add Enemy</button>
+            <button id="addHero" class="btn btn-secondary step addingButton">Add Hero</button>
+            <div id="enemyPlacement" class="step">
+                <h6 id="form-header"></h6>
+                <label class="not-for-heroes" for="enemyImage">Character Image File Name</label>
+                <input class="not-for-heroes" id="enemyImage" name="enemyImage" placeholder="Character Image File Name">
+                <br />
+                <label class="not-for-heroes" for="enemyImageIndex">Character Image Index</label>
+                <select class="not-for-heroes" id="enemyImageIndex" name="enemyImageIndex">
+                    <option value="-1">Use Default</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+                <br />
+                <label for="enemyPlacementSelect">Transition</label>
+                <select id="enemyPlacementSelect" name="t">
+                    <option class="not-for-heroes" value="default">Use Default</option>
+                    <option class="not-for-heroes" value="appear">
+                        Appear
+                    </option>
+                    <option value="jump">
+                        Jump
+                    </option>
+                    <option value="walk">
+                        Walk
+                    </option>
+                </select>
+                <br />
+                <label class="not-for-heroes" for="enemyStartPos">Start Pos (x,y)</label>
+                <input class="not-for-heroes" readonly id="enemyStartPos" type="text" name="startpos" placeholder="x,y"><button data-target="enemyStartPos" class="btn btn-xs btn-secondary set-position">Set</button>
+                <br />
+                <label for="enemyPos">Final Position (x,y)</label>
+                <input readonly id="enemyPos" type="text" name="pos" placeholder="x,y"><button data-target="enemyPos" class="btn btn-xs btn-secondary set-position">Set</button>
+                <br />
+            </div>
+            <button id="saveEnemy" class="btn btn-info step savingButton">Save Enemy</button>
+            <button id="saveEnemyDefaults" class="btn btn-info step savingButton">Save Enemy Defaults</button>
+            <button id="saveHero" class="btn btn-info step savingButton">Save Hero</button>
+            <button id="finishEvent" class="btn btn-secondary step">Finish Event</button>
+            <textarea id="output"></textarea>
+        </div>
+    </div>
+</div>
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toaster" class="toast align-items-center bg-success text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold"> </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script
+        src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="battlePlanner.js"></script>
+</body>
+</html>
