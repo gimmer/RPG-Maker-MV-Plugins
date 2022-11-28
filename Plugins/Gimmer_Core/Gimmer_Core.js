@@ -1,14 +1,14 @@
 var Gimmer_Core = Gimmer_Core || {'debug':false, 'pluginCommands':{}};
 
-Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.6.2";
+var Imported = Imported || {};
+Imported['Gimmer_Core'] = "1.6.3";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.6.2 - General plugin framework for my other plugins
+ * @plugindesc v1.6.3 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -70,6 +70,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.6: Updated Polygon object to old js standard
  * - Version 1.6.1: Updated common event call back framework as it doesn't seem to work anymore
  * - Version 1.6.2: Fix an error occuring when events terminate
+ * - Version 1.6.3: Add in support for hiding events via an image tag
  *
  * Terms of Use:
  * =======================================================================
@@ -565,6 +566,38 @@ Gimmer_Core.wordsToDirections = function(d){
     }
     return direction;
 }
+
+/**
+ * =================
+ * Game_Event Mod
+ * ================
+ */
+
+Gimmer_Core.Game_Event_prototype_setImage = Game_Event.prototype.setImage;
+Game_Event.prototype.setImage = function (characterName, characterIndex){
+    if(this.event().meta.hasOwnProperty('hideimg') && Number(this.event().meta.hideimg) === 1){
+        this._tileId = 0;
+        this._characterName = "";
+        this._characterIndex = 0;
+        this._isObjectCharacter = false;
+    }
+    else{
+        Gimmer_Core.Game_Event_prototype_setImage.call(this,characterName, characterIndex);
+    }
+}
+Gimmer_Core.Game_Event_prototype_setTileImage = Game_Event.prototype.setTileImage;
+Game_Event.prototype.setTileImage = function(tileId){
+    if(this.event().meta.hasOwnProperty('hideimg') && Number(this.event().meta.hideimg) === 1){
+        this._tileId = 0;
+        this._characterName = "";
+        this._characterIndex = 0;
+        this._isObjectCharacter = false;
+    }
+    else{
+        Gimmer_Core.Game_Event_prototype_setTileImage.call(this, tileId);
+    }
+}
+
 
 //Helper to draw a rectangle border without a fill.
 Bitmap.prototype.drawRectBorder = function(x, y, width, height, borderColor, thickness = 1){
