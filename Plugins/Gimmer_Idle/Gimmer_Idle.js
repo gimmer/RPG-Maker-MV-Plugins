@@ -12,7 +12,7 @@ Gimmer_Core.idle = {'loaded':true}
  *
  * @help Gimmer_Idle.js
  *
- * Version 1.1
+ * Version 1.2
  *
  * For any actor / follower you want to go idle, put in <idleImage:characterName,characterIndex> in the note section of the actor.
  * Set the number of idle frames, and it will go to a stepping frames
@@ -22,9 +22,22 @@ Gimmer_Core.idle = {'loaded':true}
  * @desc Number of frames before you go to the idle animation
  * @type Number
  * @default 120
+ *
+ * @param Switch To Enable Party Idle Frames
+ * @type switch
+ * @text Switch to Enable Party Idle Frames
+ * @desc What switch needs to be on so party members will go into idle mode? Leave blank for no switch
+ *
+ * @param Switch To Enable Event Idle Frames
+ * @type switch
+ * @text Switch to Enable Event Idle Frames
+ * @desc What switch needs to be on so events will go into idle mode? Leave blank for no switch
+ *
  */
 
 Gimmer_Core.idle.stopFrames = Number(PluginManager.parameters('Gimmer_Idle')['Idle Frames']);
+Gimmer_Core.idle.partySwitchId = Number(PluginManager.parameters('Gimmer_Idle')['Switch To Enable Party Idle Frames']);
+Gimmer_Core.idle.eventSwitchId = Number(PluginManager.parameters('Gimmer_Idle')['Switch To Enable Event Idle Frames']);
 
 Gimmer_Core.idle.Game_CharacterBase_prototype_initMembers = Game_CharacterBase.prototype.initMembers
 Game_CharacterBase.prototype.initMembers = function(){
@@ -67,9 +80,29 @@ Game_CharacterBase.prototype.jump = function(xPlus, yPlus){
     Gimmer_Core.idle.Game_CharacterBase_prototype_jump.call(this,xPlus, yPlus);
 }
 
+Game_CharacterBase.prototype.setIdle = function(){};
 
-Game_CharacterBase.prototype.setIdle = function(){
-    if(this._idleImage !== "" && this.characterName() !== this._idleImage){
+Game_Event.prototype.setIdle = function(){
+    if(this._idleImage !== "" && this.characterName() !== this._idleImage  && (Gimmer_Core.idle.eventSwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.eventSwitchId))){
+        this.setStepAnime(true);
+        this._preIdleCharacterIndex = this.characterIndex();
+        this._preIdleCharacterName = this.characterName();
+        this.setImage(this._idleImage, this._idleIndex);
+    }
+}
+
+Game_Player.prototype.setIdle = function(){
+    if(this._idleImage !== "" && this.characterName() !== this._idleImage && (Gimmer_Core.idle.partySwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.partySwitchId))){
+        this.setStepAnime(true);
+        this._preIdleCharacterIndex = this.characterIndex();
+        this._preIdleCharacterName = this.characterName();
+        this.setImage(this._idleImage, this._idleIndex);
+    }
+}
+
+
+Game_Follower.prototype.setIdle = function(){
+    if(this._idleImage !== "" && this.characterName() !== this._idleImage && (Gimmer_Core.idle.partySwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.partySwitchId))){
         this.setStepAnime(true);
         this._preIdleCharacterIndex = this.characterIndex();
         this._preIdleCharacterName = this.characterName();
@@ -87,7 +120,7 @@ Game_CharacterBase.prototype.stopIdle = function (){
 Game_Actor.prototype.getIdleImage = function(){
     const actor = this.actor();
     if(actor.meta.hasOwnProperty('idleImage')){
-       return actor.meta.idleImage.split(',');
+        return actor.meta.idleImage.split(',');
     }
     return [];
 }
