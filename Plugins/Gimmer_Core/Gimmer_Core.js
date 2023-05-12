@@ -1,14 +1,18 @@
-var Gimmer_Core = Gimmer_Core || {'debug':false, 'pluginCommands':{}};
+if(Gimmer_Core !== undefined){
+    throw new Error("You have to load Gimmer_Core before any other gimmer plugins");
+}
+
+var Gimmer_Core =  {'debug':false, 'pluginCommands':{}};
 
 var Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.6.3";
+Imported['Gimmer_Core'] = "1.6.4";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.6.3 - General plugin framework for my other plugins
+ * @plugindesc v1.6.4 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -71,6 +75,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.6.1: Updated common event call back framework as it doesn't seem to work anymore
  * - Version 1.6.2: Fix an error occuring when events terminate
  * - Version 1.6.3: Add in support for hiding events via an image tag
+ * - Version 1.6.4: Fixed an issue whereby Gimmer_Core would crash if it was loaded after other Gimmer_Core plugins
  *
  * Terms of Use:
  * =======================================================================
