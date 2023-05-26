@@ -1,6 +1,9 @@
 # RPG Maker plugins
 All plugins created by Gimmer_
 
+Anyone has the right to use these plugins at no cost in any project.
+The only exception is Salik Hussain (SigmaSuccour), who may not use my plugins in any of his projects. I will not be helpful to those who wish to spread hate.
+
 | Project                                                      | Description                                                                                                      | Latest release                              |
 |--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 |                                                              | **Gimmer Core**                                                                                                  |                                             |
