@@ -1,6 +1,11 @@
 var Gimmer_Core = Gimmer_Core || {};
 Gimmer_Core.idle = {'loaded':true}
 
+var Imported = Imported || {};
+Imported.Gimmer_Idle = true;
+
+
+
 //=============================================================================
 // Idle Frames
 //=============================================================================
@@ -12,7 +17,7 @@ Gimmer_Core.idle = {'loaded':true}
  *
  * @help Gimmer_Idle.js
  *
- * Version 1.2
+ * Version 1.2.3
  *
  * For any actor / follower you want to go idle, put in <idleImage:characterName,characterIndex> in the note section of the actor.
  * Set the number of idle frames, and it will go to a stepping frames
@@ -39,11 +44,12 @@ Gimmer_Core.idle.stopFrames = Number(PluginManager.parameters('Gimmer_Idle')['Id
 Gimmer_Core.idle.partySwitchId = Number(PluginManager.parameters('Gimmer_Idle')['Switch To Enable Party Idle Frames']);
 Gimmer_Core.idle.eventSwitchId = Number(PluginManager.parameters('Gimmer_Idle')['Switch To Enable Event Idle Frames']);
 
+Gimmer_Core.idle.ACTOR_CACHE = {};
+Gimmer_Core.idle.EVENT_CACHE = {};
+
 Gimmer_Core.idle.Game_CharacterBase_prototype_initMembers = Game_CharacterBase.prototype.initMembers
 Game_CharacterBase.prototype.initMembers = function(){
     Gimmer_Core.idle.Game_CharacterBase_prototype_initMembers.call(this);
-    this._preIdleCharacterName = "";
-    this._preIdleCharacterIndex = 0;
     this._idleImage = "";
     this._idleIndex = 0;
 }
@@ -85,36 +91,79 @@ Game_CharacterBase.prototype.setIdle = function(){};
 Game_Event.prototype.setIdle = function(){
     if(this._idleImage !== "" && this.characterName() !== this._idleImage  && (Gimmer_Core.idle.eventSwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.eventSwitchId))){
         this.setStepAnime(true);
-        this._preIdleCharacterIndex = this.characterIndex();
-        this._preIdleCharacterName = this.characterName();
-        this.setImage(this._idleImage, this._idleIndex);
+        let index = this.characterIndex();
+        let mod = 0;
+        if(Imported.Galv_DiagonalMovement && Galv.DM.diagGraphic && this._diagDir && index > 4){
+            mod = 4;
+        }
+        Gimmer_Core.idle.EVENT_CACHE[this.eventId().toString()+'-'+this._mapId.toString()] = {
+            'preIdleCharacterIndex': index - mod,
+            'preIdleCharacterName': this.characterName()
+        }
+        this.setImage(this._idleImage, this._idleIndex + mod);
     }
 }
 
 Game_Player.prototype.setIdle = function(){
     if(this._idleImage !== "" && this.characterName() !== this._idleImage && (Gimmer_Core.idle.partySwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.partySwitchId))){
         this.setStepAnime(true);
-        this._preIdleCharacterIndex = this.characterIndex();
-        this._preIdleCharacterName = this.characterName();
-        this.setImage(this._idleImage, this._idleIndex);
+        let index = this.characterIndex();
+        let mod = 0;
+        if(Imported.Galv_DiagonalMovement && Galv.DM.diagGraphic && this._diagDir && index > 4){
+            mod = 4;
+        }
+        Gimmer_Core.idle.ACTOR_CACHE[$gameParty.leader().actorId().toString()] = {
+            'preIdleCharacterIndex': index - mod,
+            'preIdleCharacterName': this.characterName()
+        }
+
+        this.setImage(this._idleImage, this._idleIndex + mod);
     }
 }
 
 
 Game_Follower.prototype.setIdle = function(){
-    if(this._idleImage !== "" && this.characterName() !== this._idleImage && (Gimmer_Core.idle.partySwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.partySwitchId))){
+    if(this.actor() && this._idleImage !== "" && this.characterName() !== this._idleImage && (Gimmer_Core.idle.partySwitchId === 0 || $gameSwitches.value(Gimmer_Core.idle.partySwitchId))){
         this.setStepAnime(true);
-        this._preIdleCharacterIndex = this.characterIndex();
-        this._preIdleCharacterName = this.characterName();
-        this.setImage(this._idleImage, this._idleIndex);
+        let index = this.characterIndex();
+        let mod = 0;
+        if(Imported.Galv_DiagonalMovement && Galv.DM.diagGraphic && this._diagDir && index > 4){
+            mod = 4;
+        }
+        Gimmer_Core.idle.ACTOR_CACHE[this.actor().actorId().toString()] = {
+            'preIdleCharacterIndex': index - mod,
+            'preIdleCharacterName': this.characterName()
+        }
+
+        this.setImage(this._idleImage, this._idleIndex + mod);
     }
 }
 
 Game_CharacterBase.prototype.stopIdle = function (){
     if(this._idleImage !== "" && this.characterName() === this._idleImage){
         this.setStepAnime(false);
-        this.setImage(this._preIdleCharacterName, this._preIdleCharacterIndex);
+        const preIdleImage = this.getPreIdleImage();
+        let index = preIdleImage.preIdleCharacterIndex;
+        this.setImage(preIdleImage.preIdleCharacterName, index);
     }
+}
+
+Game_CharacterBase.prototype.getPreIdleImage = function(){
+    return {};
+}
+
+Game_Event.prototype.getPreIdleImage = function(){
+    return Gimmer_Core.idle.EVENT_CACHE[this.eventId().toString()+"-"+this._mapId];
+}
+
+Game_Player.prototype.getPreIdleImage = function(){
+    const actor = $gameParty.leader();
+    return Gimmer_Core.idle.ACTOR_CACHE[actor.actorId().toString()];
+}
+
+Game_Follower.prototype.getPreIdleImage = function(){
+    const actor = this.actor();
+    return Gimmer_Core.idle.ACTOR_CACHE[actor.actorId().toString()];
 }
 
 Game_Actor.prototype.getIdleImage = function(){

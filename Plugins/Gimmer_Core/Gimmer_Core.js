@@ -5,7 +5,7 @@ if(Gimmer_Core !== undefined){
 var Gimmer_Core =  {'debug':false, 'pluginCommands':{}};
 
 var Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.6.4";
+Imported['Gimmer_Core'] = "1.6.5";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
@@ -76,6 +76,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.6.2: Fix an error occuring when events terminate
  * - Version 1.6.3: Add in support for hiding events via an image tag
  * - Version 1.6.4: Fixed an issue whereby Gimmer_Core would crash if it was loaded after other Gimmer_Core plugins
+ * - Version 1.6.5: Fixed bug for Gimmer_Core being added later to a project
  *
  * Terms of Use:
  * =======================================================================
@@ -220,7 +221,7 @@ Game_Interpreter.prototype.initialize = function(depth) {
 
 Gimmer_Core.Game_Interpreter_prototype_terminate = Game_Interpreter.prototype.terminate;
 Game_Interpreter.prototype.terminate = function() {
-    if(this._commonEventId.toString() in Gimmer_Core.pendingCallbacks && typeof Gimmer_Core.pendingCallbacks[this._commonEventId.toString()] === 'function'){
+    if(this._commonEventId && this._commonEventId.toString() in Gimmer_Core.pendingCallbacks && typeof Gimmer_Core.pendingCallbacks[this._commonEventId.toString()] === 'function'){
         Gimmer_Core.pendingCallbacks[this._commonEventId.toString()]();
         delete Gimmer_Core.pendingCallbacks[this._commonEventId];
     }
