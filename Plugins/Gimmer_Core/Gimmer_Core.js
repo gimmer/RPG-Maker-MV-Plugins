@@ -5,14 +5,14 @@ if(Gimmer_Core !== undefined){
 var Gimmer_Core =  {'debug':false, 'pluginCommands':{}};
 
 var Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.6.5";
+Imported['Gimmer_Core'] = "1.6.6";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.6.4 - General plugin framework for my other plugins
+ * @plugindesc v1.6.6 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -77,6 +77,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.6.3: Add in support for hiding events via an image tag
  * - Version 1.6.4: Fixed an issue whereby Gimmer_Core would crash if it was loaded after other Gimmer_Core plugins
  * - Version 1.6.5: Fixed bug for Gimmer_Core being added later to a project
+ * - Version 1.6.6: Fixed incompabiility with events that don't have meta tag data (E.G. from event spawners)
  *
  * Terms of Use:
  * =======================================================================
@@ -581,7 +582,7 @@ Gimmer_Core.wordsToDirections = function(d){
 
 Gimmer_Core.Game_Event_prototype_setImage = Game_Event.prototype.setImage;
 Game_Event.prototype.setImage = function (characterName, characterIndex){
-    if(this.event().meta.hasOwnProperty('hideimg') && Number(this.event().meta.hideimg) === 1){
+    if(this.event().hasOwnProperty('meta') && this.event().meta.hasOwnProperty('hideimg') && Number(this.event().meta.hideimg) === 1){
         this._tileId = 0;
         this._characterName = "";
         this._characterIndex = 0;
