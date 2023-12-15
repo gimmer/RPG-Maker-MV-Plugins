@@ -56,9 +56,8 @@ foreach($files as $dir => $sourceFile){
 			$fileBreakDown[$outputFile] = $position;
 		}
 	}
-
-
-	$startPosition = -1;
+	
+	$startPosition = 0;
 	$lastFile = 'misc';
 	foreach($fileBreakDown as $outputFile => $endPosition){
 		if($startPosition >= 0){
@@ -74,7 +73,7 @@ foreach($files as $dir => $sourceFile){
 }
 echo "Update main.js and put these lines in the scriptUrls const and remove all rmmz_* files:\r\n\r\n";
 foreach($filesCreated as $path){
-	echo $jsSubstructure.$path."\r\n";
+	echo '"'.$jsSubstructure.$path.'",'."\r\n";
 }
 
 function dd($t){
