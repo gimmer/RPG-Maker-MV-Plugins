@@ -45,6 +45,13 @@ Gimmer_Core.isPlayerStopped = false;
  * Default False
  * @default false
  *
+ * @param Start Game At Point
+ * @parent debug
+ * @type Number
+ * @desc Requires Debug On. Choose a number (0 for new game, 1 or greater for a save slot) to load that save slot on game start.
+ * Default 0
+ * @default 0
+ *
  * @param Show Mouse Coordinates
  * @parent ---Parameters---
  * @type Boolean
