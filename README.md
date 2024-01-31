@@ -2,12 +2,12 @@
 All plugins created by Gimmer_
 
 Anyone has the right to use these plugins at no cost in any project.
-The only exception is Salik Hussain (SigmaSuccour), who may not use my plugins in any of his projects. I will not be helpful to those who wish to spread hate.
+The only exception is Salik Hussain (SigmaSuccour), who may not use my plugins in any of his projects. I will not be helpful to those who wishes to spread hate.
 
 | Project                                                      | Description                                                                                                      | Latest release                              |
 |--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 |                                                              | **Gimmer Core**                                                                                                  |                                             |
-| [Gimmer_Core][Gimmer_Core]                                   | Core plugin required for all other plugins.                                                                      | [1.6.4][Gimmer_Core_release]                |
+| [Gimmer_Core][Gimmer_Core]                                   | Core plugin required for all other plugins.                                                                      | [1.7][Gimmer_Core_release]                  |
 |                                                              | **Compatible with MV only**                                                                                      |                                             |
 | [Gimmer_FolderPictures][Gimmer_FolderPictures]               | Save your pictures into folders, and use them.                                                                   | [1.1][Gimmer_FolderPictures_release]        |
 |                                                              | **Compatible with MV only**                                                                                      |                                             |

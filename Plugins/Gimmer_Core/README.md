@@ -17,6 +17,7 @@ Can block F5 from reloading the game.
 
 * Disable F5 Reload: prevents F5 from reloading the browser and restarting the game. Use in production.
 * Show Mouse Coordinates: shows a little box with mouse coordinates underneath
+* With Debug enabled, you can choose a save slot (0 for new game) to auto load into on game start.
 
 
 ## Terms of Use:
