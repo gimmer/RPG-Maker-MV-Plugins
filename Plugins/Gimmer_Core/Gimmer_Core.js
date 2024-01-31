@@ -5,14 +5,14 @@ if(Gimmer_Core !== undefined){
 var Gimmer_Core =  {'debug':false, 'pluginCommands':{}};
 
 var Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.6.6";
+Imported['Gimmer_Core'] = "1.7";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.6.6 - General plugin framework for my other plugins
+ * @plugindesc v1.7 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -78,6 +78,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.6.4: Fixed an issue whereby Gimmer_Core would crash if it was loaded after other Gimmer_Core plugins
  * - Version 1.6.5: Fixed bug for Gimmer_Core being added later to a project
  * - Version 1.6.6: Fixed incompabiility with events that don't have meta tag data (E.G. from event spawners)
+ * - Version 1.7: Add ability to load save slot on starting debug
  *
  * Terms of Use:
  * =======================================================================
@@ -86,11 +87,12 @@ Gimmer_Core.isPlayerStopped = false;
  * =======================================================================
  */
 
-var gParameters = PluginManager.parameters('Gimmer_Core');
-Gimmer_Core.debug = (gParameters['debug'] === "true");
-Gimmer_Core.advancedDebug = (Gimmer_Core.debug && gParameters['Advanced Debug'] === "true");
-Gimmer_Core.blockF5 = (gParameters['Block F5 Reload'] === "true");
-Gimmer_Core.showMouseCoords = (gParameters['Show Mouse Coordinates'] === "true");
+Gimmer_Core.gParameters = PluginManager.parameters('Gimmer_Core');
+Gimmer_Core.debug = (Gimmer_Core.gParameters['debug'] === "true");
+Gimmer_Core.advancedDebug = (Gimmer_Core.debug && Gimmer_Core.gParameters['Advanced Debug'] === "true");
+Gimmer_Core.blockF5 = (Gimmer_Core.gParameters['Block F5 Reload'] === "true");
+Gimmer_Core.showMouseCoords = (Gimmer_Core.gParameters['Show Mouse Coordinates'] === "true");
+Gimmer_Core.startGameAtPoint = (Gimmer_Core.debug ? Number(Gimmer_Core.gParameters['Start Game At Point']) : -1);
 
 
 Gimmer_Core.SceneManager_onKeyDown = SceneManager.onKeyDown;
@@ -127,7 +129,27 @@ if(Gimmer_Core.showMouseCoords){
     }
 }
 
-
+Gimmer_Core.Scene_Boot_prototype_start = Scene_Boot.prototype.start;
+Scene_Boot.prototype.start = function(){
+    if(Gimmer_Core.debug && Gimmer_Core.startGameAtPoint >= 0) {
+        if(Gimmer_Core.startGameAtPoint === 0){
+            this.checkPlayerLocation();
+            DataManager.setupNewGame();
+            SceneManager.goto(Scene_Map);
+        }
+        else{
+            if (DataManager.loadGame(Gimmer_Core.startGameAtPoint)) {
+                Scene_Load.prototype.reloadMapIfUpdated.call(this);
+                SceneManager.goto(Scene_Map);
+            } else {
+                throw new Error("Couldn't load the save you wanted, change the number in Gimmer_Core Params");
+            }
+        }
+    }
+    else{
+        Gimmer_Core.Scene_Boot_prototype_start.call(this);
+    }
+}
 
 //Function for debugging. Uses the DD name because my muscle memory types that when I want to figure out what's broken
 function dd(something){
