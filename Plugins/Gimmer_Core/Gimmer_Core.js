@@ -12,7 +12,7 @@ Gimmer_Core.areEventsStopped = false;
 Gimmer_Core.isPlayerStopped = false;
 //=============================================================================
 /*:
- * @plugindesc v1.7 - General plugin framework for my other plugins
+ * @plugindesc v1.7.1 - General plugin framework for my other plugins
  * @author Gimmer
  * @help
  * ===========
@@ -86,6 +86,7 @@ Gimmer_Core.isPlayerStopped = false;
  * - Version 1.6.5: Fixed bug for Gimmer_Core being added later to a project
  * - Version 1.6.6: Fixed incompabiility with events that don't have meta tag data (E.G. from event spawners)
  * - Version 1.7: Add ability to load save slot on starting debug
+ * - Version 1.7.1: Add changes to popups so they can be set to be dismissed by an ok press
  *
  * Terms of Use:
  * =======================================================================
@@ -363,9 +364,16 @@ Window_Popup.prototype.refresh = function(){
 Window_Popup.prototype.update = function(){
     Window_Base.prototype.update.call(this);
     if(this.isOpen() && !this.isClosing()){
-        this._openCount -= 1;
-        if(this._openCount <= 0){
-            this.close();
+        if(this._openUntilOk){
+            if(Input.isTriggered('ok')){
+                this.close();
+            }
+        }
+        else{
+            this._openCount -= 1;
+            if(this._openCount <= 0){
+                this.close();
+            }
         }
     }
 }
@@ -383,7 +391,7 @@ Window_Popup.prototype.updateOpen = function() {
 Window_Popup.prototype.close = function(){
     Window_Base.prototype.close.call(this);
     if(this._onClose){
-        this._onClose();
+        this._onClose.call(this);
     }
 }
 
@@ -415,7 +423,13 @@ Window_Popup.prototype.open = function(){
     if (!this.isOpen()) {
         this._opening = true;
     }
-    this._openCount = this._countToSpendOpen;
+    if(this._countToSpendOpen > 0){
+        this._openCount = this._countToSpendOpen;
+    }
+    else{
+        this._openUntilOk = true;
+    }
+
     this._closing = false;
 }
 
