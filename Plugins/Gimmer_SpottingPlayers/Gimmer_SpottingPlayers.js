@@ -6,7 +6,7 @@ Gimmer_Core['SpottingPlayers'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.1 - A plugin to allow NPC events to "spot the player" and send execute a common event
+ * @plugindesc v1.2 - A plugin to allow NPC events to "spot the player" and send execute a common event
  * @author Gimmer_
  *
  * @param ---Parameters---
@@ -64,6 +64,9 @@ Gimmer_Core['SpottingPlayers'] = {'loaded':true};
  * A plugin to allow NPC events to "spot the player" and send & execute
  * a Common Event.
  *
+ * Use the plugin Command: eventStopSpotting eventId to stop an event from spotting
+ * Use the plugin Command: eventStartSpotting eventId to restart an event spotting
+ *
  * VIDEO TUTORIAL:
  * ============================
  * https://youtu.be/sW1RJ_Xm7h0
@@ -88,6 +91,7 @@ Gimmer_Core.SpottingPlayers.watchedBoxes = {};
 Gimmer_Core.SpottingPlayers.stopViewAt = Number(SpottingPlayersParameters['Solid Wall Region Id']);
 Gimmer_Core.SpottingPlayers.trackSpotter = (SpottingPlayersParameters['Track Spotter For Balloons'] === "true");
 Gimmer_Core.SpottingPlayers.trackMapPosition = (SpottingPlayersParameters['Track Map Position'] === "true");
+Gimmer_Core.SpottingPlayers.DisabledEvents = [];
 
 
 //Direction constants
@@ -142,6 +146,10 @@ Gimmer_Core.SpottingPlayers.checkIfSpotted = function(){
     }
 }
 
+/**
+ * Reset all the switches in a given level, that way if you've set the switches on
+ * during the level, they are set back
+ */
 Gimmer_Core.SpottingPlayers.resetLevel = function (){
     $dataMap.events.forEach(function(v,k){
         if(k > 0){
@@ -234,7 +242,13 @@ Gimmer_Core.SpottingPlayers.setViewedArea = function(obj, viewDistances){
 Game_CharacterBase.prototype.setDirection = function(d) {
     if (!this.isDirectionFixed() && d) {
         this._direction = d;
-        if($dataMap && typeof $dataMap.events[this._eventId] !== 'undefined' && 'note' in $dataMap.events[this._eventId] && $dataMap.events[this._eventId].note.includes("canSpotPlayer") && !Gimmer_Core.SpottingPlayers.isSpotted) {
+        if($dataMap &&
+            typeof $dataMap.events[this._eventId] !== 'undefined' &&
+            'note' in $dataMap.events[this._eventId] &&
+            $dataMap.events[this._eventId].note.includes("canSpotPlayer") &&
+            !Gimmer_Core.SpottingPlayers.isSpotted &&
+            Gimmer_Core.SpottingPlayers.DisabledEvents.indexOf($gameMap.mapId().toString() + this._eventId.toString()) === -1
+        ) {
             let notes = $dataMap.events[this._eventId].note.split("|");
             let distances = {
                 'up': 0,
@@ -287,7 +301,7 @@ Game_CharacterBase.prototype.moveStraight = function(d){
     this.setDirection(d);
 }
 
-Gimmer_Core.pluginCommands['RESETLEVEL'] = function(args){
+Gimmer_Core.pluginCommands['RESETLEVEL'] = function(){
     Gimmer_Core.SpottingPlayers.resetLevel();
 }
 
@@ -297,4 +311,23 @@ Gimmer_Core.pluginCommands['STOPSPOTTING'] = function(){
 
 Gimmer_Core.pluginCommands['STARTSPOTTING'] = function(){
     Gimmer_Core.SpottingPlayers.isSpotted = false;
+}
+
+Gimmer_Core.pluginCommands['EVENTSTOPSPOTTING'] = function(args){
+    const eventId = args[0];
+    const label = 'npc' + eventId;
+    const otherLabel = $gameMap.mapId().toString() + eventId;
+    if(Gimmer_Core.SpottingPlayers.DisabledEvents.indexOf(otherLabel) === -1){
+        Gimmer_Core.SpottingPlayers.DisabledEvents.push(otherLabel);
+    }
+    delete Gimmer_Core.SpottingPlayers.watchedBoxes[label];
+}
+
+Gimmer_Core.pluginCommands['EVENTSTARTSPOTTING'] = function(args){
+    const eventId = args[0];
+    const otherLabel = $gameMap.mapId().toString() + eventId;
+    const pos = Gimmer_Core.SpottingPlayers.DisabledEvents.indexOf(otherLabel);
+    if(pos > -1){
+        Gimmer_Core.SpottingPlayers.DisabledEvents.splice(pos,1);
+    }
 }

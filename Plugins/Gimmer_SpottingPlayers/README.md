@@ -32,7 +32,9 @@ You'll have to set the following parameters:
 * ResetLevel: this will look for any common events on page that have "change switch to on" commands, and toggle them back off.
 Call this if you want the players progress to be reset through a level.
 * StopSpotting: call to prevent the player from being spotted anymore.
-* StartSpotting: call to all the player to be spotted again.
+* StartSpotting: call to all events to start spotting the player.
+* eventStopSpotting eventId: stop an event from spotting the player anymore
+* eventStartSpotting eventId: start an event spotting the player again
 
 ## Terms of Use:
 
