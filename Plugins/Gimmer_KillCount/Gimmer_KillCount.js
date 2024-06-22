@@ -3,45 +3,35 @@ Gimmer_Core['kc'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.0 - Count kills for a specific enemy
+ * @plugindesc v2.0 - Count kills for a specific enemy
  * @author Gimmer
  * @help
  * =================
  * Gimmer_KillCount
  * =================
  *
- * Run the plugin command to start counting kills of a given enemyId:
- * (Note: starting a new tracking will reset the current kill count)
+ * Run the plugin command to start counting kills of a given enemyId with in a provided variable Id:
+ * (Note: starting a new tracking will reset the current kill count if you choose an id that is already in use)
  *
- * startKillCount enemyId
+ * startKillCount enemyId variableId
  *
- * E.G. startKillCount 3 to track enemyId 3
+ * E.G. startKillCount 3 10 to track enemyId 3 in variable 10
  *
- * Run the plugin command to stop counting kills
+ * Run the plugin command to stop counting kills. This WILL NOT clear the variable associated with the kill count.
  *
- * stopKillCount
+ * stopKillCount enemyId
  *
  * Run the plugin command to reset kill count
  *
- * resetKillCount
+ * resetKillCount enemyId
  *
  * ================
  * Version History
  * ================
  * - 1.0: Release
- *
- * @param ---Parameters---
- * @default
- *
- * @param VariableId For Kills
- * @parent ---Parameters---
- * @type variable
- * @desc Variable Id for the kills to go into
+ * - 2.0: Rework for unlimited counts, removed parameters
  *
  */
-
-Gimmer_Core.kc.rawParameters = PluginManager.parameters('Gimmer_KillCount');
-Gimmer_Core.kc.KILL_VARIABLE_ID = Number(Gimmer_Core.kc.rawParameters['VariableId For Kills']);
 
 /**
  * Game_Map Extensions
@@ -49,50 +39,67 @@ Gimmer_Core.kc.KILL_VARIABLE_ID = Number(Gimmer_Core.kc.rawParameters['VariableI
 Gimmer_Core.kc.Game_Map_prototype_initialize = Game_Map.prototype.initialize
 Game_Map.prototype.initialize = function(){
     Gimmer_Core.kc.Game_Map_prototype_initialize.call(this);
-    this._enemyIdToTrack = -1;
+    this._enemysTracked = {};
 }
 
-Game_Map.prototype.setEnemyToTrack = function(enemyId){
-    this._enemyIdToTrack = Number(enemyId);
+Game_Map.prototype.setEnemyToTrack = function(enemyId, variableId){
+    this._enemysTracked[enemyId.toString()] = variableId;
 }
 
-Game_Map.prototype.getTrackedEnemy = function(){
-    return this._enemyIdToTrack;
+Game_Map.prototype.stopTrackingEnemy = function(enemyId){
+    if(this.isEnemyTracked(enemyId)){
+        delete this._enemysTracked[enemyId.toString()];
+    }
+}
+
+Game_Map.prototype.isEnemyTracked = function(enemyId){
+    return this._enemysTracked.hasOwnProperty(enemyId.toString());
+}
+
+Game_Map.prototype.getEnemyVariable = function(enemyId){
+    return this._enemysTracked[enemyId.toString()] || 0;
 }
 
 Gimmer_Core.kc.Game_Enemy_prototype_performCollapse  = Game_Enemy.prototype.performCollapse
 Game_Enemy.prototype.performCollapse  = function(){
     Gimmer_Core.kc.Game_Enemy_prototype_performCollapse.call(this);
-    if(this.enemyId() === $gameMap.getTrackedEnemy() && Gimmer_Core.kc.KILL_VARIABLE_ID > 0){
-        let value = $gameVariables.value(Gimmer_Core.kc.KILL_VARIABLE_ID);
-        if(!value){
-            value = 0;
+    if($gameMap.isEnemyTracked(this.enemyId())){
+        const variableId = $gameMap.getEnemyVariable(this.enemyId());
+        if(variableId > 0){
+            let value = $gameVariables.value(Gimmer_Core.kc.KILL_VARIABLE_ID);
+            if(!value){
+                value = 0;
+            }
+            $gameVariables.setValue(variableId, value + 1);
         }
-        $gameVariables.setValue(Gimmer_Core.kc.KILL_VARIABLE_ID, value + 1);
     }
-
 }
 
 /** Backwards compatibility for saves */
 Gimmer_Core.kc.DataManager_extractSaveContents = DataManager.extractSaveContents
 DataManager.extractSaveContents  = function(contents){
     Gimmer_Core.kc.DataManager_extractSaveContents.call(this, contents);
-    if(!$gameMap.hasOwnProperty('_enemyIdToTrack')){
-        $gameMap._enemyIdToTrack = -1;
+    if(!$gameMap.hasOwnProperty('_enemysTracked')){
+        $gameMap._enemysTracked = {};
     }
 }
 Gimmer_Core.kc.Game_Interpreter_prototype_pluginCommand = Game_Interpreter.prototype.pluginCommand
 Game_Interpreter.prototype.pluginCommand = function(command, args) {
+    let enemyId = args[0];
     switch(command){
         case 'startKillCount':
-            $gameMap.setEnemyToTrack(Number(args[0]));
-            $gameVariables.setValue(Gimmer_Core.kc.KILL_VARIABLE_ID, 0);
+            const variableId = Number(args[1]);
+            $gameMap.setEnemyToTrack(enemyId, variableId);
+            $gameVariables.setValue(variableId, 0);
             break;
         case 'stopKillCount':
-            $gameMap.setEnemyToTrack(-1)
+            $gameMap.stopTrackingEnemy(args[0]);
             break;
         case 'resetKillCount':
-            $gameVariables.setValue(Gimmer_Core.kc.KILL_VARIABLE_ID, 0);
+            if($gameMap.isEnemyTracked(enemyId)){
+                let varId = $gameMap.getEnemyVariable(enemyId);
+                $gameVariables.setValue(varId, 0);
+            }
             break;
     }
 

@@ -5,7 +5,7 @@ if(Gimmer_Core !== undefined){
 var Gimmer_Core =  {'debug':false, 'pluginCommands':{}};
 
 var Imported = Imported || {};
-Imported['Gimmer_Core'] = "1.7";
+Imported['Gimmer_Core'] = "1.7.1";
 
 Gimmer_Core.pendingCallbacks = {};
 Gimmer_Core.areEventsStopped = false;

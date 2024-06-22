@@ -7,7 +7,7 @@ Gimmer_Core.bore = {'loaded':true}
 
 /*:
  * @target MZ
- * @plugindesc Walk away from boring events
+ * @plugindesc v1.0 - Walk away from boring events
  * @author Gimmer_
  *
  * @help Gimmer_YaBoring.js

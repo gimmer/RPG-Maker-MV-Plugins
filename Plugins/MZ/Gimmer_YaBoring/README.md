@@ -1,7 +1,7 @@
 ## Gimmer_YaBoring
 
 Allows any events with only dialogue in them to be walked away from and cancelled.
-Now you can have random flavour text NPCs but not players can leave if they want
+Now you can have random flavour text NPCs but now players can leave if they want
 
 #### Text Tutorial:
 

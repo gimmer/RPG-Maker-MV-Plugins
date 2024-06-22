@@ -4,19 +4,21 @@ Used to track kills of a given enemy. Set the variableId you want to track kills
 
 Run the plugin command to start counting kills of a given enemyId:
 
-**Note**: starting a new tracking will reset the current kill count
+**Note**: starting a new tracking will reset the current kill count if the same variable is used
 
-startKillCount enemyId 
+startKillCount enemyId variableId
 
-E.G. startKillCount 3 to track enemyId 3
+E.G. "startKillCount 3 10" to track enemyId 3 in variable 10
 
-Run the plugin command to stop counting kills
+Run the plugin command to stop counting kills of a given enemyId 
 
-stopKillCount
+**Note**: Stopping a kill count does not reset the variable. You'll have to reset it manually if you don't run reset kill count first
 
-Run the plugin command to reset kill count
+stopKillCount enemyId
 
-resetKillCount
+Run the plugin command to reset kill count of a given enemyId
+
+resetKillCount enemyId
 
 
 
