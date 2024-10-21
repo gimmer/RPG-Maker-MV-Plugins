@@ -4,7 +4,7 @@ if(Gimmer_Core === undefined){
 
 //=============================================================================
 /*:
- * @plugindesc v2.9.1 - Display text anywhere on the screen
+ * @plugindesc v2.9.2 - Display text anywhere on the screen
  * @author Gimmer_
  * @help You can use this plugin to show text on the screen
  *
@@ -180,6 +180,7 @@ if(Gimmer_Core === undefined){
  * - Version 2.8.1: Change the text layer only show and hide on buttons for texts provided in the plugin parameters
  * - Version 2.9: Show pictures when showing the HUD optionally
  * - Version 2.9.1: Don't crash if you don't have pictures
+ * - Version 2.9.2: Fix fadeout bug
  *
  * Terms of Use:
  * =======================================================================
@@ -345,7 +346,7 @@ if(Gimmer_Core === undefined){
 */
 
 Imported = Imported || {};
-Imported.Gimmer_TextAnywhere = '2.9.1'
+Imported.Gimmer_TextAnywhere = '2.9.2'
 
 Gimmer_Core['TextAnywhere'] = {'loaded':true};
 
@@ -514,9 +515,11 @@ Scene_Map.prototype.updateTextOverlay = function(){
             this.updateTextDuration(text);
             this.updateTextFadeOut(text);
             this.updateTextFadeIn(text);
-            let tempText = this._textOverLay.convertEscapeCharacters(text.text);
-            let textLength = this.updateTypingIn(text, tempText);
-            this.displayTextAnywhere(text,tempText, textLength);
+            if(text.currentOpacity > 0){
+                let tempText = this._textOverLay.convertEscapeCharacters(text.text);
+                let textLength = this.updateTypingIn(text, tempText);
+                this.displayTextAnywhere(text,tempText, textLength);
+            }
         }
     }, this)
 
