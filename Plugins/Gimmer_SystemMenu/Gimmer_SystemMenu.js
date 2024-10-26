@@ -6,7 +6,7 @@ Gimmer_Core['SystemMenu'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc v1.1 - Support spliting out some menu options to a different menu
+ * @plugindesc v1.2.1 - Support spliting out some menu options to a different menu
  * @author Gimmer_
  *
  * ================
@@ -14,6 +14,8 @@ Gimmer_Core['SystemMenu'] = {'loaded':true};
  * ================
  *
  * Split the menu so that you have a game menu & system menu (for settings, quitting the game etc.)
+ *
+ * call $gameSystem.disableJustMenu() to disable the regular menu;
  *
  * Terms of Use:
  * =======================================================================
@@ -68,6 +70,20 @@ Gimmer_Core['SystemMenu'] = {'loaded':true};
  * @option Menu (Y on Xbox, Triangle on PS)
  * @value 3
  *
+ * @param Height of Window MZ
+ * @parent ---Parameters---
+ * @type Number
+ * @desc How high to make the window in MZ? MV handles this automatically.
+ * Default 200
+ * @default 200
+ *
+ * @param Width of Window MZ
+ * @parent ---Parameters---
+ * @type Number
+ * @desc How wide to make the window in MZ? MV handles this automatically.
+ * Default 200
+ * @default 200
+ *
  */
 
 var smParamaters = PluginManager.parameters('Gimmer_SystemMenu');
@@ -75,6 +91,8 @@ Gimmer_Core.SystemMenu.IncludeOptions = (smParamaters['Move Options To System Me
 Gimmer_Core.SystemMenu.IncludeSave = (smParamaters['Move Save To System Menu'] === "true");
 Gimmer_Core.SystemMenu.IncludeGameEnd = (smParamaters['Move Game End To System Menu'] === "true");
 Gimmer_Core.SystemMenu.KeyBind = Number(smParamaters['Keyboard Key for System Menu']);
+Gimmer_Core.SystemMenu.heightMZ = Number(smParamaters['Height of Window MZ']);
+Gimmer_Core.SystemMenu.widthMZ = Number(smParamaters['Width of Window MZ']);
 if(Gimmer_Core.SystemMenu.KeyBind >= 0){
     Input.keyMapper[Gimmer_Core.SystemMenu.KeyBind] = 'system';
 }
@@ -140,6 +158,14 @@ Game_System.prototype.initialize = function(){
     this._systemMenuEnabled = true;
 }
 
+Game_System.prototype.disableJustMenu = function(){
+    this._menuEnabled = false;
+}
+
+Game_System.prototype.enableJustMenu = function(){
+    this._menuEnabled = true;
+}
+
 Game_System.prototype.disableMenu = function() {
     this._menuEnabled = false;
     this._systemMenuEnabled = false;
@@ -195,7 +221,13 @@ Scene_SystemMenu.prototype.start = function() {
 };
 
 Scene_SystemMenu.prototype.createCommandWindow = function(){
-    this._commandWindow = new Window_MenuSystem(0, 0);
+    if(Utils.RPGMAKER_NAME === "MV"){
+        this._commandWindow = new Window_MenuSystem(0, 0);
+    }
+    else{
+        const rect = new Rectangle(0,0, Gimmer_Core.SystemMenu.widthMZ, Gimmer_Core.SystemMenu.heightMZ)
+        this._commandWindow = new Window_MenuSystem(rect);
+    }
     this._commandWindow.setHandler('options',   this.commandOptions.bind(this));
     this._commandWindow.setHandler('save',      this.commandSave.bind(this));
     this._commandWindow.setHandler('gameEnd',   this.commandGameEnd.bind(this));
