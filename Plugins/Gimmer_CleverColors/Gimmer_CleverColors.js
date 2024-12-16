@@ -3,13 +3,13 @@ if(Gimmer_Core === undefined){
 }
 
 var Imported = Imported || {}
-Imported['Gimmer_CleverColors'] = '1.1';
+Imported['Gimmer_CleverColors'] = '1.2';
 
 Gimmer_Core['CC'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Map specific words or phrases to colors to avoid needing repetitive color flags
+ * @plugindesc v1.2 Map specific words or phrases to colors to avoid needing repetitive color flags
  * @author Gimmer_
  * @help You can either hardcode a list for 50 colors, or update Colors.json in the data folder to associate
  * case-sensitive phrases with specific colours.
@@ -37,6 +37,20 @@ Gimmer_Core['CC'] = {'loaded':true};
  * @type Boolean
  * @desc Use colors.json to hold all the color to string matches. If set to false, you'll have to set arrays for each color
  * Default: False
+ * @default false
+ *
+ * @param Use colors in text boxes?
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc Show Text should show colors?
+ * Default: True
+ * @default true
+ *
+ * @param Use colors in battle log?
+ * @parent ---Parameters---
+ * @type Boolean
+ * @desc The Battle Log should show colors?
+ * Default: false
  * @default false
  *
  * @param ---Manual Colors---
@@ -253,6 +267,8 @@ Gimmer_Core['CC'] = {'loaded':true};
 const ccParams = PluginManager.parameters('Gimmer_CleverColors');
 
 Gimmer_Core.CC.UseJsonFile = (ccParams['Use colors data file'] === "true");
+Gimmer_Core.CC.TEXT_BOX_ON = (ccParams['Use colors in text boxes?'] === "true");
+Gimmer_Core.CC.BATTLE_LOG_ON = (ccParams['Use colors in battle log?'] === "true");
 
 //Function to initialize $dataColors from file or plugin parameters
 Gimmer_Core.CC.initializeDatabase = function(){
@@ -305,9 +321,19 @@ DataManager.setupBattleTest = function(){
 //Extend add text to magically add colors
 Gimmer_Core.CC.Game_Message_prototype_add = Game_Message.prototype.add;
 Game_Message.prototype.add = function(text) {
-    text = this.magicallyAddColors(text);
+    if(Gimmer_Core.CC.TEXT_BOX_ON){
+        text = this.magicallyAddColors(text);
+    }
     Gimmer_Core.CC.Game_Message_prototype_add.call(this, text);
-};
+}
+
+Gimmer_Core.CC.Window_BattleLog_prototype_addText = Window_BattleLog.prototype.addText;
+Window_BattleLog.prototype.addText = function(text){
+    if(Gimmer_Core.CC.BATTLE_LOG_ON) {
+        text = Game_Message.prototype.magicallyAddIcons(text);
+    }
+    Gimmer_Core.CC.Window_BattleLog_prototype_addText.call(this, text);
+}
 
 //Magical add colors function
 Game_Message.prototype.magicallyAddColors = function(text){

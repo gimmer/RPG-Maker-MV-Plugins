@@ -1,10 +1,12 @@
 ## Gimmer_CleverColors
 
 Allows you to define a Colors.json file or use the plugin parameters to define specific text strings that, 
-if found in a Show Text command, will automatically become certain colors.
+if found in a Show Text command or Battle Log text line, will automatically become certain colors.
 
 An example Colors.json file can be found in the repo. Its format is pretty simplistic, just an object with word as key, 
 and colorId as value.
+
+You can choose if you want the colors to work in battle, show text, or both.
 
 #### Text Tutorial:
 
