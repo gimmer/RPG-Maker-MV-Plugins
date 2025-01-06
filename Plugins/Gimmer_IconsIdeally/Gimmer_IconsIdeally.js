@@ -1,7 +1,7 @@
 var Gimmer_Core = Gimmer_Core || {};
 
 var Imported = Imported || {}
-Imported['Gimmer_IconsIdeally'] = '1.0';
+Imported['Gimmer_IconsIdeally'] = '1.1';
 
 Gimmer_Core['ii'] = {'loaded':true};
 
@@ -15,6 +15,12 @@ Gimmer_Core['ii'] = {'loaded':true};
  * Putting ! in front of a term will prevent it from having its icon drawn in that particular instance
  *
  * NOTE: you cannot use the word UBBAJABBAFLUBBADUBBA in your text chat. Don't ask why, it's a dirty code reason.
+ *
+ * =================
+ * Version History
+ * =================
+ * - 1.0: Release
+ * - 1.1: Fix bug with scrolling battle box double iconing
  *
  * @param Use icons in text boxes?
  * @parent ---Parameters---
@@ -97,6 +103,7 @@ Window_BattleLog.prototype.addText = function(text){
 Game_Message.prototype.magicallyAddIcons = function(text){
     Object.keys($dataIcons).forEach(function(word){
         if(text.contains(word)){
+            text = text.replace("\x1bi["+$dataIcons[word]+"]",'');
             text = text.replace("!"+word,"UBBAJABBAFLUBBADUBBA");
             text = text.replace(word,"\x1bi["+$dataIcons[word]+"]"+word);
             text = text.replace("UBBAJABBAFLUBBADUBBA", word);
