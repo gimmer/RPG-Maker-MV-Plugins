@@ -3,19 +3,27 @@ if(Gimmer_Core === undefined){
 }
 
 Imported = Imported || {};
-Imported['Gimmer_MirrorMirrorOnTheWall'] = '1.1';
+Imported['Gimmer_MirrorMirrorOnTheWall'] = '1.3';
 
 Gimmer_Core['Mirror'] = {'loaded':true};
 
 //=============================================================================
 /*:
- * @plugindesc Choose tiles that are mirrors?
+ * @plugindesc v1.3 - Choose tiles that are mirrors
  * @author Gimmer_
  * @help This plugin lets you define events as mirrors
  *
  * Simply put <mirror> in the note tag on event, and place it on a transparent tile on the map.
  * Any events or characters on the screen using a "characterName" will be reflected.
  * The terrain in front of the mirror will also be reflected.
+ *
+ * Plugin Command:
+ * changePlayerMirrorImage [filename] [index]
+ * e.g. changePlayerMirrorImage Actor1 3 -> to change the mirror image to Actor1 index 3
+ *
+ * clearPlayerMirrorImage -> Clears the custom image
+ *
+ * Note: This will not persist through saving.
  *
  * KNOWN ISSUE:  The tiles reflected won't be inverted in the mirror.
  * Make sure the terrain in front of the mirror is direction agnostic.
@@ -25,6 +33,10 @@ Gimmer_Core['Mirror'] = {'loaded':true};
  * ==================
  * - 0.1: Released
  * - 1.1: Added optional alternative reflection support for the main character
+ * - 1.1.1: Fix bug with character index not working if you overwrote the character
+ * - 1.2: Added a plugin command for swapping the play override
+ * - 1.2.1: Added a plugin command for to clear player overrides
+ * - 1.3: Bug fix for direction fix
  *
  * @param ---Parameters---
  *
@@ -108,6 +120,39 @@ Sprite_Character_Mirror.prototype.updateBitmap = function() {
     }
 };
 
+Sprite_Character.prototype.characterBlockX = function() {
+    if (this._isBigCharacter) {
+        return 0;
+    } else {
+        return this._characterIndex % 4 * 3;
+    }
+};
+
+Sprite_Character.prototype.characterBlockY = function() {
+    if (this._isBigCharacter) {
+        return 0;
+    } else {
+        return Math.floor(this._characterIndex / 4) * 4;
+    }
+};
+
+Sprite_Character_Mirror.prototype.isImageChanged = function() {
+    if(this._character === $gamePlayer && Gimmer_Core.Mirror.ALT_CHARACTER_NAME.length){
+        return (this._tilesetId !== $gameMap.tilesetId() ||
+            this._tileId !== this._character.tileId() ||
+            this._characterName !== Gimmer_Core.Mirror.ALT_CHARACTER_NAME||
+            this._characterIndex !== Gimmer_Core.Mirror.ALT_CHARACTER_INDEX);
+    }
+    else{
+        return (this._tilesetId !== $gameMap.tilesetId() ||
+            this._tileId !== this._character.tileId() ||
+            this._characterName !== this._character.characterName() ||
+            this._characterIndex !== this._character.characterIndex());
+    }
+
+
+};
+
 Sprite_Character_Mirror.prototype.updateShatterEffect = function(){}
 
 
@@ -124,7 +169,7 @@ Sprite_Character_Mirror.prototype.updatePosition = function() {
     let mirror = this.findNearestMirror(this._character);
     let th = $gameMap.tileHeight();
     if(mirror){
-        let d = this._character.direction();
+        let d = this._character.realDirection();
         if(this._frame.width !== this.patternWidth() && this._character.isMoving() && (d === 6 || d === 4)){
             let widthMod = this.getWidthMod(mirror);
             if(widthMod > 0){
@@ -152,7 +197,7 @@ Sprite_Character_Mirror.prototype.updatePosition = function() {
 
 Sprite_Character_Mirror.prototype.setFrame = function (x, y, width, height){
     let mirror = this.findNearestMirror(this._character);
-    let d = this._character.direction();
+    let d = this._character.realDirection();
 
     let isEnteringMirroredSpace = false;
     let isLeavingMirroredSpace = false;
@@ -220,7 +265,8 @@ Sprite_Character_Mirror.prototype.isLeavingMirroredSpace = function(){
     if(tilemap && this._character.isMoving()){
         let x = this._character._realX;
         let y = this._character._realY;
-        let d = this._character.direction();
+        let d =  this._character.realDirection();
+        console.log(d);
         switch(d){
             case 4:
                 x = Math.ceil(x);
@@ -468,3 +514,25 @@ Object.defineProperty(Tilemap.prototype, 'mirrorEvents', {
         this._mirrorEvents = value;
     }
 });
+
+Gimmer_Core.pluginCommands['CHANGEPLAYERMIRRORIMAGE'] = function(params){
+    Gimmer_Core.Mirror.ALT_CHARACTER_NAME = params[0];
+    Gimmer_Core.Mirror.ALT_CHARACTER_INDEX = Number(params[1] || 0);
+}
+
+Gimmer_Core.pluginCommands['CLEARPLAYERMIRRORIMAGE'] = function(params){
+    Gimmer_Core.Mirror.ALT_CHARACTER_NAME = "";
+    Gimmer_Core.Mirror.ALT_CHARACTER_INDEX = 0;
+}
+
+Game_Character.prototype.realDirection = function(){
+    let d = this.direction();
+    if(this.isMoving()) {
+        if (this._x === this._realX) {
+            d = (this._y > this._realY ? 2 : 8);
+        } else if (this._y === this._realY) {
+            d = (this._x > this._realX ? 6 : 4);
+        }
+    }
+    return d;
+}
