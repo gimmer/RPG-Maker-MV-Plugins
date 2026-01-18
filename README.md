@@ -32,6 +32,7 @@ The only exception is Salik Hussain (SigmaSuccour), who may not use my plugins i
 | [Gimmer_QuitToDesktop][Gimmer_QuitToDesktop]                 | Extends the quit screen to offer a quit to desktop option.                                                       | [1.1][Gimmer_QuitToDesktop_release]         |
 | [Gimmer_SelfSwitcheroo][Gimmer_SelfSwitcheroo]               | Adds a plugin command that allows you to change any events' self switch.                                         | [1.0][Gimmer_SelfSwitcheroo_release]        |
 | [Gimmer_SpottingPlayers][Gimmer_SpottingPlayers]             | Allows events to be given cones of vision, and to run a common event when the player enters their line of sight. | [1.1][Gimmer_SpottingPlayers_release]       |
+| [Gimmer_StateYerBusiness][Gimmer_StateYerBusiness]           | Allows you to save sets of game states to load to instantly using plugin parameters                              | [1.1][Gimmer_StateYerBusiness_release]      |
 | [Gimmer_SystemMenu][Gimmer_SystemMenu]                       | Allows you to move Options, Save, and Game End to a different smaller menu.                                      | [1.1][Gimmer_SystemMenu_release]            |
 | [Gimmer_TextAnywhere][Gimmer_TextAnywhere]                   | Fill in an array of text variables, and that text will show anywhere on the screen.                              | [2.9][Gimmer_TextAnywhere_release]          |
 | [Gimmer_TextEntryPopup][Gimmer_TextEntryPopup]               | Create a popup asking for text to be entered that can be use in conditional branches, without pausing the map.   | [1.1][Gimmer_TextEntryPopup_release]        |
@@ -126,3 +127,6 @@ The only exception is Salik Hussain (SigmaSuccour), who may not use my plugins i
 
 [Gimmer_KillCount]: https://github.com/gimmer/RPG-Maker-MV-Plugins/tree/master/Plugins/Gimmer_KillCount
 [Gimmer_KillCount_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_KillCount/Gimmer_KillCount.js
+
+[Gimmer_StateYerBusiness]: https://github.com/gimmer/RPG-Maker-MV-Plugins/tree/master/Plugins/Gimmer_StateYerBusiness
+[Gimmer_StateYerBusiness_release]: https://github.com/gimmer/RPG-Maker-MV-Plugins/blob/master/Plugins/Gimmer_StateYerBusiness/Gimmer_StateYerBusiness.js
